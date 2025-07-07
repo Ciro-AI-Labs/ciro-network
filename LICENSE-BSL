@@ -1,0 +1,59 @@
+Business Source License 1.1
+
+License text copyright (c) 2017 MariaDB Corporation Ab, All Rights Reserved.
+"Business Source License" is a trademark of MariaDB Corporation Ab.
+
+-----------------------------------------------------------------------------
+
+The Business Source License (this document, or the "License") governs use of the accompanying software. By using the software, you accept this License. If you do not accept the License, do not use the software.
+
+As used in this License:
+
+- "License" means the terms and conditions set forth herein.
+- "Licensor" means CIRO Network Foundation.
+- "Licensed Work" means the programming code and associated documentation files made available under this License.
+- "Additional Use Grant" means the grant set forth below.
+- "Change Date" means January 1, 2029.
+- "Change License" means Apache License, Version 2.0.
+
+With respect to the Licensed Work, you may not:
+
+- use the Licensed Work for a Competing Use.
+
+A "Competing Use" means use of the Licensed Work in a production environment to provide a service that competes with CIRO Network, or to create a product that competes with CIRO Network. Competing Use specifically includes:
+
+- Operating a competing distributed compute network
+- Providing compute job distribution services that compete with CIRO Network
+- Creating derivative works that serve as alternatives to CIRO Network's core services
+- Using the Licensed Work to develop competing tokenomics or incentive mechanisms
+
+Additional Use Grant: You may use the Licensed Work for any purpose if your organization's total annual gross revenue for the prior tax year does not exceed US$1,000,000. If your organization is a non-profit organization or government entity, you may use the Licensed Work for any purpose.
+
+You may also use the Licensed Work for:
+
+- Educational and research purposes
+- Internal evaluation and testing
+- Developing applications that integrate with CIRO Network
+- Contributing improvements back to the Licensed Work
+
+Notice Requirement: You must include the above copyright notice and this License in all copies or substantial portions of the Licensed Work.
+
+On the Change Date, or the fourth anniversary of the first publicly available distribution of a specific version of the Licensed Work under this License, whichever comes first, the License will automatically convert to the Change License for that version.
+
+For information about alternative licensing arrangements for the Licensed Work, please contact licensing@ciro.network.
+
+-----------------------------------------------------------------------------
+
+Copyright (c) 2025 CIRO Network Foundation
+
+Licensed under the Business Source License 1.1 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://mariadb.com/bsl11/
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. 

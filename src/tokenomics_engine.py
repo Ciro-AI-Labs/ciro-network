@@ -1,3 +1,18 @@
+# SPDX-License-Identifier: BUSL-1.1
+# Copyright (c) 2025 CIRO Network Foundation
+#
+# This file is part of CIRO Network.
+#
+# Licensed under the Business Source License 1.1 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
+#     https://github.com/Ciro-AI-Labs/ciro-network/blob/main/LICENSE-BSL
+#
+# Change Date: January 1, 2029
+# Change License: Apache License, Version 2.0
+#
+# For more information see: https://github.com/Ciro-AI-Labs/ciro-network/blob/main/WHY_BSL_FOR_CIRO.md
+
 """CIRO Tokenomics Engine (Public API)
 
 This module implements the core CIRO v3.0 hybrid tokenomics model for simulation
@@ -11,7 +26,7 @@ Key Features:
 - Cross-chain fee aggregation and burn execution simulation
 
 Author: CIRO Network Foundation
-License: MIT (Standard - consider Apache-2 for enterprise patent protection)
+License: BSL 1.1 → Apache 2.0 on January 1, 2029
 Version: 3.0 (Red-Team Hardened)
 """
 

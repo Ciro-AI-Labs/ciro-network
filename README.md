@@ -6,7 +6,8 @@
   <img src="https://img.shields.io/badge/Cairo-1.0-blue?style=for-the-badge&logo=ethereum" alt="Cairo 1.0">
   <img src="https://img.shields.io/badge/Rust-1.70+-orange?style=for-the-badge&logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/Starknet-Mainnet-purple?style=for-the-badge" alt="Starknet">
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License">
+  <img src="https://img.shields.io/badge/License-BSL_1.1-red?style=for-the-badge" alt="BSL 1.1 License">
+  <img src="https://img.shields.io/badge/2029-Apache_2.0-green?style=for-the-badge" alt="Future Apache License">
 </p>
 
 <p align="center">
@@ -190,8 +191,24 @@ Security is paramount in decentralized systems. Please review our
 
 ## 📄 **License**
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
-for details.
+CIRO Network uses a **dual licensing strategy** to balance IP protection with our commitment to open source:
+
+### **📋 License Summary**
+
+| Component | License | Details |
+|-----------|---------|---------|
+| **Core Smart Contracts** | **BSL 1.1** → Apache 2.0 | [See WHY_BSL_FOR_CIRO.md](WHY_BSL_FOR_CIRO.md) |
+| **SDKs & Developer Tools** | **Apache 2.0** | Immediate open source |
+| **Client Libraries** | **MIT** | Maximum compatibility |
+
+### **🗓️ Timeline**
+
+- **Today**: Core contracts protected under BSL 1.1
+- **January 1, 2029**: All code automatically becomes Apache 2.0
+
+**Why BSL?** We believe in open source but need time-boxed IP protection to build our competitive moat. See our complete explanation: [WHY_BSL_FOR_CIRO.md](WHY_BSL_FOR_CIRO.md)
+
+For full licensing details, see [LICENSE](LICENSE).
 
 ---
 

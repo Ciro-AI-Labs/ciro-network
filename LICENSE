@@ -1,21 +1,95 @@
-MIT License
+# CIRO Network Licensing
 
-Copyright (c) 2025 CIRO Network Foundation
+CIRO Network uses a **dual licensing strategy** to balance intellectual property protection with our commitment to open source.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## 📋 **License Summary**
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+| Component Type | License | File Reference |
+|---------------|---------|----------------|
+| **Core Smart Contracts** | Business Source License 1.1 | [LICENSE-BSL](./LICENSE-BSL) |
+| **SDKs & Developer Tools** | Apache License 2.0 | [LICENSE-APACHE](./LICENSE-APACHE) |
+| **Client Libraries** | MIT License | [LICENSE-MIT](./LICENSE-MIT) |
+| **Documentation** | Creative Commons BY 4.0 | [LICENSE-CC](./LICENSE-CC) |
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE. 
+## 🎯 **Core Contracts (BSL 1.1)**
+
+**Files covered:**
+- `cairo-contracts/src/ciro_token.cairo`
+- `cairo-contracts/src/cdc_pool.cairo` 
+- `cairo-contracts/src/job_manager.cairo`
+- `cairo-contracts/src/vesting/`
+- `cairo-contracts/src/utils/governance.cairo`
+- `cairo-contracts/src/utils/interactions.cairo`
+
+**Key terms:**
+- ✅ **Free for:** Research, education, small businesses (<$1M revenue), non-profits
+- ✅ **Free to:** Develop applications that integrate with CIRO Network
+- ❌ **Restricted:** Operating competing distributed compute networks
+- 📅 **Converts to Apache 2.0 on:** January 1, 2029
+
+**Why BSL?** See our explanation: [WHY_BSL_FOR_CIRO.md](./WHY_BSL_FOR_CIRO.md)
+
+## 🔧 **SDKs & Tools (Apache 2.0)**
+
+**Files covered:**
+- `shared/ciro-types/`
+- `shared/ciro-network/`
+- `shared/ciro-crypto/`
+- `shared/ciro-utils/`
+- Developer examples and tutorials
+- Integration libraries
+
+**Key terms:**
+- ✅ **Completely free and open**
+- ✅ **Commercial use allowed**
+- ✅ **No restrictions on distribution**
+
+## 🖥️ **Client Applications (MIT)**
+
+**Files covered:**
+- `tauri-app/` (Desktop application)
+- `rust-node/` (Worker node software)
+- CLI tools and utilities
+
+**Key terms:**
+- ✅ **Completely free and open**
+- ✅ **Can be bundled with proprietary software**
+- ✅ **Minimal attribution requirements**
+
+## 📚 **Documentation (CC BY 4.0)**
+
+**Files covered:**
+- `docs/` directory
+- README files
+- User guides and tutorials
+
+**Key terms:**
+- ✅ **Free to use and redistribute**
+- ✅ **Can be modified and adapted**
+- ✅ **Attribution required**
+
+## �� **Contributing**
+
+By contributing to CIRO Network, you agree to our [Contributor License Agreement](./CONTRIBUTOR_LICENSE_AGREEMENT.md).
+
+**Quick sign-off for GitHub:**
+```bash
+git commit -s -m "Your commit message"
+```
+
+## 📞 **Commercial Licensing**
+
+Need to use BSL-licensed components in ways not permitted by the license? Contact us for commercial licensing options:
+
+📧 **Email:** licensing@ciro.network  
+🌐 **Website:** https://ciro.network/enterprise  
+
+## ⚖️ **Legal**
+
+**Copyright Holder:** CIRO Network Foundation  
+**Legal Contact:** legal@ciro.network  
+**License Questions:** licensing@ciro.network  
+
+---
+
+*This licensing summary is for informational purposes. See individual license files for complete legal terms.* 
