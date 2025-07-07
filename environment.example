@@ -1,0 +1,79 @@
+# ===== CIRO Network Environment Configuration =====
+# Copy this file to .env and fill in your actual values
+
+# ===== Database Configuration =====
+DATABASE_URL=postgresql://ciro:ciro@localhost:5432/ciro_dev
+POSTGRES_USER=ciro
+POSTGRES_PASSWORD=ciro
+POSTGRES_DB=ciro_dev
+
+# ===== Redis Configuration =====
+REDIS_URL=redis://localhost:6379
+
+# ===== Starknet Configuration =====
+STARKNET_RPC_URL=http://localhost:5050
+STARKNET_NETWORK=sepolia-testnet
+STARKNET_ACCOUNT_ADDRESS=0x123...
+STARKNET_PRIVATE_KEY=0x456...
+
+# ===== Kafka Configuration =====
+KAFKA_BROKERS=localhost:9092
+KAFKA_CONSUMER_GROUP=ciro-workers
+KAFKA_TOPIC_JOBS=ciro-jobs
+KAFKA_TOPIC_RESULTS=ciro-results
+KAFKA_TOPIC_METRICS=ciro-metrics
+KAFKA_TOPIC_EVENTS=ciro-events
+
+# ===== Worker Node Configuration =====
+WORKER_ID=worker-001
+WORKER_NAME=My CIRO Worker
+WORKER_GPU_COUNT=1
+WORKER_GPU_MEMORY=8192
+WORKER_MAX_CONCURRENT_JOBS=3
+WORKER_STAKE_AMOUNT=100000000000000000000  # 100 CIRO tokens
+
+# ===== P2P Network Configuration =====
+P2P_LISTEN_ADDRESS=/ip4/0.0.0.0/tcp/4001
+P2P_EXTERNAL_ADDRESS=/ip4/your-public-ip/tcp/4001
+P2P_BOOTSTRAP_NODES=/ip4/bootstrap1.ciro.network/tcp/4001/p2p/12D3KooW...
+
+# ===== AI/ML Configuration =====
+OLLAMA_HOST=http://localhost:11434
+HUGGINGFACE_TOKEN=hf_your_token_here
+COMPUTE_TIMEOUT=300
+MAX_MEMORY_GB=8
+MAX_GPU_MEMORY_GB=16
+
+# ===== Monitoring Configuration =====
+RUST_LOG=info
+JAEGER_ENDPOINT=http://localhost:14268/api/traces
+PROMETHEUS_ENDPOINT=http://localhost:9090
+GRAFANA_URL=http://localhost:3001
+
+# ===== Security Configuration =====
+JWT_SECRET=your-super-secret-jwt-key-here
+ENCRYPTION_KEY=your-encryption-key-here
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# ===== Application Configuration =====
+API_HOST=0.0.0.0
+API_PORT=8080
+FRONTEND_URL=http://localhost:5173
+TAURI_APP_NAME=CIRO Worker
+TAURI_APP_VERSION=0.1.0
+
+# ===== Development Configuration =====
+DEVELOPMENT=true
+LOG_LEVEL=debug
+ENABLE_CORS=true
+ENABLE_SWAGGER=true
+ENABLE_METRICS=true
+
+# ===== External Services =====
+IPFS_GATEWAY=https://gateway.pinata.cloud
+IPFS_API_KEY=your-ipfs-api-key
+PINATA_JWT=your-pinata-jwt
+
+# ===== Starknet Foundation Grant =====
+GRANT_MILESTONE_TRACKER=true
+GRANT_REPORTING_ENDPOINT=https://api.starknet.io/grants/reporting 

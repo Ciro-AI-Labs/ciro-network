@@ -1,0 +1,27 @@
+# CIRO Network Tokenomics Simulator Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core Data Science Libraries
+numpy>=1.24.0
+pandas>=2.0.0
+pandas-stubs>=2.0.0.230412
+
+# Optional: Enhanced Analysis & Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Optional: Jupyter Notebook Support
+jupyter>=1.0.0
+ipykernel>=6.25.0
+
+# Optional: Advanced Financial Modeling
+scipy>=1.11.0
+statsmodels>=0.14.0
+
+# Development & Type Checking
+typing-extensions>=4.7.0 
+# Development / CI
+automated-testing
+pytest>=7.4.0
+pyright>=1.1.355 

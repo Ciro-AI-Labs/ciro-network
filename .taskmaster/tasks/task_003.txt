@@ -1,0 +1,53 @@
+# Task ID: 3
+# Title: JobMgr Smart Contract Implementation
+# Status: done
+# Dependencies: 2
+# Priority: high
+# Description: Implement the JobMgr contract in Cairo 1.0 with escrow functionality, job submission, and basic result attestation.
+# Details:
+1. Implement the JobMgr contract with the following functions:
+   - `submit_job(model_id: felt252, inputs: Array<felt252>, payment: u256) -> job_id: u256`
+   - `register_model(model_hash: felt252, requirements: ModelRequirements) -> model_id: felt252`
+   - `submit_result(job_id: u256, result_hash: felt252, worker_signature: Array<felt252>)`
+   - `verify_result(job_id: u256, result: Array<felt252>) -> bool`
+   - `release_payment(job_id: u256)`
+   - `dispute_result(job_id: u256, evidence: Array<felt252>)`
+
+2. Implement data structures:
+```cairo
+#[derive(Drop, Serde)]
+struct Job {
+    id: u256,
+    model_id: felt252,
+    inputs: Array<felt252>,
+    status: JobStatus,
+    result_hash: felt252,
+    worker: ContractAddress,
+    payment: u256,
+    created_at: u64,
+    completed_at: u64,
+}
+
+#[derive(Drop, Serde)]
+enum JobStatus {
+    Pending,
+    Assigned,
+    Completed,
+    Disputed,
+    Resolved,
+}
+```
+
+3. Implement events for job lifecycle
+4. Implement access control using Starknet's account abstraction
+5. Add escrow functionality using STRK token (ERC20 interface)
+6. Implement simple hash-based result attestation
+7. Add job timeout and reassignment logic
+
+# Test Strategy:
+1. Unit tests for all contract functions with 90%+ coverage
+2. Test job submission, assignment, completion, and payment flows
+3. Test dispute scenarios and edge cases
+4. Test with mock ERC20 tokens
+5. Deploy to Starknet testnet and conduct integration tests
+6. Perform security review focusing on fund safety and access control

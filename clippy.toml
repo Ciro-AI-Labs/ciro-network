@@ -1,0 +1,114 @@
+# Clippy Configuration for CIRO Network
+# Enforces high-quality Rust code standards and best practices
+# https://doc.rust-lang.org/clippy/
+
+# Cognitive complexity threshold
+cognitive-complexity-threshold = 30
+
+# Cyclomatic complexity threshold
+cyclomatic-complexity-threshold = 7
+
+# Documentation requirements
+missing-docs-in-crate-items = true
+
+# Type complexity threshold
+type-complexity-threshold = 250
+
+# Too many arguments threshold
+too-many-arguments-threshold = 7
+
+# Too many lines threshold
+too-many-lines-threshold = 100
+
+# Trivial copy threshold
+trivial-copy-size-limit = 64
+
+# String literal threshold
+string-literal-threshold = 1
+
+# Enum variant name threshold
+enum-variant-name-threshold = 3
+
+# Struct field name threshold
+struct-excessive-bools = 3
+
+# Function argument threshold
+fn-params-excessive-bools = 3
+
+# Large enum variant threshold
+large-enum-variant-threshold = 200
+
+# Vec box threshold
+vec-box-size-threshold = 4096
+
+# Verbose bit mask threshold
+verbose-bit-mask-threshold = 1
+
+# Literal representation threshold
+literal-representation-threshold = 10
+
+# Single char lifetime names
+single-char-lifetime-names = true
+
+# Avoid breaking exported API
+avoid-breaking-exported-api = true
+
+# Cargo configuration
+cargo-ignore-publish = false
+
+# Allow certain lints that may be too restrictive for some contexts
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true
+
+# Disallowed names (placeholder names that should not be used)
+disallowed-names = ["foo", "bar", "baz", "quux", "lorem", "ipsum"]
+
+# Disallowed types
+disallowed-types = []
+
+# Disallowed methods
+disallowed-methods = []
+
+# Semicolon if nothing returned
+semicolon-if-nothing-returned = true
+
+# Semicolon outside block
+semicolon-outside-block = true
+
+# Array size threshold
+array-size-threshold = 512000
+
+# Max suggested slice pattern length
+max-suggested-slice-pattern-length = 3
+
+# Max trait bounds
+max-trait-bounds = 3
+
+# Max struct field count
+max-struct-fields = 20
+
+# Max function parameter count
+max-fn-params = 7
+
+# Blacklisted names
+blacklisted-names = ["tmp", "temp", "dummy", "test", "data", "stuff", "thing"]
+
+# Allowed scripts (Unicode scripts allowed in identifiers)
+allowed-scripts = ["Latin", "Greek"]
+
+# Check private items
+check-private-items = true
+
+# Enforce doc strings
+enforce-iter-loop-reborrow = true
+
+# Standard library
+standard-macro-braces = [
+    "assert_eq", "assert_ne", "assert", "panic", "todo", "unimplemented",
+    "unreachable", "vec", "format", "write", "writeln", "print", "println",
+    "eprint", "eprintln", "format_args", "concat", "include", "include_str",
+    "include_bytes", "module_path", "file", "line", "column", "compile_error",
+    "env", "option_env", "cfg", "debug_assert", "debug_assert_eq", "debug_assert_ne"
+] 

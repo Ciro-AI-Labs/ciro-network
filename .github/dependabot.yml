@@ -1,0 +1,268 @@
+# Dependabot configuration for CIRO Network
+# This file configures automated dependency updates for all package managers used in the project
+
+version: 2
+updates:
+  # ===== Rust Dependencies =====
+  # Main workspace Cargo.toml
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "ciro-ai-labs/core-team"
+    assignees:
+      - "ciro-ai-labs/core-team"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "rust"
+      - "security"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      # Ignore major version updates for core dependencies that might introduce breaking changes
+      - dependency-name: "tokio"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "serde"
+        update-types: ["version-update:semver-major"]
+
+  # Rust node specific dependencies
+  - package-ecosystem: "cargo"
+    directory: "/rust-node"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ciro-ai-labs/backend-team"
+    commit-message:
+      prefix: "deps(rust-node)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "rust"
+      - "rust-node"
+
+  # Shared libraries dependencies
+  - package-ecosystem: "cargo"
+    directory: "/shared"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ciro-ai-labs/core-team"
+    commit-message:
+      prefix: "deps(shared)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "rust"
+      - "shared-libs"
+
+  # ===== Node.js Dependencies =====
+  # Root package.json (development tools, documentation)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "ciro-ai-labs/frontend-team"
+    assignees:
+      - "ciro-ai-labs/frontend-team"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "tooling"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      # Ignore major version updates for critical tooling
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prettier"
+        update-types: ["version-update:semver-major"]
+
+  # Tauri app frontend dependencies
+  - package-ecosystem: "npm"
+    directory: "/tauri-app"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "ciro-ai-labs/frontend-team"
+    commit-message:
+      prefix: "deps(tauri-app)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "tauri-app"
+      - "frontend"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      # Ignore major React updates that might require migration
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  # Backend Node.js dependencies (if any)
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ciro-ai-labs/backend-team"
+    commit-message:
+      prefix: "deps(backend)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "backend"
+
+  # ===== Docker Dependencies =====
+  # Main Dockerfile
+  - package-ecosystem: "docker"
+    directory: "/docker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ciro-ai-labs/devops-team"
+    commit-message:
+      prefix: "deps(docker)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "infrastructure"
+
+  # DevContainer Dockerfile
+  - package-ecosystem: "docker"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "ciro-ai-labs/devops-team"
+    commit-message:
+      prefix: "deps(devcontainer)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "devcontainer"
+
+  # ===== GitHub Actions Dependencies =====
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ciro-ai-labs/devops-team"
+    assignees:
+      - "ciro-ai-labs/devops-team"
+    commit-message:
+      prefix: "deps(github-actions)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+
+  # ===== Tauri Rust Dependencies =====
+  - package-ecosystem: "cargo"
+    directory: "/tauri-app/src-tauri"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ciro-ai-labs/frontend-team"
+    commit-message:
+      prefix: "deps(tauri-rust)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "rust"
+      - "tauri-app"
+      - "desktop"
+    ignore:
+      # Ignore major Tauri version updates that might require migration
+      - dependency-name: "tauri"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tauri-build"
+        update-types: ["version-update:semver-major"]
+
+  # ===== Documentation Dependencies =====
+  - package-ecosystem: "cargo"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "ciro-ai-labs/docs-team"
+    commit-message:
+      prefix: "deps(docs)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "rust"
+      - "documentation"
+
+# Global configuration for all ecosystems
+registries:
+  # Configure custom registries if needed
+  # For example, if using a private Rust registry
+  # private-rust-registry:
+  #   type: "cargo-registry"
+  #   url: "https://private-registry.ciro.ai"
+  #   token: "${{ secrets.PRIVATE_REGISTRY_TOKEN }}"
+
+# Security-focused configuration
+enable-beta-ecosystems: true # Enable beta ecosystems for better security coverage
+
+# Notification settings
+# Note: These are configured at the repository level in GitHub settings

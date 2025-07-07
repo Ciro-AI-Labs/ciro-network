@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Community Discussion
+    url: https://github.com/ciro-ai-labs/ciro-network/discussions
+    about: Ask questions, share ideas, and discuss with the community
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/ciro-ai-labs/ciro-network/security/advisories/new
+    about: Report security vulnerabilities privately
+  - name: 📋 Documentation Feedback
+    url: https://github.com/ciro-ai-labs/ciro-network/discussions/categories/documentation
+    about: Suggest improvements to documentation
+  - name: 💡 Feature Ideas
+    url: https://github.com/ciro-ai-labs/ciro-network/discussions/categories/ideas
+    about: Share and discuss new feature ideas
+  - name: 🆘 Get Help
+    url: https://discord.gg/ciro-network
+    about: Join our Discord community for real-time help

@@ -1,0 +1,180 @@
+version: "3.8"
+
+services:
+  # ===== Main Development Container =====
+  development:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ciro-dev
+    volumes:
+      - ../..:/workspace:cached
+      - cargo-cache:/usr/local/cargo
+      - node-cache:/usr/local/lib/node_modules
+      - ~/.gitconfig:/home/vscode/.gitconfig:ro
+      - ~/.ssh:/home/vscode/.ssh:ro
+    working_dir: /workspace
+    command: sleep infinity
+    depends_on:
+      - postgres
+      - redis
+      - starknet-devnet
+    environment:
+      - CARGO_HOME=/usr/local/cargo
+      - RUSTUP_HOME=/usr/local/rustup
+      - DATABASE_URL=postgresql://ciro:ciro@postgres:5432/ciro_dev
+      - REDIS_URL=redis://redis:6379
+      - STARKNET_RPC_URL=http://starknet-devnet:5050
+      - RUST_LOG=debug
+    networks:
+      - ciro-network
+
+  # ===== PostgreSQL Database =====
+  postgres:
+    image: postgres:15-alpine
+    container_name: ciro-postgres
+    environment:
+      POSTGRES_DB: ciro_dev
+      POSTGRES_USER: ciro
+      POSTGRES_PASSWORD: ciro
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - ciro-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ciro -d ciro_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Redis Cache =====
+  redis:
+    image: redis:7-alpine
+    container_name: ciro-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - ciro-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Starknet Devnet =====
+  starknet-devnet:
+    image: shardlabs/starknet-devnet:latest
+    container_name: ciro-starknet-devnet
+    ports:
+      - "5050:5050"
+    command: |
+      --host 0.0.0.0
+      --port 5050
+      --seed 0
+      --gas-price 2000000000
+      --data-gas-price 1000000000
+      --accounts 10
+      --initial-balance 1000000000000000000000
+      --timeout 320
+    networks:
+      - ciro-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050/is_alive"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Kafka (for CIRO integration) =====
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: ciro-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - ciro-network
+
+  # ===== Zookeeper (for Kafka) =====
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: ciro-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+    networks:
+      - ciro-network
+
+  # ===== Jaeger (Distributed Tracing) =====
+  jaeger:
+    image: jaegertracing/all-in-one:1.46
+    container_name: ciro-jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+    networks:
+      - ciro-network
+
+  # ===== Prometheus (Metrics) =====
+  prometheus:
+    image: prom/prometheus:v2.44.0
+    container_name: ciro-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - ciro-network
+
+  # ===== Grafana (Dashboard) =====
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: ciro-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - ciro-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  cargo-cache:
+  node-cache:
+  kafka-data:
+  zookeeper-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  ciro-network:
+    driver: bridge

@@ -1,0 +1,169 @@
+# Task ID: 16
+# Title: Worker Desktop Application Implementation
+# Status: pending
+# Dependencies: 15
+# Priority: high
+# Description: Implement the worker desktop application with one-click deployment, earnings dashboard, and system monitoring, ensuring seamless cross-platform functionality across Windows, macOS, and Linux.
+# Details:
+1. Set up Tauri project with React or Svelte, optimizing for cross-platform compatibility
+2. Implement the following features:
+   - Worker setup and registration
+   - Dashboard with earnings and stats
+   - Job queue and history
+   - System performance monitoring (platform-specific implementations)
+   - Settings and configuration
+   - Staking/unstaking interface
+   - Platform-specific system tray integration
+3. Integrate with worker Docker container with platform-specific approaches:
+   - Windows: Docker Desktop API or Docker Engine API
+   - macOS: Docker Desktop API
+   - Linux: Direct Docker Engine API
+4. Implement system monitoring with platform-specific hardware access:
+   - Windows: WMI or Performance Counters
+   - macOS: IOKit and sysctl
+   - Linux: procfs and sysfs
+5. Add automatic updates with platform-specific mechanisms:
+   - Windows: NSIS or MSI-based updates
+   - macOS: Sparkle framework integration
+   - Linux: AppImage or repository-based updates
+6. Create platform-specific installers:
+   - Windows: MSI installer with proper registry entries
+   - macOS: Signed .app bundle in DMG
+   - Linux: .deb, .rpm packages and AppImage
+7. Implement Starknet wallet integration
+8. Add notifications and alerts using native APIs:
+   - Windows: Windows Notification API
+   - macOS: NSUserNotification
+   - Linux: libnotify
+
+Platform-specific file system access:
+- Windows: AppData directory structure
+- macOS: Application Support directory
+- Linux: XDG Base Directory specification
+
+Tauri configuration:
+```json
+{
+  "build": {
+    "distDir": "../dist",
+    "devPath": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "tauri": {
+    "bundle": {
+      "identifier": "network.ciro.worker",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "resources": [],
+      "externalBin": [],
+      "copyright": "",
+      "category": "DeveloperTool",
+      "shortDescription": "CIRO Worker Node",
+      "longDescription": "Worker node for CIRO Distributed Compute Layer",
+      "deb": {
+        "depends": ["docker-ce"]
+      },
+      "macOS": {
+        "frameworks": [],
+        "minimumSystemVersion": "10.15",
+        "exceptionDomain": "ciro.network",
+        "signingIdentity": null,
+        "entitlements": null
+      },
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://releases.ciro.network/worker/{{target}}/{{current_version}}"
+      ],
+      "dialog": true,
+      "pubkey": ""
+    },
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true,
+        "execute": true
+      },
+      "fs": {
+        "all": false,
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true,
+        "createDir": true,
+        "removeDir": true,
+        "removeFile": true
+      },
+      "http": {
+        "all": true,
+        "request": true,
+        "scope": ["https://api.ciro.network/*"]
+      },
+      "notification": {
+        "all": true
+      },
+      "systemTray": {
+        "all": true
+      }
+    },
+    "windows": [
+      {
+        "title": "CIRO Worker",
+        "width": 1024,
+        "height": 768,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' https://api.ciro.network"
+    }
+  }
+}
+```
+
+# Test Strategy:
+1. Comprehensive cross-platform testing:
+   - Windows: Test on Windows 10 and 11, both Intel and ARM architectures
+   - macOS: Test on Intel and Apple Silicon, minimum macOS 10.15
+   - Linux: Test on Ubuntu, Fedora, and Debian distributions
+
+2. Platform-specific installation testing:
+   - Windows: MSI installation, permissions, registry entries
+   - macOS: DMG mounting, app installation, Gatekeeper behavior
+   - Linux: deb/rpm package installation, AppImage execution
+
+3. Test worker setup and registration on each platform
+
+4. Test dashboard and monitoring features with platform-specific hardware metrics
+
+5. Test staking and unstaking across platforms
+
+6. Test automatic updates on each platform:
+   - Windows: Silent and interactive updates
+   - macOS: Sparkle framework updates
+   - Linux: Repository and AppImage updates
+
+7. Test Docker integration with platform-specific Docker implementations
+
+8. Test Starknet wallet integration across platforms
+
+9. Test platform-specific features:
+   - System tray integration
+   - Notifications
+   - File system access
+   - Startup behavior
+
+10. Conduct user acceptance testing on all supported platforms

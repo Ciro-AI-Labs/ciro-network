@@ -1,0 +1,309 @@
+name: 📋 Generate Release Notes
+
+on:
+  release:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag name for release notes'
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run (don't update release)"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  generate-release-notes:
+    name: 📋 Generate Release Notes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+      issues: read
+      
+    steps:
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔍 Get Release Information
+        id: release_info
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "tag_name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+            echo "release_id=${{ github.event.release.id }}" >> $GITHUB_OUTPUT
+            echo "prerelease=${{ github.event.release.prerelease }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag_name=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
+            echo "dry_run=${{ github.event.inputs.dry_run }}" >> $GITHUB_OUTPUT
+            # Get release ID from tag
+            release_id=$(gh release view "${{ github.event.inputs.release_tag }}" --json id -q .id)
+            echo "release_id=$release_id" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔄 Get Previous Release
+        id: previous_release
+        run: |
+          # Get the previous release tag
+          previous_tag=$(gh release list --limit 10 --json tagName,publishedAt | \
+            jq -r --arg current "${{ steps.release_info.outputs.tag_name }}" \
+            'sort_by(.publishedAt) | reverse | map(select(.tagName != $current)) | first.tagName // "HEAD~50"')
+          echo "previous_tag=$previous_tag" >> $GITHUB_OUTPUT
+          
+          # Get commit range
+          if [ "$previous_tag" != "HEAD~50" ]; then
+            echo "commit_range=$previous_tag..${{ steps.release_info.outputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "commit_range=HEAD~50..${{ steps.release_info.outputs.tag_name }}" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📊 Collect Changes
+        id: collect_changes
+        run: |
+          # Create temporary files for different types of changes
+          mkdir -p /tmp/release-notes
+          
+          # Get commits in range
+          git log --pretty=format:"%H|%s|%an|%ae" ${{ steps.previous_release.outputs.commit_range }} > /tmp/release-notes/commits.txt
+          
+          # Initialize arrays
+          echo "[]" > /tmp/release-notes/features.json
+          echo "[]" > /tmp/release-notes/bugs.json
+          echo "[]" > /tmp/release-notes/improvements.json
+          echo "[]" > /tmp/release-notes/breaking.json
+          echo "[]" > /tmp/release-notes/security.json
+          echo "[]" > /tmp/release-notes/docs.json
+          echo "[]" > /tmp/release-notes/dependencies.json
+          echo "[]" > /tmp/release-notes/contributors.json
+          
+          # Process commits and categorize
+          while IFS='|' read -r hash subject author email; do
+            # Skip merge commits
+            if [[ "$subject" == Merge* ]]; then
+              continue
+            fi
+            
+            # Extract PR number from commit message
+            pr_num=$(echo "$subject" | grep -oE '\(#[0-9]+\)' | grep -oE '[0-9]+' || echo "")
+            
+            # Add contributor
+            jq --arg author "$author" --arg email "$email" \
+              '. + [{author: $author, email: $email}] | unique_by(.email)' \
+              /tmp/release-notes/contributors.json > /tmp/release-notes/contributors.tmp && \
+              mv /tmp/release-notes/contributors.tmp /tmp/release-notes/contributors.json
+            
+            # Categorize based on commit message patterns
+            if [[ "$subject" =~ ^(feat|feature)(\(.*\))?: ]]; then
+              jq --arg subject "$subject" --arg hash "$hash" --arg pr "$pr_num" \
+                '. + [{subject: $subject, hash: $hash, pr: $pr}]' \
+                /tmp/release-notes/features.json > /tmp/release-notes/features.tmp && \
+                mv /tmp/release-notes/features.tmp /tmp/release-notes/features.json
+            elif [[ "$subject" =~ ^(fix|bug)(\(.*\))?: ]]; then
+              jq --arg subject "$subject" --arg hash "$hash" --arg pr "$pr_num" \
+                '. + [{subject: $subject, hash: $hash, pr: $pr}]' \
+                /tmp/release-notes/bugs.json > /tmp/release-notes/bugs.tmp && \
+                mv /tmp/release-notes/bugs.tmp /tmp/release-notes/bugs.json
+            elif [[ "$subject" =~ ^(perf|refactor|style|chore)(\(.*\))?: ]]; then
+              jq --arg subject "$subject" --arg hash "$hash" --arg pr "$pr_num" \
+                '. + [{subject: $subject, hash: $hash, pr: $pr}]' \
+                /tmp/release-notes/improvements.json > /tmp/release-notes/improvements.tmp && \
+                mv /tmp/release-notes/improvements.tmp /tmp/release-notes/improvements.json
+            elif [[ "$subject" =~ ^docs(\(.*\))?: ]]; then
+              jq --arg subject "$subject" --arg hash "$hash" --arg pr "$pr_num" \
+                '. + [{subject: $subject, hash: $hash, pr: $pr}]' \
+                /tmp/release-notes/docs.json > /tmp/release-notes/docs.tmp && \
+                mv /tmp/release-notes/docs.tmp /tmp/release-notes/docs.json
+            elif [[ "$subject" =~ BREAKING ]]; then
+              jq --arg subject "$subject" --arg hash "$hash" --arg pr "$pr_num" \
+                '. + [{subject: $subject, hash: $hash, pr: $pr}]' \
+                /tmp/release-notes/breaking.json > /tmp/release-notes/breaking.tmp && \
+                mv /tmp/release-notes/breaking.tmp /tmp/release-notes/breaking.json
+            elif [[ "$subject" =~ ^(deps|build)(\(.*\))?: ]]; then
+              jq --arg subject "$subject" --arg hash "$hash" --arg pr "$pr_num" \
+                '. + [{subject: $subject, hash: $hash, pr: $pr}]' \
+                /tmp/release-notes/dependencies.json > /tmp/release-notes/dependencies.tmp && \
+                mv /tmp/release-notes/dependencies.tmp /tmp/release-notes/dependencies.json
+            elif [[ "$subject" =~ (security|vulnerability|CVE) ]]; then
+              jq --arg subject "$subject" --arg hash "$hash" --arg pr "$pr_num" \
+                '. + [{subject: $subject, hash: $hash, pr: $pr}]' \
+                /tmp/release-notes/security.json > /tmp/release-notes/security.tmp && \
+                mv /tmp/release-notes/security.tmp /tmp/release-notes/security.json
+            fi
+          done < /tmp/release-notes/commits.txt
+          
+          # Get closed issues for this release
+          gh issue list --state closed --json number,title,labels,closedAt | \
+            jq --arg since "${{ steps.previous_release.outputs.previous_tag }}" \
+            '[.[] | select(.closedAt > $since)]' > /tmp/release-notes/closed_issues.json
+          
+          echo "changes_collected=true" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📝 Generate Release Notes
+        id: generate_notes
+        run: |
+          cat > /tmp/release-notes/generate_notes.py << 'EOF'
+          import json
+          import os
+          import sys
+          from datetime import datetime
+          
+          def load_json(filename):
+              with open(f'/tmp/release-notes/{filename}', 'r') as f:
+                  return json.load(f)
+          
+          def format_commit_list(commits, title):
+              if not commits:
+                  return ""
+              
+              result = f"\n## {title}\n\n"
+              for commit in commits:
+                  subject = commit['subject']
+                  # Clean up conventional commit prefixes
+                  subject = subject.replace('feat:', '').replace('fix:', '').replace('docs:', '').replace('perf:', '').replace('refactor:', '').replace('style:', '').replace('chore:', '').replace('build:', '').replace('deps:', '').strip()
+                  
+                  if commit['pr']:
+                      result += f"- {subject} (#{commit['pr']})\n"
+                  else:
+                      result += f"- {subject} ({commit['hash'][:7]})\n"
+              
+              return result
+          
+          def format_contributors(contributors):
+              if not contributors:
+                  return ""
+              
+              result = "\n## 🙏 Contributors\n\n"
+              result += "Thanks to all the contributors who made this release possible:\n\n"
+              
+              for contributor in contributors:
+                  result += f"- @{contributor['author']}\n"
+              
+              return result
+          
+          # Load all data
+          features = load_json('features.json')
+          bugs = load_json('bugs.json')
+          improvements = load_json('improvements.json')
+          breaking = load_json('breaking.json')
+          security = load_json('security.json')
+          docs = load_json('docs.json')
+          dependencies = load_json('dependencies.json')
+          contributors = load_json('contributors.json')
+          
+          # Get release info
+          tag_name = os.environ.get('RELEASE_TAG', 'v0.0.0')
+          release_name = tag_name.replace('v', '').replace('.', ' ')
+          
+          # Generate release notes
+          notes = f"""# Release {tag_name}
+          
+          ## 🎉 What's New
+          
+          This release includes {len(features)} new features, {len(bugs)} bug fixes, and {len(improvements)} improvements.
+          """
+          
+          # Add sections if they have content
+          if features:
+              notes += format_commit_list(features, "🚀 New Features")
+          
+          if bugs:
+              notes += format_commit_list(bugs, "🐛 Bug Fixes")
+          
+          if improvements:
+              notes += format_commit_list(improvements, "🔧 Improvements")
+          
+          if breaking:
+              notes += format_commit_list(breaking, "💥 Breaking Changes")
+              notes += "\n⚠️ **Important**: This release contains breaking changes. Please review the migration guide before upgrading.\n"
+          
+          if security:
+              notes += format_commit_list(security, "🔒 Security")
+          
+          if docs:
+              notes += format_commit_list(docs, "📚 Documentation")
+          
+          if dependencies:
+              notes += format_commit_list(dependencies, "📋 Dependencies")
+          
+          # Add contributors
+          if contributors:
+              notes += format_contributors(contributors)
+          
+          # Add footer
+          notes += f"""
+          ## 🔗 Links
+          
+          - [Full Changelog](https://github.com/{os.environ.get('GITHUB_REPOSITORY', 'ciro-ai-labs/ciro-network')}/compare/{os.environ.get('PREVIOUS_TAG', 'HEAD~50')}...{tag_name})
+          - [Documentation](https://docs.ciro.ai)
+          - [Release Assets](https://github.com/{os.environ.get('GITHUB_REPOSITORY', 'ciro-ai-labs/ciro-network')}/releases/tag/{tag_name})
+          
+          ## 📞 Support
+          
+          - [GitHub Issues](https://github.com/{os.environ.get('GITHUB_REPOSITORY', 'ciro-ai-labs/ciro-network')}/issues)
+          - [GitHub Discussions](https://github.com/{os.environ.get('GITHUB_REPOSITORY', 'ciro-ai-labs/ciro-network')}/discussions)
+          - [Discord Community](https://discord.gg/ciro-network)
+          
+          ---
+          
+          **Full Changelog**: https://github.com/{os.environ.get('GITHUB_REPOSITORY', 'ciro-ai-labs/ciro-network')}/compare/{os.environ.get('PREVIOUS_TAG', 'HEAD~50')}...{tag_name}
+          """
+          
+          # Write to file
+          with open('/tmp/release-notes/release_notes.md', 'w') as f:
+              f.write(notes)
+          
+          print("Release notes generated successfully!")
+          EOF
+          
+          python /tmp/release-notes/generate_notes.py
+          
+          # Set outputs
+          echo "notes_generated=true" >> $GITHUB_OUTPUT
+        env:
+          RELEASE_TAG: ${{ steps.release_info.outputs.tag_name }}
+          PREVIOUS_TAG: ${{ steps.previous_release.outputs.previous_tag }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: 📋 Display Release Notes
+        run: |
+          echo "::group::Generated Release Notes"
+          cat /tmp/release-notes/release_notes.md
+          echo "::endgroup::"
+
+      - name: 🚀 Update Release
+        if: ${{ steps.release_info.outputs.dry_run != 'true' }}
+        run: |
+          # Update the release with generated notes
+          gh release edit "${{ steps.release_info.outputs.tag_name }}" \
+            --notes-file /tmp/release-notes/release_notes.md
+          
+          echo "✅ Release notes updated successfully!"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📊 Release Summary
+        run: |
+          echo "## 📋 Release Notes Generation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release**: ${{ steps.release_info.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Release**: ${{ steps.previous_release.outputs.previous_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit Range**: ${{ steps.previous_release.outputs.commit_range }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Features**: $(jq length /tmp/release-notes/features.json)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bug Fixes**: $(jq length /tmp/release-notes/bugs.json)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Improvements**: $(jq length /tmp/release-notes/improvements.json)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Contributors**: $(jq length /tmp/release-notes/contributors.json)" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.release_info.outputs.dry_run }}" == "true" ]; then
+            echo "- **Dry Run**: Yes (notes not updated)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Updated**: Yes" >> $GITHUB_STEP_SUMMARY 

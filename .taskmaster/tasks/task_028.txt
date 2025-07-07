@@ -1,0 +1,136 @@
+# Task ID: 28
+# Title: Token Vesting & Allocation System Implementation
+# Status: pending
+# Dependencies: 1, 2, 4, 5, 26
+# Priority: high
+# Description: Implement a comprehensive token vesting and allocation system with configurable schedules for different stakeholder groups, multi-signature controls, and timelock mechanisms.
+# Details:
+1. Design and implement the following smart contracts in Cairo 1.0:
+   - `TokenVesting`: Core contract for managing vesting schedules with the following features:
+     - Linear vesting with configurable cliff periods
+     - Support for different vesting schedules per stakeholder group
+     - Emergency pause functionality for regulatory compliance
+     - Ability to revoke unvested tokens in specific circumstances
+   
+   - `TokenTimelock`: Contract to lock tokens for a specified period with:
+     - Time-based release mechanisms
+     - Multi-signature requirements for early release
+     - Integration with governance systems
+
+2. Implement the following allocation structure:
+   - Team: 4-year vesting with 1-year cliff, linear monthly release
+   - Advisors: 3-year vesting with 6-month cliff, linear monthly release
+   - Private Sale: 2-year vesting with 3-month cliff, linear monthly release
+   - Seed Round: 18-month vesting with 1-month cliff, linear monthly release
+   - Foundation: 5-year vesting with 6-month cliff, linear quarterly release
+   - Ecosystem: 4-year vesting with no cliff, linear monthly release
+   - Development: 3-year vesting with 3-month cliff, linear monthly release
+
+3. Implement multi-signature functionality:
+   - Require 3-of-5 signatures for administrative actions
+   - Implement role-based access control for different operations
+   - Create separate multi-sig for emergency functions
+
+4. Implement upgrade safety mechanisms:
+   - Proxy pattern for contract upgradeability
+   - Timelock for upgrade proposals (minimum 72 hours)
+   - Governance approval requirements for upgrades
+
+5. Create comprehensive events for all operations:
+```cairo
+#[event]
+fn VestingScheduleCreated(
+    beneficiary: ContractAddress,
+    amount: u256,
+    start_time: u64,
+    cliff_duration: u64,
+    duration: u64,
+    slice_period_seconds: u64,
+    revocable: bool,
+    group: felt252
+);
+
+#[event]
+fn TokensReleased(beneficiary: ContractAddress, amount: u256);
+
+#[event]
+fn VestingRevoked(beneficiary: ContractAddress, refund_amount: u256);
+```
+
+6. Implement the following core functions:
+```cairo
+fn create_vesting_schedule(
+    beneficiary: ContractAddress,
+    amount: u256,
+    cliff_duration: u64,
+    duration: u64,
+    slice_period_seconds: u64,
+    revocable: bool,
+    group: felt252
+) -> bool;
+
+fn release() -> u256;
+
+fn revoke(beneficiary: ContractAddress) -> bool;
+
+fn get_releasable_amount(beneficiary: ContractAddress) -> u256;
+
+fn get_vesting_schedule(beneficiary: ContractAddress) -> VestingSchedule;
+```
+
+7. Implement comprehensive security measures:
+   - Reentrancy protection
+   - Integer overflow/underflow protection
+   - Access control with proper authorization checks
+   - Emergency pause functionality
+   - Rate limiting for sensitive operations
+
+8. Create a dashboard interface for:
+   - Monitoring vesting schedules
+   - Tracking token releases
+   - Managing multi-sig operations
+   - Viewing allocation statistics
+
+9. Implement integration with the CIRO Token contract:
+   - Token transfer mechanisms
+   - Approval workflows
+   - Balance tracking
+
+# Test Strategy:
+1. Unit testing:
+   - Write comprehensive unit tests for all contract functions with 100% coverage
+   - Test each vesting schedule type with different parameters
+   - Test edge cases (zero amounts, past dates, maximum values)
+   - Test revocation scenarios and emergency functions
+   - Test multi-signature operations with various signer combinations
+
+2. Integration testing:
+   - Test integration with CIRO Token contract
+   - Test interaction between vesting and timelock contracts
+   - Verify correct token transfers during vesting events
+   - Test upgrade mechanisms and proxy patterns
+
+3. Security testing:
+   - Conduct formal verification of critical functions
+   - Perform static analysis using security tools
+   - Test for common vulnerabilities (reentrancy, front-running)
+   - Conduct fuzzing tests with random inputs
+   - Verify access control restrictions
+
+4. Scenario testing:
+   - Simulate complete vesting cycles for each stakeholder group
+   - Test early termination scenarios
+   - Test regulatory compliance scenarios
+   - Verify correct behavior during market stress conditions
+
+5. Deployment testing:
+   - Deploy to Starknet testnet and verify all functions
+   - Test with realistic token amounts and timeframes
+   - Verify gas costs and optimization
+   - Test contract verification on Starkscan
+
+6. Audit preparation:
+   - Document all test cases and results
+   - Prepare security model documentation
+   - Create audit readiness checklist
+   - Address any identified issues before external audit

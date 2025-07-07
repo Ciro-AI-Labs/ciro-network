@@ -1,0 +1,24 @@
+name-template: "v$NEXT_PATCH_VERSION"
+prerelease: false
+
+# Categorize pull requests into sections in the release notes
+categories:
+  - title: "🚀 Features"
+    labels:
+      - "feature"
+  - title: "🐛 Bug Fixes"
+    labels:
+      - "bug"
+  - title: "📝 Documentation"
+    labels:
+      - "documentation"
+  - title: "🔧 Maintenance"
+    labels:
+      - "chore"
+  - title: "🛡️ Security"
+    labels:
+      - "security"
+
+# What to do with PRs that don’t match a category
+change-template: "* $TITLE (#$NUMBER)"
+no-changes-template: "* No user-facing changes"

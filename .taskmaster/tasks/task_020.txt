@@ -1,0 +1,35 @@
+# Task ID: 20
+# Title: Network Dashboard Design
+# Status: pending
+# Dependencies: 11
+# Priority: medium
+# Description: Design the network dashboard for public statistics, worker leaderboards, and economic analytics.
+# Details:
+1. Create wireframes for network dashboard
+2. Design the following sections:
+   - Network overview with key metrics
+   - Worker leaderboards
+   - Job completion statistics
+   - Economic analytics (TVL, rewards)
+   - Model performance metrics
+   - Network health indicators
+3. Create data visualization designs
+4. Design responsive layouts
+5. Create user flows and interactions
+6. Design filtering and search functionality
+7. Create dark and light themes
+
+Recommended technologies:
+- React or Next.js for frontend
+- Tailwind CSS for styling
+- Chart.js or D3.js for visualizations
+- React Query for data fetching
+- Vercel or Netlify for hosting
+
+# Test Strategy:
+1. Conduct user testing with wireframes
+2. Review designs with stakeholders
+3. Test responsive layouts
+4. Validate user flows and interactions
+5. Test accessibility compliance
+6. Verify design system consistency

@@ -1,0 +1,294 @@
+# CIRO Distributed Compute Layer (CDC) - Product Requirements Document
+
+## Executive Summary
+
+Build a Starknet-native marketplace that transforms idle GPUs into a decentralized AI powerhouse, providing low-latency compute for dApps while feeding CIRO's real-time context engine.
+
+## Problem Statement
+
+### Current Pain Points
+- Kafka streams, LLMs, and CV models require expensive compute resources
+- Starknet dApps, games, and DeFi protocols need low-latency AI but can't afford centralized GPU farms
+- GPU owners have idle compute capacity with no monetization path
+- Existing compute platforms (Render Network, Akash) lack Starknet integration
+- CIRO's "chat with your world" experience needs affordable, verifiable compute
+
+### Market Opportunity
+- DePIN market projected to reach $3.5B by 2028
+- GPU rental market growing 30% annually
+- Starknet ecosystem lacks native compute infrastructure
+- Potential for $1M Starknet Foundation grant
+
+## Product Vision
+
+A trust-minimized render farm on Starknet where:
+- dApps post inference jobs with escrowed funds
+- Distributed workers stake STRK, deliver results, earn CIRO tokens
+- Results are verifiable through hash attestations (Phase 1) and ZK-ML proofs (Phase 3)
+- Integration with existing CIRO platform for seamless user experience
+
+## Core Architecture
+
+### Smart Contracts (Cairo 1)
+- JobMgr: Escrow, staking, slashing, model registry
+- CDC Pool: Worker registration, payout distribution
+- Paymaster: Gas-free job posting for IoT/games
+
+### Backend Services (Rust)
+- Coordinator: Kafka listener, job dispatcher, on-chain recorder
+- Worker Manager: Health monitoring, load balancing
+- Integration Bridge: Connect to existing CIRO infrastructure
+
+### Worker Infrastructure (Docker)
+- GPU Worker: CUDA-enabled inference execution
+- CPU Worker: Lightweight processing for simple tasks
+- Monitoring Agent: Performance tracking, health reporting
+
+## Detailed Requirements
+
+### Phase 1: Bootstrap (0-3 months)
+
+#### 1.1 Smart Contract Development
+- JobMgr contract with basic escrow functionality
+- Worker registration and basic staking mechanism
+- Simple hash-based result attestation
+- Unit tests with 90%+ coverage
+- Deployment scripts for testnet
+
+#### 1.2 Coordinator Service
+- Kafka message consumption and job parsing
+- Worker discovery and health monitoring
+- Job routing based on worker capabilities
+- On-chain transaction submission
+- REST API for job status queries
+
+#### 1.3 Worker Node System
+- Docker containerization for easy deployment
+- CPU-based inference execution (starting with SHA-256)
+- Result signing and attestation
+- Basic monitoring and logging
+- Health check endpoints
+
+#### 1.4 Worker Desktop Application
+- **Critical Gap Addressed**: Desktop GUI for worker management
+- One-click worker node deployment
+- Real-time earnings dashboard
+- Job queue visibility
+- System performance monitoring
+- Staking/unstaking interface
+- Automatic updates
+
+#### 1.5 Integration with Existing CIRO
+- API endpoints for job submission from CIRO chat
+- Authentication bridge between systems
+- Shared user session management
+- Results integration into CIRO's context engine
+
+### Phase 2: Scale (4-7 months)
+
+#### 2.1 GPU Worker Support
+- CUDA-enabled Docker images
+- Support for popular ML frameworks (PyTorch, TensorFlow)
+- GPU utilization monitoring
+- Dynamic pricing based on compute demand
+
+#### 2.2 Paymaster Implementation
+- Account abstraction for gas-free transactions
+- Sponsored transaction batching
+- IoT device integration APIs
+- Game client SDKs
+
+#### 2.3 Network Dashboard
+- Public network statistics
+- Worker leaderboards
+- Job completion metrics
+- Economic analytics (TVL, rewards distributed)
+
+#### 2.4 Enhanced Worker UX
+- Mobile companion app for monitoring
+- Advanced analytics dashboard
+- Automated optimization suggestions
+- Community features (worker forums, support)
+
+### Phase 3: Prove (8-15 months)
+
+#### 3.1 ZK-ML Integration
+- Orion/Giza proof generation for inference results
+- Verifiable computation for ResNet models
+- Proof aggregation and batching
+- Integration with Starknet's proving infrastructure
+
+#### 3.2 Advanced Security
+- On-chain slashing for invalid proofs
+- Reputation system for workers
+- Dispute resolution mechanism
+- Insurance fund for failed jobs
+
+#### 3.3 Cross-Chain Expansion
+- Herodotus bridge integration
+- L3 deployment capabilities
+- Multi-chain worker support
+- Interoperability protocols
+
+## Technical Specifications
+
+### Performance Requirements
+- Job submission latency: <200ms
+- Inference completion: <30s for standard models
+- Network uptime: >99.9%
+- Transaction finality: <10 minutes
+
+### Security Requirements
+- Worker staking minimum: 100 STRK
+- Slashing conditions: Invalid results, downtime >24h
+- Proof verification: 100% for ZK-ML phase
+- Access control: Multi-sig for critical operations
+
+### Scalability Targets
+- Phase 1: 10 concurrent workers, 100 jobs/hour
+- Phase 2: 100 concurrent workers, 1,000 jobs/hour
+- Phase 3: 1,000 concurrent workers, 10,000 jobs/hour
+
+## User Experience Design
+
+### Worker Onboarding Flow
+1. Download Desktop App
+2. Create/Connect Starknet wallet
+3. Stake minimum STRK tokens
+4. Hardware capability assessment
+5. Docker container deployment
+6. First job assignment and payout
+
+### dApp Integration Flow
+1. Register with JobMgr contract
+2. Submit job with model hash and inputs
+3. Escrow payment in STRK/CIRO tokens
+4. Receive job ID and tracking URL
+5. Get results with attestation/proof
+6. Automatic payment release
+
+### CIRO Platform Integration
+1. Existing CIRO users access via chat command
+2. `/run sentiment "Hello world"` triggers job submission
+3. Real-time progress updates in chat
+4. Results integrated into conversation context
+5. Transparent pricing display
+
+## Business Model
+
+### Revenue Streams
+- Transaction fees: 2.5% of job value
+- Premium worker features: $10/month
+- Enterprise API access: $100/month
+- Custom model hosting: $500/month
+
+### Token Economics
+- CIRO tokens earned by workers
+- STRK used for staking and payments
+- Deflationary mechanism through fee burns
+- Liquidity mining incentives
+
+## Risk Assessment
+
+### Technical Risks
+- ZK-ML complexity may delay Phase 3
+- Starknet ecosystem maturity dependencies
+- Worker node reliability challenges
+- Integration complexity with existing CIRO
+
+### Market Risks
+- Competition from established players
+- Regulatory uncertainty around DePIN
+- Adoption challenges in Starknet ecosystem
+- GPU market volatility
+
+### Mitigation Strategies
+- Phased rollout with clear milestones
+- Strong community building and documentation
+- Partnership with Starknet Foundation
+- Fallback plans for each phase
+
+## Success Metrics
+
+### Phase 1 KPIs
+- 10 active workers within 1 month
+- 100 successful job completions
+- 95% job success rate
+- $75K grant milestone achievement
+
+### Phase 2 KPIs
+- 50 active workers
+- 1,000 monthly job completions
+- 5 integrated dApps
+- $250K grant milestone achievement
+
+### Phase 3 KPIs
+- 200 active workers
+- 10,000 monthly job completions
+- 20 integrated dApps
+- Self-sustaining economics
+
+## Competitive Analysis
+
+### Direct Competitors
+- Render Network: Established but Ethereum-focused
+- Akash Network: Cosmos-based, broader compute
+- Golem: Ethereum-based, declining adoption
+
+### Competitive Advantages
+- Native Starknet integration
+- ZK-ML verifiability
+- Existing CIRO platform synergy
+- Account abstraction for gasless UX
+
+## Technical Dependencies
+
+### External Dependencies
+- Starknet network stability
+- Cairo 1.0 toolchain maturity
+- Orion/Giza ZK-ML frameworks
+- Docker and container orchestration
+
+### Internal Dependencies
+- Existing CIRO Kafka infrastructure
+- Current ML model implementations
+- User authentication system
+- Analytics and monitoring tools
+
+## Implementation Timeline
+
+### Month 1-3: Foundation
+- Smart contract development
+- Basic worker infrastructure
+- CIRO platform integration
+- Desktop worker app MVP
+
+### Month 4-7: Scale
+- GPU worker support
+- Paymaster implementation
+- Network dashboard
+- Enhanced UX features
+
+### Month 8-15: Prove
+- ZK-ML integration
+- Advanced security features
+- Cross-chain expansion
+- Enterprise features
+
+## Future Considerations
+
+### Potential Extensions
+- Video rendering services
+- Scientific computing workloads
+- Edge computing integration
+- Mobile worker nodes
+
+### Long-term Vision
+- Become the de facto compute layer for Starknet
+- Expand to other blockchain ecosystems
+- Build a comprehensive DePIN platform
+- IPO or acquisition opportunities
+
+## Conclusion
+
+The CIRO Distributed Compute Layer represents a significant opportunity to build critical infrastructure for the Starknet ecosystem while creating a sustainable business model. Success depends on careful execution of the three-phase roadmap, strong technical implementation, and effective community building. 

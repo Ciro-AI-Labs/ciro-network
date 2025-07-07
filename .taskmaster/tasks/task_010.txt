@@ -1,0 +1,58 @@
+# Task ID: 10
+# Title: On-chain Transaction Submission
+# Status: pending
+# Dependencies: 5, 9
+# Priority: high
+# Description: Implement on-chain transaction submission for job results and payment processing.
+# Details:
+1. Integrate starknet-rs for contract interaction
+2. Implement transaction signing and submission
+3. Create transaction queue with retry logic
+4. Add transaction monitoring and confirmation
+5. Implement gas estimation and optimization
+6. Create transaction database schema
+7. Add error handling for transaction failures
+8. Implement nonce management
+
+```rust
+#[derive(sqlx::FromRow)]
+struct Transaction {
+    id: String,
+    job_id: String,
+    tx_hash: Option<String>,
+    tx_type: TransactionType,
+    status: TransactionStatus,
+    created_at: chrono::DateTime<chrono::Utc>,
+    submitted_at: Option<chrono::DateTime<chrono::Utc>>,
+    confirmed_at: Option<chrono::DateTime<chrono::Utc>>,
+    retry_count: u32,
+}
+
+#[derive(sqlx::Type)]
+enum TransactionType {
+    JobSubmission,
+    ResultSubmission,
+    PaymentRelease,
+    WorkerRegistration,
+    Staking,
+    Unstaking,
+}
+
+#[derive(sqlx::Type)]
+enum TransactionStatus {
+    Pending,
+    Submitted,
+    Confirmed,
+    Failed,
+}
+```
+
+9. Implement transaction batching for gas optimization
+
+# Test Strategy:
+1. Unit tests for transaction creation and signing
+2. Integration tests with Starknet testnet
+3. Test transaction retry logic
+4. Test gas estimation and optimization
+5. Benchmark transaction throughput
+6. Test transaction batching

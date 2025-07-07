@@ -1,0 +1,673 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Documentation Standards - CIRO Network Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Complete documentation for the CIRO Network decentralized compute layer">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../theme/ciro-theme.css">
+        <link rel="stylesheet" href="../../theme/custom.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">CIRO Network Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/Ciro-AI-Labs/ciro-network" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/Ciro-AI-Labs/ciro-network/edit/main/docs/src/contributing/standards/documentation.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-documentation-standards"><a class="header" href="#-documentation-standards">📝 Documentation Standards</a></h1>
+<p>This guide establishes the documentation standards for CIRO Network, ensuring
+consistency, quality, and maintainability across all project documentation.</p>
+<h2 id="-core-principles"><a class="header" href="#-core-principles">🎯 Core Principles</a></h2>
+<h3 id="clarity-first"><a class="header" href="#clarity-first">Clarity First</a></h3>
+<ul>
+<li><strong>Write for your audience</strong>: Consider whether you’re writing for GPU owners,
+developers, or contributors</li>
+<li><strong>Use active voice</strong>: “Configure the worker” instead of “The worker should be
+configured”</li>
+<li><strong>Be specific</strong>: Provide exact commands, file paths, and examples</li>
+<li><strong>Avoid jargon</strong>: Explain technical terms or provide links to the glossary</li>
+</ul>
+<h3 id="completeness"><a class="header" href="#completeness">Completeness</a></h3>
+<ul>
+<li><strong>Include all prerequisites</strong>: List required tools, dependencies, and
+knowledge</li>
+<li><strong>Provide working examples</strong>: All code examples must be tested and functional</li>
+<li><strong>Cover error scenarios</strong>: Document common issues and their solutions</li>
+<li><strong>Link related content</strong>: Connect readers to relevant sections</li>
+</ul>
+<h3 id="consistency"><a class="header" href="#consistency">Consistency</a></h3>
+<ul>
+<li><strong>Follow the style guide</strong>: Use consistent formatting, terminology, and
+structure</li>
+<li><strong>Maintain navigation</strong>: Ensure all content is discoverable through the
+navigation</li>
+<li><strong>Use templates</strong>: Follow established patterns for similar content types</li>
+<li><strong>Regular updates</strong>: Keep documentation synchronized with code changes</li>
+</ul>
+<h2 id="-writing-style"><a class="header" href="#-writing-style">📖 Writing Style</a></h2>
+<h3 id="voice-and-tone"><a class="header" href="#voice-and-tone">Voice and Tone</a></h3>
+<ul>
+<li><strong>Professional yet approachable</strong>: Technical but not intimidating</li>
+<li><strong>Encouraging</strong>: Help readers feel confident about their ability to succeed</li>
+<li><strong>Direct</strong>: Get to the point quickly while being thorough</li>
+<li><strong>Inclusive</strong>: Use language that welcomes all skill levels and backgrounds</li>
+</ul>
+<h3 id="language-guidelines"><a class="header" href="#language-guidelines">Language Guidelines</a></h3>
+<ul>
+<li><strong>Use second person</strong>: “You can configure…” instead of “One can
+configure…”</li>
+<li><strong>Present tense</strong>: “The system processes…” instead of “The system will
+process…”</li>
+<li><strong>Parallel structure</strong>: Maintain consistent formatting in lists and
+instructions</li>
+<li><strong>Clear headers</strong>: Use descriptive section titles that indicate content</li>
+</ul>
+<h3 id="technical-writing-best-practices"><a class="header" href="#technical-writing-best-practices">Technical Writing Best Practices</a></h3>
+<ul>
+<li><strong>Lead with the most important information</strong></li>
+<li><strong>Use numbered lists for sequential steps</strong></li>
+<li><strong>Use bulleted lists for feature lists or requirements</strong></li>
+<li><strong>Include code examples for all technical instructions</strong></li>
+<li><strong>Provide both conceptual overviews and detailed implementations</strong></li>
+</ul>
+<h2 id="-document-structure"><a class="header" href="#-document-structure">🏗️ Document Structure</a></h2>
+<h3 id="page-template"><a class="header" href="#page-template">Page Template</a></h3>
+<p>Every documentation page should follow this structure:</p>
+<pre><code class="language-markdown"># Page Title
+
+Brief introduction explaining what this page covers and who it's for.
+
+## 🎯 Prerequisites
+
+- List required knowledge
+- List required tools
+- Link to setup instructions
+
+## 📋 Overview
+
+High-level explanation of concepts covered.
+
+## 🚀 Main Content
+
+Detailed instructions, explanations, and examples.
+
+### Subsection
+
+More specific content.
+
+## 💡 Examples
+
+Working code examples with explanations.
+
+## ⚠️ Troubleshooting
+
+Common issues and solutions.
+
+## 🔗 Related Resources
+
+- [Link to related documentation]()
+- [External resources]()
+
+## 📝 Next Steps
+
+What to read or do next.
+</code></pre>
+<h3 id="section-ordering"><a class="header" href="#section-ordering">Section Ordering</a></h3>
+<ol>
+<li><strong>Introduction</strong>: Brief overview and target audience</li>
+<li><strong>Prerequisites</strong>: What readers need before starting</li>
+<li><strong>Concepts</strong>: High-level explanations</li>
+<li><strong>Implementation</strong>: Step-by-step instructions</li>
+<li><strong>Examples</strong>: Working code samples</li>
+<li><strong>Troubleshooting</strong>: Common issues</li>
+<li><strong>References</strong>: Related links and resources</li>
+</ol>
+<h2 id="-formatting-standards"><a class="header" href="#-formatting-standards">🎨 Formatting Standards</a></h2>
+<h3 id="headers"><a class="header" href="#headers">Headers</a></h3>
+<ul>
+<li>Use title case for page titles: “Getting Started with CIRO Network”</li>
+<li>Use sentence case for section headers: “Installing the desktop application”</li>
+<li>Include relevant emojis in headers to improve scannability</li>
+<li>Maintain consistent hierarchy (H1 → H2 → H3, don’t skip levels)</li>
+</ul>
+<h3 id="code-formatting"><a class="header" href="#code-formatting">Code Formatting</a></h3>
+<h4 id="inline-code"><a class="header" href="#inline-code">Inline Code</a></h4>
+<p>Use backticks for:</p>
+<ul>
+<li>File names: <code>package.json</code></li>
+<li>Commands: <code>cargo build</code></li>
+<li>Variables: <code>API_KEY</code></li>
+<li>Short code snippets: <code>let result = compute(input);</code></li>
+</ul>
+<h4 id="code-blocks"><a class="header" href="#code-blocks">Code Blocks</a></h4>
+<p>Use fenced code blocks with language specification:</p>
+<pre><pre class="playground"><code class="language-rust edition2021"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust example with comments
+use ciro_network::{Worker, ComputeRequest};
+
+async fn process_job(request: ComputeRequest) -&gt; Result&lt;Output, Error&gt; {
+    let worker = Worker::new().await?;
+    worker.execute(request).await
+}
+<span class="boring">}</span></code></pre></pre>
+<pre><code class="language-bash"># Shell commands with comments
+cargo build --release
+./target/release/ciro-worker --config worker.toml
+</code></pre>
+<h4 id="file-paths"><a class="header" href="#file-paths">File Paths</a></h4>
+<ul>
+<li>Use forward slashes for all paths: <code>src/lib.rs</code></li>
+<li>Include full paths from project root when relevant</li>
+<li>Use proper casing matching the actual file system</li>
+</ul>
+<h3 id="links"><a class="header" href="#links">Links</a></h3>
+<ul>
+<li><strong>Internal links</strong>: Use relative paths:
+<code>[Setup Guide](../development/setup.md)</code></li>
+<li><strong>External links</strong>: Use full URLs with descriptive text</li>
+<li><strong>API references</strong>: Link to specific sections when possible</li>
+<li><strong>Code links</strong>: Link to GitHub when referencing specific implementations</li>
+</ul>
+<h3 id="lists-and-formatting"><a class="header" href="#lists-and-formatting">Lists and Formatting</a></h3>
+<ul>
+<li>Use <strong>bold</strong> for emphasis on key terms</li>
+<li>Use <em>italics</em> for notes or less important clarifications</li>
+<li>Use <code>inline code</code> for technical terms and file names</li>
+<li>Use &gt; blockquotes for important notes or warnings</li>
+</ul>
+<h3 id="admonitions"><a class="header" href="#admonitions">Admonitions</a></h3>
+<p>Use admonitions for special content:</p>
+<pre><code class="language-markdown">&lt;div class="admonition note"&gt;
+&lt;p class="admonition-title"&gt;📝 Note&lt;/p&gt;
+&lt;p&gt;Additional information that helps but isn't required.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class="admonition tip"&gt;
+&lt;p class="admonition-title"&gt;💡 Tip&lt;/p&gt;
+&lt;p&gt;Helpful advice or best practices.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class="admonition warning"&gt;
+&lt;p class="admonition-title"&gt;⚠️ Warning&lt;/p&gt;
+&lt;p&gt;Important information about potential issues.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div class="admonition danger"&gt;
+&lt;p class="admonition-title"&gt;🚨 Danger&lt;/p&gt;
+&lt;p&gt;Critical information about security or data loss risks.&lt;/p&gt;
+&lt;/div&gt;
+</code></pre>
+<h2 id="-visual-elements"><a class="header" href="#-visual-elements">📊 Visual Elements</a></h2>
+<h3 id="diagrams"><a class="header" href="#diagrams">Diagrams</a></h3>
+<ul>
+<li>Use Mermaid for system diagrams, flowcharts, and sequences</li>
+<li>Include alt text for accessibility</li>
+<li>Provide text descriptions for complex diagrams</li>
+<li>Use consistent colors and styling</li>
+</ul>
+<pre class="mermaid">graph TB
+    A[User Request] --&gt; B[API Gateway]
+    B --&gt; C[Worker Pool]
+    C --&gt; D[GPU Compute]
+    D --&gt; E[Result]
+</pre>
+<h3 id="images"><a class="header" href="#images">Images</a></h3>
+<ul>
+<li>Use PNG format for screenshots</li>
+<li>Use SVG format for icons and simple graphics</li>
+<li>Include descriptive alt text</li>
+<li>Optimize for both light and dark themes when possible</li>
+</ul>
+<h3 id="tables"><a class="header" href="#tables">Tables</a></h3>
+<ul>
+<li>Use tables for structured data comparison</li>
+<li>Include headers for all columns</li>
+<li>Keep tables simple and readable</li>
+<li>Consider mobile responsiveness</li>
+</ul>
+<div class="table-wrapper"><table><thead><tr><th>Component</th><th>Language</th><th>Purpose</th></tr></thead><tbody>
+<tr><td>Smart Contracts</td><td>Cairo</td><td>On-chain logic</td></tr>
+<tr><td>Worker Node</td><td>Rust</td><td>GPU management</td></tr>
+<tr><td>Desktop App</td><td>TypeScript</td><td>User interface</td></tr>
+</tbody></table>
+</div>
+<h2 id="-technical-documentation"><a class="header" href="#-technical-documentation">🔧 Technical Documentation</a></h2>
+<h3 id="api-documentation"><a class="header" href="#api-documentation">API Documentation</a></h3>
+<ul>
+<li><strong>Auto-generated</strong>: Use rustdoc, JSDoc, or similar tools</li>
+<li><strong>Manual enhancement</strong>: Add usage examples and context</li>
+<li><strong>Version tracking</strong>: Document API changes and deprecations</li>
+<li><strong>Error handling</strong>: Document all possible error responses</li>
+</ul>
+<h3 id="code-examples"><a class="header" href="#code-examples">Code Examples</a></h3>
+<ul>
+<li><strong>Complete examples</strong>: Include all necessary imports and setup</li>
+<li><strong>Tested examples</strong>: Verify all examples work with current codebase</li>
+<li><strong>Commented code</strong>: Explain non-obvious parts</li>
+<li><strong>Multiple scenarios</strong>: Show different use cases</li>
+</ul>
+<h3 id="architecture-documentation"><a class="header" href="#architecture-documentation">Architecture Documentation</a></h3>
+<ul>
+<li><strong>C4 Model</strong>: Use Context, Container, Component, and Code diagrams</li>
+<li><strong>Decision records</strong>: Document architectural decisions and rationale</li>
+<li><strong>Trade-offs</strong>: Explain choices and alternatives considered</li>
+<li><strong>Evolution</strong>: Document how architecture has changed over time</li>
+</ul>
+<h2 id="-testing-documentation"><a class="header" href="#-testing-documentation">🧪 Testing Documentation</a></h2>
+<h3 id="code-example-validation"><a class="header" href="#code-example-validation">Code Example Validation</a></h3>
+<p>All code examples must be:</p>
+<ul>
+<li>Syntactically correct</li>
+<li>Functionally tested</li>
+<li>Up-to-date with current APIs</li>
+<li>Documented with expected outputs</li>
+</ul>
+<h3 id="documentation-testing"><a class="header" href="#documentation-testing">Documentation Testing</a></h3>
+<ul>
+<li><strong>Link checking</strong>: Verify all internal and external links work</li>
+<li><strong>Spell checking</strong>: Use automated tools for grammar and spelling</li>
+<li><strong>Accessibility</strong>: Ensure content is accessible to screen readers</li>
+<li><strong>Mobile testing</strong>: Verify content renders well on mobile devices</li>
+</ul>
+<h2 id="-content-guidelines"><a class="header" href="#-content-guidelines">📋 Content Guidelines</a></h2>
+<h3 id="tutorials"><a class="header" href="#tutorials">Tutorials</a></h3>
+<ul>
+<li><strong>Step-by-step</strong>: Break complex tasks into manageable steps</li>
+<li><strong>Progressive complexity</strong>: Start simple, build to advanced concepts</li>
+<li><strong>Checkpoint validation</strong>: Allow readers to verify progress</li>
+<li><strong>Troubleshooting</strong>: Include common pitfalls and solutions</li>
+</ul>
+<h3 id="reference-documentation"><a class="header" href="#reference-documentation">Reference Documentation</a></h3>
+<ul>
+<li><strong>Comprehensive coverage</strong>: Document all public APIs and features</li>
+<li><strong>Searchable</strong>: Use clear, descriptive headers and keywords</li>
+<li><strong>Cross-referenced</strong>: Link between related concepts</li>
+<li><strong>Version-specific</strong>: Clearly indicate version compatibility</li>
+</ul>
+<h3 id="user-guides"><a class="header" href="#user-guides">User Guides</a></h3>
+<ul>
+<li><strong>Task-oriented</strong>: Focus on what users want to accomplish</li>
+<li><strong>Multiple paths</strong>: Acknowledge different approaches to problems</li>
+<li><strong>Context-aware</strong>: Provide information relevant to user’s situation</li>
+<li><strong>Outcome-focused</strong>: Clearly state what users will achieve</li>
+</ul>
+<h2 id="-maintenance-process"><a class="header" href="#-maintenance-process">🔄 Maintenance Process</a></h2>
+<h3 id="regular-reviews"><a class="header" href="#regular-reviews">Regular Reviews</a></h3>
+<ul>
+<li><strong>Quarterly reviews</strong>: Check for outdated information</li>
+<li><strong>Release updates</strong>: Update documentation with each release</li>
+<li><strong>User feedback</strong>: Incorporate suggestions and corrections</li>
+<li><strong>Analytics</strong>: Use documentation metrics to identify improvement areas</li>
+</ul>
+<h3 id="version-control"><a class="header" href="#version-control">Version Control</a></h3>
+<ul>
+<li><strong>Branch strategy</strong>: Create documentation branches for major changes</li>
+<li><strong>Change tracking</strong>: Document what changed and why</li>
+<li><strong>Release notes</strong>: Include documentation changes in release notes</li>
+<li><strong>Archive old versions</strong>: Maintain historical documentation when needed</li>
+</ul>
+<h3 id="collaboration"><a class="header" href="#collaboration">Collaboration</a></h3>
+<ul>
+<li><strong>Review process</strong>: All documentation changes require review</li>
+<li><strong>Style consistency</strong>: Maintain consistent voice and formatting</li>
+<li><strong>Technical accuracy</strong>: Verify technical content with domain experts</li>
+<li><strong>User testing</strong>: Test documentation with actual users when possible</li>
+</ul>
+<h2 id="-quality-checklist"><a class="header" href="#-quality-checklist">🎯 Quality Checklist</a></h2>
+<p>Before publishing any documentation:</p>
+<h3 id="content-quality"><a class="header" href="#content-quality">Content Quality</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Accurate and up-to-date information</li>
+<li><input disabled="" type="checkbox"/>
+Clear target audience identification</li>
+<li><input disabled="" type="checkbox"/>
+Complete coverage of the topic</li>
+<li><input disabled="" type="checkbox"/>
+Logical organization and flow</li>
+<li><input disabled="" type="checkbox"/>
+Working code examples</li>
+<li><input disabled="" type="checkbox"/>
+Proper grammar and spelling</li>
+</ul>
+<h3 id="technical-quality"><a class="header" href="#technical-quality">Technical Quality</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+All links work correctly</li>
+<li><input disabled="" type="checkbox"/>
+Code examples are tested</li>
+<li><input disabled="" type="checkbox"/>
+Screenshots are current</li>
+<li><input disabled="" type="checkbox"/>
+Formatting is consistent</li>
+<li><input disabled="" type="checkbox"/>
+Mobile-friendly layout</li>
+<li><input disabled="" type="checkbox"/>
+Accessibility compliance</li>
+</ul>
+<h3 id="user-experience"><a class="header" href="#user-experience">User Experience</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Clear navigation path</li>
+<li><input disabled="" type="checkbox"/>
+Appropriate difficulty level</li>
+<li><input disabled="" type="checkbox"/>
+Sufficient context and background</li>
+<li><input disabled="" type="checkbox"/>
+Helpful examples and use cases</li>
+<li><input disabled="" type="checkbox"/>
+Troubleshooting information included</li>
+<li><input disabled="" type="checkbox"/>
+Next steps clearly identified</li>
+</ul>
+<h2 id="-templates"><a class="header" href="#-templates">📚 Templates</a></h2>
+<h3 id="api-reference-template"><a class="header" href="#api-reference-template">API Reference Template</a></h3>
+<pre><code class="language-markdown"># API Method Name
+
+Brief description of what this API method does.
+
+## Parameters
+
+| Parameter | Type   | Required | Description              |
+| --------- | ------ | -------- | ------------------------ |
+| `param1`  | string | Yes      | Description of parameter |
+
+## Response
+
+Description of response format.
+
+```json
+{
+  "example": "response"
+}
+```
+</code></pre>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
+<pre><pre class="playground"><code class="language-rust edition2021"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Rust example
+<span class="boring">}</span></code></pre></pre>
+<h3 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h3>
+<pre><pre class="playground"><code class="language-rust edition2021"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Error handling example
+<span class="boring">}</span></code></pre></pre>
+<h2 id="error-codes"><a class="header" href="#error-codes">Error Codes</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Code</th><th>Description</th><th>Resolution</th></tr></thead><tbody>
+<tr><td>400</td><td>Bad Request</td><td>Check parameters</td></tr>
+</tbody></table>
+</div>
+<pre><code>
+### Tutorial Template
+```markdown
+# Tutorial Title
+
+What you'll learn and build in this tutorial.
+
+## 🎯 Prerequisites
+
+- Required knowledge
+- Required tools
+- Time estimate
+
+## 🏗️ Overview
+
+What we'll build and the steps involved.
+
+## 📋 Step 1: Setup
+
+Detailed instructions for first step.
+
+## 📋 Step 2: Implementation
+
+Continue with next steps...
+
+## 🧪 Testing
+
+How to verify everything works.
+
+## 🎉 Conclusion
+
+Summary of what was accomplished and next steps.
+</code></pre>
+<hr />
+<p><em>Remember: Great documentation is not just about providing information—it’s
+about empowering users to achieve their goals efficiently and confidently.</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../contributing/standards/coding.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../contributing/standards/testing.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../contributing/standards/coding.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../contributing/standards/testing.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../theme/ciro-theme.js"></script>
+
+
+    </div>
+    </body>
+</html>

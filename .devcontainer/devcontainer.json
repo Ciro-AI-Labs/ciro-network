@@ -1,0 +1,161 @@
+{
+  "name": "CIRO Network Development Environment",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "development",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // ===== Rust Development =====
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        "serayuzgur.crates",
+        "dustypomerleau.rust-syntax",
+
+        // ===== Cairo/Starknet =====
+        "starkware.cairo",
+        "ericglau.cairo-ls",
+
+        // ===== Web Development =====
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "tauri-apps.tauri-vscode",
+
+        // ===== Docker & DevOps =====
+        "ms-azuretools.vscode-docker",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "ms-vscode-remote.remote-containers",
+
+        // ===== Git & Version Control =====
+        "eamodio.gitlens",
+        "github.vscode-pull-request-github",
+        "github.copilot",
+        "github.copilot-chat",
+
+        // ===== Code Quality =====
+        "ms-vscode.test-adapter-converter",
+        "hbenl.vscode-test-explorer",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-python.python",
+
+        // ===== Documentation =====
+        "davidanson.vscode-markdownlint",
+        "yzhang.markdown-all-in-one",
+        "bierner.markdown-mermaid",
+        "mushan.vscode-paste-image",
+        "shd101wyy.markdown-preview-enhanced",
+        "tamasfe.even-better-toml",
+
+        // ===== Utilities =====
+        "ms-vscode.hexeditor",
+        "ms-vscode-remote.remote-ssh",
+        "ms-vscode.remote-explorer",
+        "streetsidesoftware.code-spell-checker",
+        "gruntfuggly.todo-tree",
+        "christian-kohler.path-intellisense",
+        "ms-vscode.vscode-json"
+      ],
+      "settings": {
+        "rust-analyzer.check.command": "clippy",
+        "rust-analyzer.cargo.features": "all",
+        "rust-analyzer.procMacro.enable": true,
+        "rust-analyzer.imports.granularity.group": "module",
+        "rust-analyzer.completion.addCallArgumentSnippets": true,
+        "rust-analyzer.completion.addCallParenthesis": true,
+        "rust-analyzer.diagnostics.disabled": ["unresolved-proc-macro"],
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "files.watcherExclude": {
+          "**/target/**": true,
+          "**/node_modules/**": true,
+          "**/docs/book/**": true
+        },
+        "search.exclude": {
+          "**/target": true,
+          "**/Cargo.lock": true
+        },
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "python.defaultInterpreterPath": "/usr/local/bin/python3",
+        "git.autofetch": true,
+        "git.enableSmartCommit": true,
+        "editor.rulers": [80, 120],
+        "editor.wordWrap": "bounded",
+        "editor.wordWrapColumn": 120,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+
+        // ===== Documentation Settings =====
+        "markdown.preview.breaks": true,
+        "markdown.preview.linkify": true,
+        "markdownlint.config": {
+          "MD013": false,
+          "MD033": false,
+          "MD041": false
+        },
+        "markdown-preview-enhanced.enableWikiLinkSyntax": true,
+        "markdown-preview-enhanced.enableEmojiSyntax": true,
+        "markdown-preview-enhanced.enableExtendedTableSyntax": true,
+        "markdown-preview-enhanced.enableCriticMarkupSyntax": true,
+        "markdown-preview-enhanced.codeBlockTheme": "monokai.css",
+        "markdown-preview-enhanced.previewTheme": "github-dark.css"
+      }
+    }
+  },
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "ppa": true,
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "latest",
+      "enableNonRootDocker": true
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "nodeGypDependencies": true,
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11",
+      "installTools": true
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+
+  "forwardPorts": [
+    3000, // Frontend dev server
+    3001, // Documentation server (mdBook)
+    8080, // Backend API
+    9000, // Worker node admin
+    5432, // PostgreSQL
+    6379, // Redis
+    8545, // Local blockchain
+    26656, // P2P networking
+    26657 // RPC
+  ],
+
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=${localWorkspaceFolder}/.cargo,target=/usr/local/cargo,type=bind"
+  ],
+
+  "remoteUser": "vscode",
+  "containerUser": "vscode",
+  "updateRemoteUserUID": true
+}

@@ -1,0 +1,217 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # Cairo Smart Contracts
+  cairo-contracts:
+    name: Cairo Contracts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./cairo-contracts
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Scarb
+        uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.8.2"
+
+      - name: Cache Scarb dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/scarb
+            cairo-contracts/target
+          key: ${{ runner.os }}-scarb-${{ hashFiles('cairo-contracts/Scarb.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-scarb-
+
+      - name: Check Cairo format
+        run: scarb fmt --check
+
+      - name: Build Cairo contracts
+        run: scarb build
+
+      - name: Run Cairo tests
+        run: scarb test
+
+  # Rust Components
+  rust-components:
+    name: Rust Components
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [rust-node, tauri-app/src-tauri, shared]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Check Rust format
+        run: cargo fmt --all --check
+        working-directory: ${{ matrix.component }}
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        working-directory: ${{ matrix.component }}
+
+      - name: Build Rust component
+        run: cargo build --verbose
+        working-directory: ${{ matrix.component }}
+
+      - name: Run Rust tests
+        run: cargo test --verbose
+        working-directory: ${{ matrix.component }}
+
+  # Node.js Frontend
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./tauri-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: tauri-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check TypeScript
+        run: npm run type-check
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Build frontend
+        run: npm run build
+
+  # Python Backend
+  backend:
+    name: Backend Services
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run linting
+        run: |
+          black --check .
+          flake8 .
+          mypy .
+
+      - name: Run tests
+        run: pytest
+
+  # Security Checks
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  # Integration Tests
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [cairo-contracts, rust-components, frontend, backend]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup test environment
+        run: |
+          echo "Setting up integration test environment..."
+          # Add integration test setup here
+
+      - name: Run integration tests
+        run: |
+          echo "Running integration tests..."
+          # Add integration test commands here
+
+  # Documentation
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js for docs
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Check documentation links
+        run: |
+          echo "Checking documentation links..."
+          # Add doc link checker here
+
+      - name: Build documentation
+        run: |
+          echo "Building documentation..."
+          # Add doc build commands here

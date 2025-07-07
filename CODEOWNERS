@@ -1,0 +1,62 @@
+# ===== CIRO Network Code Owners =====
+
+# Global ownership - Core team reviews all changes
+* @Ciro-AI-Labs/core-team
+
+# ===== Smart Contracts =====
+# Cairo contracts and Starknet deployment
+/cairo-contracts/ @Ciro-AI-Labs/smart-contract-team
+/cairo-contracts/src/ @Ciro-AI-Labs/smart-contract-team
+/cairo-contracts/tests/ @Ciro-AI-Labs/smart-contract-team
+/cairo-contracts/scripts/ @Ciro-AI-Labs/smart-contract-team
+
+# ===== Rust Infrastructure =====
+# Worker nodes and backend services
+/rust-node/ @Ciro-AI-Labs/rust-team
+/backend/ @Ciro-AI-Labs/rust-team
+/rust-node/src/ @Ciro-AI-Labs/rust-team
+/rust-node/docker/ @Ciro-AI-Labs/rust-team
+/backend/api/ @Ciro-AI-Labs/rust-team
+/backend/services/ @Ciro-AI-Labs/rust-team
+
+# ===== Desktop Application =====
+# Tauri app and frontend
+/tauri-app/ @Ciro-AI-Labs/frontend-team
+/tauri-app/src/ @Ciro-AI-Labs/frontend-team
+/tauri-app/src-tauri/ @Ciro-AI-Labs/frontend-team
+
+# ===== Documentation =====
+# All documentation and guides
+/docs/ @Ciro-AI-Labs/docs-team
+/README.md @Ciro-AI-Labs/docs-team
+/CONTRIBUTING.md @Ciro-AI-Labs/docs-team
+/SECURITY.md @Ciro-AI-Labs/docs-team
+
+# ===== Infrastructure & DevOps =====
+# CI/CD, Docker, and deployment
+/.github/ @Ciro-AI-Labs/devops-team
+/docker-compose.yml @Ciro-AI-Labs/devops-team
+/Dockerfile @Ciro-AI-Labs/devops-team
+/.dockerignore @Ciro-AI-Labs/devops-team
+/scripts/ @Ciro-AI-Labs/devops-team
+
+# ===== Configuration =====
+# Core configuration files
+/Cargo.toml @Ciro-AI-Labs/rust-team
+/Cargo.lock @Ciro-AI-Labs/rust-team
+/package.json @Ciro-AI-Labs/frontend-team
+/tsconfig.json @Ciro-AI-Labs/frontend-team
+/scarb.toml @Ciro-AI-Labs/smart-contract-team
+
+# ===== Security & Secrets =====
+# Security-related files require security team approval
+/SECURITY.md @Ciro-AI-Labs/security-team
+/.env.example @Ciro-AI-Labs/security-team
+/cairo-contracts/src/security/ @Ciro-AI-Labs/security-team
+/rust-node/src/security/ @Ciro-AI-Labs/security-team
+
+# ===== Project Management =====
+# Task Master and project planning
+/.taskmaster/ @Ciro-AI-Labs/project-team
+/.taskmaster/tasks/ @Ciro-AI-Labs/project-team
+/.taskmaster/docs/ @Ciro-AI-Labs/project-team 

@@ -1,0 +1,28 @@
+# Task ID: 5
+# Title: Smart Contract Deployment Scripts
+# Status: pending
+# Dependencies: 3, 4
+# Priority: medium
+# Description: Create deployment scripts for the smart contracts on Starknet testnet and mainnet with proper configuration.
+# Details:
+1. Create deployment scripts using Starknet.js or Starknet CLI
+2. Implement configuration for different environments (local, testnet, mainnet)
+3. Set up contract initialization with proper parameters
+4. Implement contract verification on Starkscan
+5. Create documentation for deployment process
+6. Implement contract upgrade scripts
+7. Set up multi-sig for contract ownership
+8. Create scripts for contract interaction and testing
+
+Use the latest Starknet deployment tools:
+- Starknet.js v5.14+ or Starknet-rs
+- Scarb 0.7+ for contract compilation
+- Starkli for CLI interactions
+
+# Test Strategy:
+1. Test deployment on local Starknet devnet
+2. Verify successful deployment on Starknet Goerli testnet
+3. Test contract initialization and parameter setting
+4. Verify contract verification works on Starkscan
+5. Test contract upgrade process
+6. Validate multi-sig functionality

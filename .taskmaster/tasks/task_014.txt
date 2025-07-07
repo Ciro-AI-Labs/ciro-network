@@ -1,0 +1,65 @@
+# Task ID: 14
+# Title: Worker Result Signing and Attestation
+# Status: pending
+# Dependencies: 13
+# Priority: high
+# Description: Implement result signing and attestation for worker nodes to provide verifiable results.
+# Details:
+1. Implement Starknet wallet integration for signing
+2. Create result hash generation
+3. Implement signature generation
+4. Add attestation data structure
+5. Implement result submission with attestation
+6. Create signature verification logic
+7. Add secure key storage
+
+Attestation implementation:
+```rust
+#[derive(Serialize, Deserialize)]
+struct ResultAttestation {
+    job_id: String,
+    result_hash: String,
+    worker_id: String,
+    timestamp: u64,
+    signature: Vec<u8>,
+}
+
+impl ResultAttestation {
+    fn new(job_id: String, result: &[u8], worker_id: String, wallet: &StarknetWallet) -> Self {
+        use sha2::{Sha256, Digest};
+        let mut hasher = Sha256::new();
+        hasher.update(result);
+        let result_hash = hex::encode(hasher.finalize());
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        
+        let message = format!("{}{}{}{}", job_id, result_hash, worker_id, timestamp);
+        let signature = wallet.sign_message(message.as_bytes());
+        
+        Self {
+            job_id,
+            result_hash,
+            worker_id,
+            timestamp,
+            signature,
+        }
+    }
+    
+    fn verify(&self, public_key: &[u8]) -> bool {
+        let message = format!("{}{}{}{}", self.job_id, self.result_hash, self.worker_id, self.timestamp);
+        // Verify signature using Starknet signature verification
+        // This is a placeholder for actual verification logic
+        true
+    }
+}
+```
+
+# Test Strategy:
+1. Unit tests for result signing
+2. Test attestation generation
+3. Test signature verification
+4. Test with various result sizes
+5. Test secure key storage
+6. Verify compatibility with on-chain verification

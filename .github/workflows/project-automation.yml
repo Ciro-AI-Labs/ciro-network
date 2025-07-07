@@ -1,0 +1,374 @@
+name: 🔄 Project Automation
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened, assigned, unassigned, labeled, unlabeled]
+  pull_request:
+    types: [opened, edited, closed, reopened, assigned, unassigned, labeled, unlabeled, synchronize]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  schedule:
+    # Run stale issue check daily at 2 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Automation action to run"
+        required: true
+        type: choice
+        options:
+          - "sync-projects"
+          - "update-labels"
+          - "check-stale"
+          - "generate-metrics"
+
+jobs:
+  project-automation:
+    name: 🔄 Project Board Automation
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Determine Action
+        id: determine_action
+        run: |
+          if [ "${{ github.event_name }}" == "issues" ]; then
+            echo "action=issue_automation" >> $GITHUB_OUTPUT
+            echo "item_type=issue" >> $GITHUB_OUTPUT
+            echo "item_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+            echo "item_state=${{ github.event.issue.state }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "action=pr_automation" >> $GITHUB_OUTPUT
+            echo "item_type=pr" >> $GITHUB_OUTPUT
+            echo "item_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "item_state=${{ github.event.pull_request.state }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "pull_request_review" ]; then
+            echo "action=pr_review_automation" >> $GITHUB_OUTPUT
+            echo "item_type=pr" >> $GITHUB_OUTPUT
+            echo "item_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "review_state=${{ github.event.review.state }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "action=stale_check" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "action=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🏷️ Auto-Label Issues and PRs
+        if: ${{ steps.determine_action.outputs.action == 'issue_automation' || steps.determine_action.outputs.action == 'pr_automation' || steps.determine_action.outputs.action == 'update-labels' }}
+        run: |
+          if [ "${{ steps.determine_action.outputs.item_type }}" == "issue" ]; then
+            item_number="${{ steps.determine_action.outputs.item_number }}"
+            
+            # Get issue details
+            issue_body=$(gh issue view $item_number --json body -q .body)
+            issue_title=$(gh issue view $item_number --json title -q .title)
+            issue_labels=$(gh issue view $item_number --json labels -q '.labels[].name' | tr '\n' ' ')
+            
+            # Auto-label based on title and body content
+            labels_to_add=""
+            
+            # Component detection
+            if [[ "$issue_title" =~ (contract|cairo|smart|starknet) ]] || [[ "$issue_body" =~ (contract|cairo|smart|starknet) ]]; then
+              labels_to_add="$labels_to_add component:contracts"
+            fi
+            
+            if [[ "$issue_title" =~ (worker|node|mining|gpu) ]] || [[ "$issue_body" =~ (worker|node|mining|gpu) ]]; then
+              labels_to_add="$labels_to_add component:worker"
+            fi
+            
+            if [[ "$issue_title" =~ (desktop|app|tauri|ui) ]] || [[ "$issue_body" =~ (desktop|app|tauri|ui) ]]; then
+              labels_to_add="$labels_to_add component:desktop"
+            fi
+            
+            if [[ "$issue_title" =~ (backend|api|server) ]] || [[ "$issue_body" =~ (backend|api|server) ]]; then
+              labels_to_add="$labels_to_add component:backend"
+            fi
+            
+            if [[ "$issue_title" =~ (doc|documentation|readme) ]] || [[ "$issue_body" =~ (doc|documentation|readme) ]]; then
+              labels_to_add="$labels_to_add component:docs"
+            fi
+            
+            # Priority detection
+            if [[ "$issue_title" =~ (critical|urgent|security|vulnerability) ]] || [[ "$issue_body" =~ (critical|urgent|security|vulnerability) ]]; then
+              labels_to_add="$labels_to_add priority:p0-critical"
+            elif [[ "$issue_title" =~ (important|high) ]] || [[ "$issue_body" =~ (important|high) ]]; then
+              labels_to_add="$labels_to_add priority:p1-high"
+            fi
+            
+            # Type detection
+            if [[ "$issue_title" =~ ^\[BUG\] ]] || [[ "$issue_body" =~ bug ]]; then
+              labels_to_add="$labels_to_add type:bug"
+            elif [[ "$issue_title" =~ ^\[FEATURE\] ]] || [[ "$issue_body" =~ feature ]]; then
+              labels_to_add="$labels_to_add type:feature"
+            elif [[ "$issue_title" =~ ^\[DOCS\] ]] || [[ "$issue_body" =~ documentation ]]; then
+              labels_to_add="$labels_to_add type:docs"
+            fi
+            
+            # Add labels if not already present
+            for label in $labels_to_add; do
+              if [[ ! "$issue_labels" =~ $label ]]; then
+                gh issue edit $item_number --add-label "$label"
+                echo "Added label: $label"
+              fi
+            done
+            
+            # Add triage label for new issues
+            if [[ ! "$issue_labels" =~ status: ]]; then
+              gh issue edit $item_number --add-label "status:triage"
+              echo "Added triage label"
+            fi
+            
+          elif [ "${{ steps.determine_action.outputs.item_type }}" == "pr" ]; then
+            pr_number="${{ steps.determine_action.outputs.item_number }}"
+            
+            # Get PR details
+            pr_title=$(gh pr view $pr_number --json title -q .title)
+            pr_labels=$(gh pr view $pr_number --json labels -q '.labels[].name' | tr '\n' ' ')
+            pr_files=$(gh pr view $pr_number --json files -q '.files[].path' | tr '\n' ' ')
+            
+            # Auto-label based on changed files
+            labels_to_add=""
+            
+            if [[ "$pr_files" =~ cairo-contracts/ ]]; then
+              labels_to_add="$labels_to_add component:contracts"
+            fi
+            
+            if [[ "$pr_files" =~ rust-node/ ]]; then
+              labels_to_add="$labels_to_add component:worker"
+            fi
+            
+            if [[ "$pr_files" =~ tauri-app/ ]]; then
+              labels_to_add="$labels_to_add component:desktop"
+            fi
+            
+            if [[ "$pr_files" =~ backend/ ]]; then
+              labels_to_add="$labels_to_add component:backend"
+            fi
+            
+            if [[ "$pr_files" =~ docs/ ]] || [[ "$pr_files" =~ README.md ]] || [[ "$pr_files" =~ .md ]]; then
+              labels_to_add="$labels_to_add component:docs"
+            fi
+            
+            if [[ "$pr_files" =~ .github/ ]] || [[ "$pr_files" =~ Dockerfile ]] || [[ "$pr_files" =~ docker-compose ]]; then
+              labels_to_add="$labels_to_add component:infra"
+            fi
+            
+            # Type detection from title
+            if [[ "$pr_title" =~ ^(feat|feature): ]]; then
+              labels_to_add="$labels_to_add type:feature"
+            elif [[ "$pr_title" =~ ^(fix|bug): ]]; then
+              labels_to_add="$labels_to_add type:bug"
+            elif [[ "$pr_title" =~ ^docs: ]]; then
+              labels_to_add="$labels_to_add type:docs"
+            elif [[ "$pr_title" =~ ^(refactor|perf): ]]; then
+              labels_to_add="$labels_to_add type:refactor"
+            fi
+            
+            # Add labels
+            for label in $labels_to_add; do
+              if [[ ! "$pr_labels" =~ $label ]]; then
+                gh pr edit $pr_number --add-label "$label"
+                echo "Added label: $label"
+              fi
+            done
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📋 Update Project Boards
+        if: ${{ steps.determine_action.outputs.action == 'issue_automation' || steps.determine_action.outputs.action == 'pr_automation' || steps.determine_action.outputs.action == 'sync-projects' }}
+        run: |
+          # Note: This step would typically use GitHub's project API
+          # For now, we'll use the CLI to demonstrate the workflow
+
+          if [ "${{ steps.determine_action.outputs.item_type }}" == "issue" ]; then
+            item_number="${{ steps.determine_action.outputs.item_number }}"
+            item_state="${{ steps.determine_action.outputs.item_state }}"
+            
+            echo "Processing issue #$item_number with state: $item_state"
+            
+            # Add to project board based on action
+            case "${{ github.event.action }}" in
+              opened)
+                echo "Issue opened - would add to 'Backlog' column"
+                # gh project item-add [PROJECT_ID] --content-id [ISSUE_ID]
+                ;;
+              closed)
+                echo "Issue closed - would move to 'Done' column"
+                # gh project item-edit [PROJECT_ID] [ITEM_ID] --field-id [STATUS_FIELD_ID] --single-select-option-id [DONE_OPTION_ID]
+                ;;
+              assigned)
+                echo "Issue assigned - would move to 'Todo' column"
+                ;;
+              labeled)
+                # Check for specific labels that trigger moves
+                labels=$(gh issue view $item_number --json labels -q '.labels[].name' | tr '\n' ' ')
+                if [[ "$labels" =~ status:in-progress ]]; then
+                  echo "Issue marked in progress - would move to 'In Progress' column"
+                fi
+                ;;
+            esac
+            
+          elif [ "${{ steps.determine_action.outputs.item_type }}" == "pr" ]; then
+            pr_number="${{ steps.determine_action.outputs.item_number }}"
+            pr_state="${{ steps.determine_action.outputs.item_state }}"
+            
+            echo "Processing PR #$pr_number with state: $pr_state"
+            
+            case "${{ github.event.action }}" in
+              opened)
+                echo "PR opened - would add to 'Review' column"
+                ;;
+              closed)
+                if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
+                  echo "PR merged - would move linked issues to 'Done'"
+                else
+                  echo "PR closed without merge - would remove from board"
+                fi
+                ;;
+            esac
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 👀 Handle PR Reviews
+        if: ${{ steps.determine_action.outputs.action == 'pr_review_automation' }}
+        run: |
+          pr_number="${{ steps.determine_action.outputs.item_number }}"
+          review_state="${{ steps.determine_action.outputs.review_state }}"
+
+          echo "Processing review for PR #$pr_number with state: $review_state"
+
+          case "$review_state" in
+            approved)
+              echo "PR approved - would add 'status:ready-for-merge' label"
+              gh pr edit $pr_number --add-label "status:ready-for-merge"
+              ;;
+            changes_requested)
+              echo "Changes requested - would add 'status:changes-requested' label"
+              gh pr edit $pr_number --add-label "status:changes-requested"
+              gh pr edit $pr_number --remove-label "status:ready-for-merge" 2>/dev/null || true
+              ;;
+          esac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🕰️ Check for Stale Issues
+        if: ${{ steps.determine_action.outputs.action == 'stale_check' || github.event.inputs.action == 'check-stale' }}
+        run: |
+          echo "Checking for stale issues and PRs..."
+
+          # Find issues that haven't been updated in 30 days
+          stale_date=$(date -d '30 days ago' --iso-8601)
+
+          # Get stale issues
+          gh issue list --state open --json number,title,updatedAt,labels | \
+            jq -r --arg stale_date "$stale_date" \
+            '.[] | select(.updatedAt < $stale_date) | select(.labels | map(.name) | contains(["status:stale"]) | not) | .number' > /tmp/stale_issues.txt
+
+          # Mark issues as stale
+          while read -r issue_number; do
+            if [ ! -z "$issue_number" ]; then
+              echo "Marking issue #$issue_number as stale"
+              gh issue edit $issue_number --add-label "status:stale"
+              
+              # Add stale comment
+              gh issue comment $issue_number --body "This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs within 7 days. If this issue is still relevant, please comment to keep it open."
+            fi
+          done < /tmp/stale_issues.txt
+
+          # Find issues that have been stale for 7 days
+          close_date=$(date -d '37 days ago' --iso-8601)
+
+          gh issue list --state open --json number,title,updatedAt,labels | \
+            jq -r --arg close_date "$close_date" \
+            '.[] | select(.updatedAt < $close_date) | select(.labels | map(.name) | contains(["status:stale"])) | .number' > /tmp/close_issues.txt
+
+          # Close stale issues
+          while read -r issue_number; do
+            if [ ! -z "$issue_number" ]; then
+              echo "Closing stale issue #$issue_number"
+              gh issue close $issue_number --comment "This issue has been automatically closed due to inactivity. If you believe this issue is still relevant, please reopen it with updated information."
+            fi
+          done < /tmp/close_issues.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📊 Generate Project Metrics
+        if: ${{ github.event.inputs.action == 'generate-metrics' || github.event_name == 'schedule' }}
+        run: |
+          echo "Generating project metrics..."
+
+          # Create metrics report
+          cat > /tmp/project_metrics.md << 'EOF'
+          # CIRO Network Project Metrics
+
+          Generated on: $(date)
+
+          ## Issue Statistics
+          EOF
+
+          # Get issue statistics
+          total_issues=$(gh issue list --state all --json number | jq length)
+          open_issues=$(gh issue list --state open --json number | jq length)
+          closed_issues=$(gh issue list --state closed --json number | jq length)
+
+          echo "- **Total Issues**: $total_issues" >> /tmp/project_metrics.md
+          echo "- **Open Issues**: $open_issues" >> /tmp/project_metrics.md
+          echo "- **Closed Issues**: $closed_issues" >> /tmp/project_metrics.md
+
+          # Get PR statistics
+          total_prs=$(gh pr list --state all --json number | jq length)
+          open_prs=$(gh pr list --state open --json number | jq length)
+          merged_prs=$(gh pr list --state merged --json number | jq length)
+
+          echo "" >> /tmp/project_metrics.md
+          echo "## Pull Request Statistics" >> /tmp/project_metrics.md
+          echo "- **Total PRs**: $total_prs" >> /tmp/project_metrics.md
+          echo "- **Open PRs**: $open_prs" >> /tmp/project_metrics.md
+          echo "- **Merged PRs**: $merged_prs" >> /tmp/project_metrics.md
+
+          # Component breakdown
+          echo "" >> /tmp/project_metrics.md
+          echo "## Component Breakdown" >> /tmp/project_metrics.md
+
+          for component in "contracts" "worker" "desktop" "backend" "docs" "infra"; do
+            count=$(gh issue list --state all --label "component:$component" --json number | jq length)
+            echo "- **$component**: $count issues" >> /tmp/project_metrics.md
+          done
+
+          # Priority breakdown
+          echo "" >> /tmp/project_metrics.md
+          echo "## Priority Breakdown" >> /tmp/project_metrics.md
+
+          for priority in "p0-critical" "p1-high" "p2-medium" "p3-low"; do
+            count=$(gh issue list --state open --label "priority:$priority" --json number | jq length)
+            echo "- **$priority**: $count open issues" >> /tmp/project_metrics.md
+          done
+
+          # Output metrics
+          echo "::group::Project Metrics"
+          cat /tmp/project_metrics.md
+          echo "::endgroup::"
+
+          # Add to job summary
+          cat /tmp/project_metrics.md >> $GITHUB_STEP_SUMMARY
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔔 Update Team on Changes
+        if: ${{ steps.determine_action.outputs.action == 'issue_automation' || steps.determine_action.outputs.action == 'pr_automation' }}
+        run: |
+          echo "Project automation completed for ${{ steps.determine_action.outputs.item_type }} #${{ steps.determine_action.outputs.item_number }}"
+
+          # This could integrate with Discord, Slack, or other notification systems
+          # For now, we'll just log the action
+          echo "Action: ${{ github.event.action }}"
+          echo "Item: ${{ steps.determine_action.outputs.item_type }} #${{ steps.determine_action.outputs.item_number }}"
+          echo "State: ${{ steps.determine_action.outputs.item_state }}"

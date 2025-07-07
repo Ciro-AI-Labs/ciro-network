@@ -1,0 +1,13 @@
+/* Custom CSS for CIRO Network Documentation */
+/* This file can be used for additional customizations */
+
+/* Future custom styles can be added here */
+
+/* Cover image styling for mdBook landing page */
+.book .cover {
+  background-image: url("../images/ciro-cover.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-height: 340px; /* ensure it shows on all screen sizes */
+}

@@ -1,0 +1,28 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "include": [
+    "src",
+    "tests"
+  ],
+  "extraPaths": [
+    "."
+  ],
+  "reportArgumentType": "information",
+  "reportRedeclaration": "information", 
+  "reportExplicitAny": "information",
+  "reportAny": "information",
+  "reportUnknownMemberType": "information",
+  "reportUnknownArgumentType": "information",
+  "reportUnusedCallResult": "information",
+  "executionEnvironments": [
+    {
+      "root": "./src",
+      "pythonVersion": "3.11"
+    },
+    {
+      "root": "./tests",
+      "pythonVersion": "3.11"
+    }
+  ]
+} 

@@ -1,0 +1,318 @@
+name: 🔍 CodeQL Security Analysis
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+  schedule:
+    # Run CodeQL analysis every Sunday at 06:00 UTC
+    - cron: "0 6 * * 0"
+
+jobs:
+  analyze:
+    name: 🔍 Analyze (${{ matrix.language }})
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+    permissions:
+      # Required for all workflows
+      security-events: write
+      # Required to fetch internal or private CodeQL packs
+      packages: read
+      # Only required for workflows in private repositories
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["rust", "javascript"]
+        # CodeQL supports [ 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript', 'python', 'ruby', 'swift' ]
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # Initializes the CodeQL tools for scanning.
+      - name: 🔧 Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          # If you wish to specify custom queries, you can do so here or in a config file.
+          # By default, queries listed here will override any specified in a config file.
+          # Prefix the list here with "+" to use these queries and those in the config file.
+          queries: +security-extended,security-and-quality
+          # For more details on CodeQL's query suites, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+
+          # Configure CodeQL with custom configuration
+          config: |
+            name: "CIRO Network CodeQL Config"
+            disable-default-queries: false
+            queries:
+              - name: security-extended
+                uses: security-extended
+              - name: security-and-quality
+                uses: security-and-quality
+            paths-ignore:
+              - "docs/**"
+              - "**/*.md"
+              - "**/*.txt"
+              - "**/node_modules/**"
+              - "**/target/**"
+              - "**/*.lock"
+              - "**/*.json"
+
+      # ===== Language-specific setup =====
+      - name: 🛠️ Setup Rust (for Rust analysis)
+        if: matrix.language == 'rust'
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: 📦 Cache Rust dependencies
+        if: matrix.language == 'rust'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-codeql-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-codeql-
+
+      - name: 🛠️ Setup Node.js (for JavaScript analysis)
+        if: matrix.language == 'javascript'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: 📦 Install Node.js dependencies
+        if: matrix.language == 'javascript'
+        run: |
+          npm ci
+          if [ -d "tauri-app" ]; then
+            cd tauri-app && npm ci
+          fi
+
+      # ===== Build for analysis =====
+      - name: 🔨 Build Rust workspace
+        if: matrix.language == 'rust'
+        run: |
+          cargo build --workspace --all-features --verbose
+          # Also build Tauri Rust backend if it exists
+          if [ -d "tauri-app/src-tauri" ]; then
+            cd tauri-app/src-tauri && cargo build --all-features --verbose
+          fi
+
+      - name: 🔨 Build JavaScript/TypeScript
+        if: matrix.language == 'javascript'
+        run: |
+          # Build documentation if it exists
+          if [ -f "docs/book.toml" ]; then
+            npm run build:docs || echo "Documentation build failed, continuing analysis"
+          fi
+
+          # Build Tauri frontend if it exists
+          if [ -d "tauri-app" ]; then
+            cd tauri-app && npm run build || echo "Tauri frontend build failed, continuing analysis"
+          fi
+
+      # ===== Perform CodeQL Analysis =====
+      - name: 🔍 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{matrix.language}}"
+          # Upload results to GitHub Security tab
+          upload: true
+          # Wait for analysis to complete
+          wait-for-processing: true
+
+      # ===== Upload additional artifacts =====
+      - name: 📤 Upload CodeQL results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: codeql-results-${{ matrix.language }}
+          path: /home/runner/work/_temp/codeql_databases
+          retention-days: 5
+
+      # ===== Security notifications =====
+      - name: 📢 Report security findings
+        if: failure()
+        run: |
+          echo "🚨 CodeQL analysis found security issues in ${{ matrix.language }} code"
+          echo "Please review the Security tab in GitHub for detailed findings"
+          echo "https://github.com/${{ github.repository }}/security/code-scanning"
+
+  # ===== Custom security checks =====
+  security-audit:
+    name: 🛡️ Security Audit
+    runs-on: ubuntu-latest
+    needs: analyze
+    if: always()
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: 🔍 Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: 🔒 Run Rust security audit
+        run: |
+          cargo audit
+          cargo audit --db advisory-db --json > rust-security-audit.json
+
+      - name: 🛠️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: 📦 Install Node.js dependencies
+        run: npm ci
+
+      - name: 🔍 Run npm audit
+        run: |
+          npm audit --audit-level=moderate --json > npm-security-audit.json || true
+
+          # Also audit Tauri app if it exists
+          if [ -d "tauri-app" ]; then
+            cd tauri-app
+            npm audit --audit-level=moderate --json > ../tauri-npm-security-audit.json || true
+          fi
+
+      - name: 📤 Upload security audit results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-audit-results
+          path: |
+            rust-security-audit.json
+            npm-security-audit.json
+            tauri-npm-security-audit.json
+          retention-days: 30
+
+      - name: 📊 Create security summary
+        run: |
+          echo "# 🔒 Security Audit Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Rust Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "- Audit completed: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- Database version: $(cargo audit --version)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Node.js Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "- Audit completed: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- npm version: $(npm --version)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "For detailed results, check the uploaded artifacts and the Security tab." >> $GITHUB_STEP_SUMMARY
+
+  # ===== Secret scanning supplement =====
+  secret-scan:
+    name: 🔐 Secret Scanning
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for secret scanning
+
+      - name: 🔍 Install TruffleHog
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: 🔐 Run secret scanning
+        run: |
+          trufflehog git file://. --json --no-update > trufflehog-results.json || true
+
+          # Check if any secrets were found
+          if [ -s trufflehog-results.json ]; then
+            echo "🚨 Potential secrets found!" >> $GITHUB_STEP_SUMMARY
+            echo "Please review the uploaded results and remove any exposed secrets." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ No secrets detected in the repository." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 📤 Upload secret scan results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: secret-scan-results
+          path: trufflehog-results.json
+          retention-days: 30
+
+  # ===== Dependency license check =====
+  license-check:
+    name: 📜 License Compliance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: 🔍 Install cargo-license
+        run: cargo install cargo-license
+
+      - name: 📜 Check Rust dependency licenses
+        run: |
+          cargo license --json > rust-licenses.json
+
+          # Check for restrictive licenses
+          if cargo license | grep -E "(GPL|AGPL|LGPL)" > restrictive-licenses.txt; then
+            echo "⚠️ Restrictive licenses found:" >> $GITHUB_STEP_SUMMARY
+            cat restrictive-licenses.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No restrictive licenses found in Rust dependencies." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🛠️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: 📦 Install license-checker
+        run: npm install -g license-checker
+
+      - name: 📜 Check Node.js dependency licenses
+        run: |
+          license-checker --json > nodejs-licenses.json || true
+
+          # Also check Tauri app if it exists
+          if [ -d "tauri-app" ]; then
+            cd tauri-app
+            license-checker --json > ../tauri-nodejs-licenses.json || true
+          fi
+
+      - name: 📤 Upload license check results
+        uses: actions/upload-artifact@v3
+        with:
+          name: license-check-results
+          path: |
+            rust-licenses.json
+            nodejs-licenses.json
+            tauri-nodejs-licenses.json
+            restrictive-licenses.txt
+          retention-days: 30

@@ -1,0 +1,87 @@
+# rustfmt Configuration for CIRO Network
+# Ensures consistent, elegant Rust code formatting
+# https://rust-lang.github.io/rustfmt/
+
+# Basic formatting
+max_width = 100
+hard_tabs = false
+tab_spaces = 4
+newline_style = "Unix"
+use_small_heuristics = "Default"
+
+# Import formatting
+imports_granularity = "Module"
+imports_layout = "Mixed"
+group_imports = "StdExternalCrate"
+reorder_imports = true
+reorder_modules = true
+
+# Function formatting
+fn_params_layout = "Tall"
+fn_single_line = false
+fn_args_layout = "Tall"
+brace_style = "SameLineWhere"
+
+# Control flow formatting
+control_brace_style = "AlwaysSameLine"
+indent_style = "Block"
+where_single_line = false
+
+# Type formatting
+type_punctuation_density = "Compressed"
+struct_field_align_threshold = 0
+enum_discrim_align_threshold = 0
+
+# String formatting
+format_strings = true
+format_macro_matchers = true
+
+# Comment formatting
+comment_width = 100
+format_code_in_doc_comments = true
+normalize_comments = true
+normalize_doc_attributes = true
+
+# Miscellaneous formatting
+trailing_comma = "Vertical"
+trailing_semicolon = true
+match_block_trailing_comma = false
+blank_lines_upper_bound = 1
+blank_lines_lower_bound = 0
+empty_item_single_line = true
+struct_lit_single_line = true
+fn_single_line = false
+where_single_line = false
+force_explicit_abi = true
+format_generated_files = false
+
+# Advanced formatting
+condense_wildcard_suffixes = false
+force_multiline_blocks = false
+format_macro_bodies = true
+hex_literal_case = "Preserve"
+merge_derives = true
+overflow_delimited_expr = false
+remove_nested_parens = true
+reorder_impl_items = true
+report_todo = "Never"
+report_fixme = "Never"
+skip_children = false
+space_after_colon = true
+space_before_colon = false
+spaces_around_ranges = false
+struct_variant_width = 0
+unstable_features = false
+use_field_init_shorthand = true
+use_try_shorthand = true
+version = "Two"
+wrap_comments = true
+
+# Chain formatting
+chain_width = 60
+single_line_if_else_max_width = 50
+force_multiline_blocks = false
+
+# Error handling
+error_on_line_overflow = false
+error_on_unformatted = false 
