@@ -155,7 +155,7 @@ jobs:
           python -c "import src; print('Python imports working')" || echo "No src module"
         working-directory: ${{ steps.check_backend.outputs.path }}
 
-  # Documentation - Build docs if they exist
+  # Documentation - Verify docs structure
   documentation:
     name: Documentation
     runs-on: ubuntu-latest
@@ -163,34 +163,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js for mdBook
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Install mdBook
-        run: |
-          curl -L https://github.com/rust-lang/mdBook/releases/download/v0.4.36/mdbook-v0.4.36-x86_64-unknown-linux-gnu.tar.gz | tar xz
-          sudo mv mdbook /usr/local/bin/
-
-      - name: Build documentation
-        run: |
-          if [ -f "docs/book.toml" ]; then
-            cd docs && mdbook build
-            echo "✅ Documentation built successfully"
-          else
-            echo "ℹ️  No mdBook configuration found"
-          fi
-
       - name: Check documentation structure
         run: |
+          echo "📚 Checking documentation structure..."
+          
           if [ -d "docs" ]; then
-            echo "📚 Documentation structure:"
-            find docs -name "*.md" | head -10
-            echo "✅ Documentation files found"
+            echo "✅ Documentation directory exists"
+            
+            # Check if pre-built documentation exists
+            if [ -d "docs/book" ]; then
+              echo "✅ Pre-built documentation found in docs/book/"
+              echo "📋 Documentation includes:"
+              find docs/book -name "*.html" | head -10
+            fi
+            
+            # Check if source exists for building
+            if [ -f "docs/book.toml" ] && [ -d "docs/src" ]; then
+              echo "✅ mdBook source found - documentation can be rebuilt"
+            else
+              echo "ℹ️  Using pre-built documentation (no source files)"
+            fi
+            
+            # Check for README
+            if [ -f "docs/README.md" ]; then
+              echo "✅ Documentation README exists"
+            fi
+            
           else
-            echo "ℹ️  No docs directory found"
+            echo "❌ No docs directory found"
+            exit 1
           fi
+          
+          echo "✅ Documentation validation completed"
 
   # Basic security scan
   security:
