@@ -229,6 +229,18 @@ cairo-contracts/optimization/
 **/*_GUIDE.md
 **/*_RECOMMENDATION.md
 
+# Internal documentation from docs/ directory  
+docs/*.md
+!docs/README.md
+docs/security/
+docs/project-management/
+docs/src/
+docs/user-guides/
+docs/development/
+docs/deployment/
+docs/architecture/
+docs/api-reference/
+
 # Testnet deployment artifacts (internal use)
 testnet_*.json
 **/testnet_*.json
