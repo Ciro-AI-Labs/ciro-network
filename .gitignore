@@ -214,6 +214,27 @@ docker-compose.override.yml
 compilerrors.md
 CAIRO_ERRORS_TASK_BREAKDOWN.md
 
+# Internal development documentation (NOT for public consumption)
+cairo-contracts/*.md
+!cairo-contracts/README.md
+cairo-contracts/docs/*.md
+cairo-contracts/security/
+cairo-contracts/optimization/
+**/DEPLOYMENT_*.md
+**/TESTNET_*.md
+**/MAINNET_*.md
+**/INTEGRATION_*.md
+**/*_STATUS.md
+**/*_SUMMARY.md
+**/*_GUIDE.md
+**/*_RECOMMENDATION.md
+
+# Testnet deployment artifacts (internal use)
+testnet_*.json
+**/testnet_*.json
+mainnet_*.json
+**/mainnet_*.json
+
 # Tauri build artifacts
 tauri-app/src-tauri/target/
 
