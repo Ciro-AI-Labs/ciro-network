@@ -74,7 +74,7 @@ pub trait IGovernanceTreasury<TContractState> {
 
 #[starknet::contract]
 pub mod GovernanceTreasury {
-    use super::{Proposal, ProposalType, GovernanceConfig, IGovernanceTreasury};
+    use super::{Proposal, ProposalType, GovernanceConfig};
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp, get_contract_address};
     use starknet::storage::{
         Map, StoragePointerReadAccess, StoragePointerWriteAccess,

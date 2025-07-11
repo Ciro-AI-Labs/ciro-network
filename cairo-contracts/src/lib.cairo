@@ -35,5 +35,4 @@ mod governance {
     pub mod governance_treasury;
 }
 
-#[cfg(test)]
-pub mod tests; 
+// Tests are located in the tests/ directory and managed by snforge
