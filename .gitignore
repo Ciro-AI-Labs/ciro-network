@@ -20,7 +20,9 @@ account.json
 *.secret
 *secrets*
 config.json
-.taskmaster/config.json
+
+# Taskmaster AI project management (contains internal project data)
+.taskmaster/
 
 # Deployment scripts (may contain sensitive parameters)
 **/scripts/deploy_*.sh
