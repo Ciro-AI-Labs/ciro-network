@@ -1,12 +1,7 @@
 // CIRO Network Milestone Vesting
 // Token distribution based on achievement of specific milestones
 
-use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
-use starknet::storage::{
-    StoragePointerReadAccess, StoragePointerWriteAccess,
-    StorageMapReadAccess, StorageMapWriteAccess, Map
-};
-use core::num::traits::Zero;
+use starknet::ContractAddress;
 
 /// Milestone structure
 #[derive(Drop, Serde, starknet::Store, Copy)]

@@ -1,12 +1,7 @@
 // CIRO Network Linear Vesting with Cliff
 // Token distribution schedules with cliff periods and linear release
 
-use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
-use starknet::storage::{
-    StoragePointerReadAccess, StoragePointerWriteAccess,
-    StorageMapReadAccess, StorageMapWriteAccess, Map
-};
-use core::num::traits::Zero;
+use starknet::ContractAddress;
 
 /// Vesting schedule structure
 #[derive(Drop, Serde, starknet::Store, Copy)]

@@ -1,12 +1,7 @@
 // CIRO Network Burn Manager
 // Token buyback and burn mechanisms for ecosystem value accrual
 
-use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
-use starknet::storage::{
-    StoragePointerReadAccess, StoragePointerWriteAccess,
-    StorageMapReadAccess, StorageMapWriteAccess, Map
-};
-use core::num::traits::Zero;
+use starknet::ContractAddress;
 
 /// Burn schedule structure
 #[derive(Drop, Serde, starknet::Store, Copy)]
