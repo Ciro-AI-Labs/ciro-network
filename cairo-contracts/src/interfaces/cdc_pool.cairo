@@ -74,7 +74,7 @@ pub struct SlashRecord {
 }
 
 /// Worker Staking Tier Enumeration (v3.1 - Realistic Capital Deployment)
-#[derive(Copy, Drop, Serde, starknet::Store)]
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
 #[allow(starknet::store_no_default_variant)]
 pub enum WorkerTier {
     Basic,          // $100 - entry level
@@ -149,6 +149,19 @@ impl SlashReasonIntoU8 of Into<SlashReason, u8> {
             SlashReason::PoorPerformance => 2,
             SlashReason::ProtocolViolation => 3,
             SlashReason::Fraud => 4,
+        }
+    }
+}
+
+/// Add Into<felt252> implementation for SlashReason
+impl SlashReasonIntoFelt252 of Into<SlashReason, felt252> {
+    fn into(self: SlashReason) -> felt252 {
+        match self {
+            SlashReason::Malicious => 'malicious',
+            SlashReason::Unavailable => 'unavailable',
+            SlashReason::PoorPerformance => 'poor_performance',
+            SlashReason::ProtocolViolation => 'protocol_violation',
+            SlashReason::Fraud => 'fraud',
         }
     }
 }

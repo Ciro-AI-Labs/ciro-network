@@ -24,210 +24,176 @@ pub struct ModelId {
     pub value: u256
 }
 
-// Enhanced job types for dual-purpose network
-#[derive(Drop, Serde, starknet::Store)]
-#[allow(starknet::store_no_default_variant)]
-pub enum JobType {
-    // AI Computation Jobs
-    AIInference,
-    AITraining,
-    AIFineTuning,
-    ImageGeneration,
-    VideoProcessing,
-    Audio3DRendering,
-    GameAssetRendering,
-    
-    // ZK Proof Generation Jobs (NEW)
-    StarknetBatchProof,
-    ZKMLProof,
-    RecursiveProof,
-    BatchVerification,
-    CrossChainProof,
+// Dispute evidence structure - Remove Store trait due to Array field
+#[derive(Drop, Serde)]
+pub struct DisputeEvidence {
+    pub evidence_type: felt252,
+    pub data: Array<felt252>, // Arrays can't be stored directly
+    pub timestamp: u64,
+    pub submitter: ContractAddress
 }
 
-// Enhanced job priority system for dual workloads
-#[derive(Drop, Serde, starknet::Store)]
-#[allow(starknet::store_no_default_variant)]
-pub enum JobPriority {
-    Low,
-    Medium,
-    High,
-    Critical,      // For time-sensitive ZK proofs
-    Emergency,     // For network liveness requirements
-}
-
-// Job specifications enhanced for ZK proofs
+// Job specification for AI workloads - Remove Store trait due to Array fields
 #[derive(Drop, Serde)]
 pub struct JobSpec {
     pub job_type: JobType,
-    pub requirements: ModelRequirements,
-    pub priority: JobPriority,
-    pub sla_deadline: u64,           // Block timestamp deadline
-    pub max_reward: u256,            // Maximum payment in USDC
+    pub model_id: ModelId,
+    pub input_data_hash: felt252,
+    pub expected_output_format: felt252,
     pub verification_method: VerificationMethod,
+    pub max_reward: u256,
+    pub sla_deadline: u64,
+    pub compute_requirements: Array<felt252>, // Arrays can't be stored directly
+    pub metadata: Array<felt252> // Arrays can't be stored directly
 }
 
-// Verification methods for different job types
-#[derive(Drop, Serde, starknet::Store)]
-#[allow(starknet::store_no_default_variant)]
-pub enum VerificationMethod {
-    StatisticalSampling,    // For AI jobs
-    CryptographicProof,     // For ZK jobs
-    RedundantCompute,       // Two workers validate
-    TestSetValidation,      // For ML training
-}
-
-// Enhanced model requirements supporting ZK proving
-#[derive(Drop, Serde)]
-pub struct ModelRequirements {
-    pub min_vram_gb: u32,
-    pub min_compute_units: u64,
-    pub required_frameworks: Array<felt252>,  // ['pytorch', 'stwo', 'circom']
-    pub docker_image: felt252,
-    pub estimated_duration: u64,
-    pub bandwidth_requirements: u64,
-}
-
-// ZK Proof specific job data
-#[derive(Drop, Serde, starknet::Store)]
-pub struct ProveJobData {
-    pub batch_hash: felt252,         // Starknet batch to prove
-    pub public_input: felt252,       // Public input for verification
-    pub circuit_type: CircuitType,   // Which proving system
-    pub recursion_level: u8,         // For recursive proofs
-    pub expected_proof_size: u32,    // Expected output size
-}
-
-#[derive(Drop, Serde, starknet::Store)]
-#[allow(starknet::store_no_default_variant)]
-pub enum CircuitType {
-    Stark,
-    Plonk,
-    Groth16,
-    FRI,
-    Custom,
-}
-
-// Enhanced job results supporting proof outputs
+// Result submission from workers - Remove Store trait due to Array field
 #[derive(Drop, Serde)]
 pub struct JobResult {
     pub job_id: JobId,
     pub worker_id: WorkerId,
-    pub result_type: ResultType,
-    pub output_data: Array<felt252>,    // Flexible output format
-    pub proof_data: Option<ProofData>,  // ZK proof specific data
-    pub completion_time: u64,
-    pub verification_status: VerificationStatus,
+    pub output_data_hash: felt252,
+    pub computation_proof: Array<felt252>, // Arrays can't be stored directly
+    pub gas_used: u256,
+    pub execution_time: u64
 }
 
-#[derive(Drop, Serde, starknet::Store)]
+// Job type enumeration
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
 #[allow(starknet::store_no_default_variant)]
-pub enum ResultType {
-    AIInferenceResult,
-    TrainingCheckpoint,
-    GeneratedAsset,
-    ZKProof,                    // NEW: ZK proof output
-    VerificationResult,
+pub enum JobType {
+    AIInference,
+    AITraining,
+    ProofGeneration,
+    ProofVerification
 }
 
-#[derive(Drop, Serde)]
-pub struct ProofData {
-    pub proof: Array<felt252>,          // The actual ZK proof
-    pub public_outputs: Array<felt252>, // Public outputs for verification
-    pub proof_metadata: felt252,        // Additional metadata
-}
-
-#[derive(Drop, Serde, starknet::Store)]
+// Verification method enumeration  
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
 #[allow(starknet::store_no_default_variant)]
-pub enum VerificationStatus {
-    Pending,
-    Verified,
-    Failed,
-    CryptographicallyValid,    // For ZK proofs
-    StatisticallyValid,        // For AI results
+pub enum VerificationMethod {
+    None,
+    StatisticalSampling,
+    ZeroKnowledgeProof,
+    ConsensusValidation
 }
 
-// Enhanced job states for dual workloads
-#[derive(Drop, Serde, starknet::Store)]
+// Job state enumeration
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
 #[allow(starknet::store_no_default_variant)]
 pub enum JobState {
     Queued,
-    Assigned,
-    Computing,
-    AwaitingVerification,
+    Processing,
     Completed,
     Failed,
-    Disputed,
-    EscalatedReward,          // For time-critical ZK jobs
+    Cancelled
 }
 
-// Enhanced interface supporting dual-purpose jobs
+// Model requirements - Remove Store trait due to Array field
+#[derive(Drop, Serde)]
+pub struct ModelRequirements {
+    pub min_memory_gb: u32,
+    pub min_compute_units: u32,
+    pub required_gpu_type: felt252,
+    pub framework_dependencies: Array<felt252> // Arrays can't be stored directly
+}
+
+// Proof job specific data - Remove Store trait due to Array field
+#[derive(Drop, Serde)]
+pub struct ProveJobData {
+    pub circuit_id: felt252,
+    pub public_inputs: Array<felt252>, // Arrays can't be stored directly
+    pub private_inputs_hash: felt252,
+    pub expected_proof_size: u32
+}
+
+// Job details for queries - simplified to avoid Array issues
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct JobDetails {
+    pub job_id: JobId,
+    pub job_type: JobType,
+    pub client: ContractAddress,
+    pub worker: ContractAddress,
+    pub state: JobState,
+    pub payment_amount: u256,
+    pub created_at: u64,
+    pub assigned_at: u64,
+    pub completed_at: u64,
+    pub result_hash: felt252
+}
+
+// Worker statistics
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct WorkerStats {
+    pub total_jobs_completed: u64,
+    pub success_rate: u8, // Percentage
+    pub average_completion_time: u64,
+    pub reputation_score: u256,
+    pub total_earnings: u256
+}
+
+/// Main Job Manager Interface
 #[starknet::interface]
 pub trait IJobManager<TContractState> {
-    // Core job management (enhanced)
+    /// Submit a new AI inference/training job
     fn submit_ai_job(
         ref self: TContractState,
         job_spec: JobSpec,
         payment: u256,
         client: ContractAddress
     ) -> JobId;
-    
-    // NEW: ZK proof job submission
+
+    /// Submit a new proof generation job  
     fn submit_prove_job(
         ref self: TContractState,
-        prove_data: ProveJobData,
-        reward: u256,
-        sla_deadline: u64
+        prove_job_data: ProveJobData,
+        payment: u256,
+        client: ContractAddress
     ) -> JobId;
-    
-    // Enhanced job assignment with priority queuing
+
+    /// Assign a job to a specific worker
     fn assign_job_to_worker(
-        ref self: TContractState, 
-        worker_id: WorkerId,
-        preferred_job_type: JobType
-    ) -> Option<JobId>;
-    
-    // Enhanced result submission with proof verification
+        ref self: TContractState,
+        job_id: JobId,
+        worker_id: WorkerId
+    );
+
+    /// Submit job execution results
     fn submit_job_result(
         ref self: TContractState,
         job_id: JobId,
         result: JobResult
-    ) -> bool;
-    
-    // NEW: Cryptographic proof verification for ZK jobs
-    fn verify_zk_proof(
-        ref self: TContractState,
-        job_id: JobId,
-        proof_data: ProofData
-    ) -> bool;
-    
-    // Enhanced reward distribution for dual workloads
-    fn distribute_rewards(
-        ref self: TContractState,
-        job_id: JobId,
-        burn_percentage: u8  // Flexible burn rate
     );
-    
-    // Real-time reward escalation for critical ZK jobs
-    fn escalate_prove_job_reward(
+
+    /// Distribute rewards after job completion and verification
+    fn distribute_rewards(ref self: TContractState, job_id: JobId);
+
+    /// Register a new model for job execution
+    fn register_model(
         ref self: TContractState,
-        job_id: JobId,
-        additional_reward: u256
-    );
-    
-    // Priority queue management
-    fn get_next_job_by_priority(
-        self: @TContractState,
-        worker_capabilities: ModelRequirements
-    ) -> Option<JobId>;
-    
-    // Enhanced analytics for dual markets
-    fn get_market_metrics(
-        self: @TContractState
-    ) -> (u256, u256, u256, u256); // ai_volume, zk_volume, ai_workers, zk_workers
-    
-    // View functions
-    fn get_job_details(self: @TContractState, job_id: JobId) -> JobSpec;
+        model_hash: felt252,
+        requirements: ModelRequirements,
+        pricing: u256
+    ) -> ModelId;
+
+    /// Get detailed information about a job
+    fn get_job_details(self: @TContractState, job_id: JobId) -> JobDetails;
+
+    /// Get current state of a job
     fn get_job_state(self: @TContractState, job_id: JobId) -> JobState;
-    fn get_worker_stats(self: @TContractState, worker_id: WorkerId) -> (u64, u64, u256);
+
+    /// Get worker statistics
+    fn get_worker_stats(self: @TContractState, worker_id: WorkerId) -> WorkerStats;
+
+    /// Admin: Update configuration parameters
+    fn update_config(ref self: TContractState, config_key: felt252, config_value: felt252);
+
+    /// Admin: Pause the contract
+    fn pause(ref self: TContractState);
+
+    /// Admin: Unpause the contract  
+    fn unpause(ref self: TContractState);
+
+    /// Admin: Emergency withdraw
+    fn emergency_withdraw(ref self: TContractState, token: ContractAddress, amount: u256);
 } 

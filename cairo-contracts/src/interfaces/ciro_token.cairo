@@ -1,50 +1,124 @@
-use starknet::ContractAddress;
+//! Enhanced CIRO Token Interface for CIRO Network
+//! Includes comprehensive DeFi operations, governance, and staking
 
-/// Governance proposal structure (Enhanced v3.1)
+use starknet::ContractAddress;
+use core::array::Array;
+
+/// Token holder information
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct TokenHolder {
+    pub address: ContractAddress,
+    pub balance: u256,
+    pub last_activity: u64,
+    pub governance_power: u256,
+}
+
+/// Governance proposal for network changes
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct GovernanceProposal {
     pub id: u256,
     pub proposer: ContractAddress,
+    pub title: felt252,
     pub description: felt252,
-    pub proposal_type: u32,         // 0=minor, 1=major, 2=protocol, 3=emergency, 4=strategic
-    pub inflation_change: i32,      // Percentage change in inflation rate (basis points)
-    pub burn_rate_change: i32,      // Percentage change in burn rate (basis points)
+    pub proposal_type: u32, // 0=inflation, 1=fees, 2=upgrade, 3=emergency, 4=general
+    pub inflation_change: i32,
+    pub burn_rate_change: i32,
+    pub voting_start: u64,
+    pub voting_end: u64,
+    pub voting_starts: u64, // Alias for compatibility
+    pub voting_ends: u64,   // Alias for compatibility
+    pub execution_delay: u64,
     pub votes_for: u256,
     pub votes_against: u256,
+    pub for_votes: u256,    // Alias for compatibility
+    pub against_votes: u256, // Alias for compatibility
+    pub total_voting_power: u256,
+    pub quorum_threshold: u256,
+    pub execution_deadline: u64,
+    pub status: ProposalStatus,
     pub created_at: u64,
-    pub voting_ends_at: u64,
-    pub executed: bool,
-    pub quorum_achieved: bool,      // Whether minimum quorum was reached
-    pub supermajority_required: bool, // Whether supermajority is required
+    pub executed_at: u64,
 }
 
-/// Progressive governance rights information
+/// Status of governance proposals
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
+#[allow(starknet::store_no_default_variant)]
+pub enum ProposalStatus {
+    Draft,
+    Active,      // Voting open
+    Succeeded,   // Passed vote, pending execution
+    Executed,    // Successfully executed
+    Defeated,    // Failed vote
+    Cancelled,   // Cancelled by proposer
+    Expired,     // Execution window passed
+}
+
+/// Enhanced burn events for tracking
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct BurnEvent {
+    pub timestamp: u64,
+    pub amount: u256,
+    pub reason: felt252,
+    pub network_phase: felt252,
+    pub total_supply_after: u256,
+    pub burn_rate: u32, // Burn rate at time of burn (basis points)
+}
+
+/// Governance rights and privileges for token holders
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct GovernanceRights {
-    pub base_voting_power: u256,
-    pub multiplied_voting_power: u256,
-    pub governance_tier: u32,       // 0=basic, 1=long-term, 2=veteran
+    pub voting_power: u256,
+    pub proposal_threshold: u256,
     pub can_create_proposals: bool,
-    pub proposal_threshold_met: u32, // Which threshold level they meet (0-4)
+    pub governance_tier: u32,
 }
 
-/// Governance statistics for transparency
+/// Governance system analytics and statistics
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct GovernanceStats {
     pub total_proposals: u256,
-    pub successful_proposals: u256,
-    pub current_quorum_requirement: u256,
-    pub average_participation_rate: u32,
+    pub active_proposals: u256,
+    pub executed_proposals: u256,
+    pub total_voters: u256,
+    pub average_participation: u32,
+    pub total_voting_power: u256,
 }
 
-/// Burn event structure for transparency
+/// Rate limiting information for transfers
 #[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct BurnEvent {
-    pub amount: u256,
-    pub revenue_source: u256,
+pub struct RateLimitInfo {
+    pub current_limit: u256,
+    pub current_usage: u256,
+    pub window_start: u64,
+    pub window_duration: u64,
+    pub next_reset: u64,
+}
+
+/// Emergency operation tracking
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct EmergencyOperation {
+    pub operation_id: u256,
+    pub operation_type: felt252,
+    pub authorized_by: ContractAddress,
+    pub justification: felt252,
     pub timestamp: u64,
-    pub burn_rate: u32,             // Burn rate in basis points
-    pub execution_price: u256,      // Price at which tokens were burned
+    pub amount_affected: u256,
+}
+
+/// Large transfer pending execution
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct PendingTransfer {
+    pub id: u256,
+    pub transfer_id: u256, // Alias for compatibility
+    pub from: ContractAddress,
+    pub to: ContractAddress,
+    pub amount: u256,
+    pub timestamp: u64,
+    pub initiated_at: u64, // Alias for compatibility
+    pub execute_after: u64,
+    pub execution_time: u64, // Alias for compatibility
+    pub approved_by_council: bool,
+    pub is_executed: bool,
 }
 
 /// Security budget tracking
@@ -54,18 +128,6 @@ pub struct SecurityBudget {
     pub current_reserves: u256,
     pub last_replenishment: u64,
     pub guard_band_active: bool,
-}
-
-/// Pending large transfer structure for anti-manipulation
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct PendingTransfer {
-    pub id: u256,
-    pub from: ContractAddress,
-    pub to: ContractAddress,
-    pub amount: u256,
-    pub timestamp: u64,
-    pub execute_after: u64,
-    pub approved_by_council: bool,
 }
 
 /// Security audit report structure
@@ -78,27 +140,6 @@ pub struct SecurityAuditReport {
     pub security_score: u32,
     pub critical_issues: u32,
     pub recommendations: felt252,
-}
-
-/// Rate limiting information
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct RateLimitInfo {
-    pub current_limit: u256,
-    pub window_start: u64,
-    pub window_duration: u64,
-    pub current_usage: u256,
-    pub remaining_capacity: u256,
-}
-
-/// Emergency operation log entry
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct EmergencyOperation {
-    pub id: u256,
-    pub operation_type: felt252,
-    pub executor: ContractAddress,
-    pub timestamp: u64,
-    pub details: felt252,
-    pub approved_by_council: bool,
 }
 
 /// CIRO Token interface extending ERC20 with tokenomics features

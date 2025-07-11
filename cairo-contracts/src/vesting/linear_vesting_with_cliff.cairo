@@ -1,803 +1,541 @@
-//! Linear Vesting with Cliff Contract
-//! CIRO Network - Production-Ready Vesting System
-//! Handles Team, Private Sale, Seed Round, and Development allocations
+// CIRO Network Linear Vesting with Cliff
+// Token distribution schedules with cliff periods and linear release
 
-use starknet::ContractAddress;
+use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
+use starknet::storage::{
+    StoragePointerReadAccess, StoragePointerWriteAccess,
+    StorageMapReadAccess, StorageMapWriteAccess, Map
+};
+use core::num::traits::Zero;
 
-#[starknet::interface]
-pub trait ILinearVestingWithCliff<TContractState> {
-    // Core vesting functions
-    fn create_vesting_schedule(
-        ref self: TContractState,
-        beneficiary: ContractAddress,
-        total_amount: u256,
-        cliff_duration: u64,
-        vesting_duration: u64,
-        start_time: u64,
-        schedule_id: u256
-    );
-    fn release_vested_tokens(ref self: TContractState, schedule_id: u256) -> u256;
-    fn release_vested_tokens_for_beneficiary(ref self: TContractState, beneficiary: ContractAddress) -> u256;
-    
-    // View functions
-    fn get_vesting_schedule(self: @TContractState, schedule_id: u256) -> VestingSchedule;
-    fn get_vested_amount(self: @TContractState, schedule_id: u256) -> u256;
-    fn get_releasable_amount(self: @TContractState, schedule_id: u256) -> u256;
-    fn get_total_vesting_schedules(self: @TContractState) -> u256;
-    fn get_beneficiary_schedules(self: @TContractState, beneficiary: ContractAddress) -> Array<u256>;
-    
-    // Multi-sig administration  
-    fn propose_emergency_pause(ref self: TContractState, reason: felt252);
-    fn execute_emergency_pause(ref self: TContractState, proposal_id: u256);
-    fn propose_schedule_revocation(ref self: TContractState, schedule_id: u256, reason: felt252);
-    fn execute_schedule_revocation(ref self: TContractState, proposal_id: u256);
-    fn update_multisig_threshold(ref self: TContractState, new_threshold: u8);
-    
-    // Compliance functions
-    fn add_compliance_officer(ref self: TContractState, officer: ContractAddress);
-    fn remove_compliance_officer(ref self: TContractState, officer: ContractAddress);
-    fn flag_schedule_for_review(ref self: TContractState, schedule_id: u256, reason: felt252);
-    fn approve_flagged_schedule(ref self: TContractState, schedule_id: u256);
-}
-
-#[derive(Drop, Serde, starknet::Store)]
+/// Vesting schedule structure
+#[derive(Drop, Serde, starknet::Store, Copy)]
 pub struct VestingSchedule {
     pub beneficiary: ContractAddress,
     pub total_amount: u256,
     pub released_amount: u256,
-    pub cliff_duration: u64,      // Cliff period in seconds
-    pub vesting_duration: u64,    // Total vesting duration in seconds
-    pub start_time: u64,          // Unix timestamp
-    pub created_time: u64,        // Creation timestamp
-    pub is_revocable: bool,       // Can be revoked by governance
-    pub is_active: bool,          // Schedule status
-    pub schedule_type: felt252,   // 'TEAM', 'PRIVATE', 'SEED', 'DEVELOPMENT'
-    pub compliance_approved: bool // KYC/AML approval status
+    pub start_time: u64,
+    pub cliff_duration: u64,
+    pub vesting_duration: u64,
+    pub revocable: bool,
+    pub revoked: bool,
+    pub created_by: ContractAddress,
 }
 
-#[derive(Drop, Serde, starknet::Store)]
-pub struct MultiSigProposal {
-    pub proposer: ContractAddress,
-    pub proposal_type: felt252,   // 'PAUSE', 'REVOKE', 'THRESHOLD'
-    pub target_id: u256,          // Schedule ID or new threshold
-    pub reason: felt252,
-    pub approvals: u8,
-    pub executed: bool,
-    pub created_time: u64,
-    pub deadline: u64
+/// Vesting configuration
+#[derive(Drop, Serde, starknet::Store, Copy)]
+pub struct VestingConfig {
+    pub min_cliff_duration: u64,
+    pub max_cliff_duration: u64,
+    pub min_vesting_duration: u64,
+    pub max_vesting_duration: u64,
+    pub allow_revocation: bool,
 }
 
-// Component imports for production security
-use openzeppelin::access::accesscontrol::AccessControlComponent;
-use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
-use openzeppelin::security::pausable::PausableComponent;
-use openzeppelin::upgrades::UpgradeableComponent;
-use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+/// Vesting Events
+#[derive(Drop, starknet::Event)]
+pub struct VestingScheduleCreated {
+    pub schedule_id: u256,
+    pub beneficiary: ContractAddress,
+    pub total_amount: u256,
+    pub start_time: u64,
+    pub cliff_duration: u64,
+    pub vesting_duration: u64,
+}
 
+#[derive(Drop, starknet::Event)]
+pub struct TokensReleased {
+    pub schedule_id: u256,
+    pub beneficiary: ContractAddress,
+    pub amount: u256,
+    pub released_timestamp: u64,
+}
+
+#[derive(Drop, starknet::Event)]
+pub struct VestingRevoked {
+    pub schedule_id: u256,
+    pub beneficiary: ContractAddress,
+    pub revoked_amount: u256,
+    pub released_amount: u256,
+}
+
+#[derive(Drop, starknet::Event)]
+pub struct VestingTransferred {
+    pub schedule_id: u256,
+    pub old_beneficiary: ContractAddress,
+    pub new_beneficiary: ContractAddress,
+}
+
+/// Linear Vesting Contract
 #[starknet::contract]
-mod LinearVestingWithCliff {
-    use super::*;
-    use starknet::{
-        ContractAddress, get_caller_address, get_contract_address, get_block_timestamp,
-        storage::{Map, Vec}
+pub mod LinearVestingWithCliff {
+    use super::{
+        VestingSchedule, VestingConfig,
+        VestingScheduleCreated, TokensReleased, VestingRevoked, VestingTransferred
     };
-
-    // Component declarations
-    component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
-    component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
-    component!(path: PausableComponent, storage: pausable, event: PausableEvent);
-    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
-
-    // Embedded implementations
-    #[abi(embed_v0)]
-    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl ReentrancyGuardImpl = ReentrancyGuardComponent::ReentrancyGuardImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl UpgradeableImpl = UpgradeableComponent::UpgradeableImpl<ContractState>;
-
-    // Internal implementations
-    impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
-    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
-    impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
-    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
-
-    // Role constants
-    const ADMIN_ROLE: felt252 = 0x0;
-    const MULTISIG_ROLE: felt252 = 'MULTISIG';
-    const COMPLIANCE_ROLE: felt252 = 'COMPLIANCE';
-    const EMERGENCY_ROLE: felt252 = 'EMERGENCY';
+    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
+    use starknet::storage::{
+        StoragePointerReadAccess, StoragePointerWriteAccess,
+        StorageMapReadAccess, StorageMapWriteAccess, Map
+    };
+    use core::num::traits::Zero;
 
     #[storage]
     struct Storage {
-        // Component storages
-        #[substorage(v0)]
-        access_control: AccessControlComponent::Storage,
-        #[substorage(v0)]
-        reentrancy_guard: ReentrancyGuardComponent::Storage,
-        #[substorage(v0)]
-        pausable: PausableComponent::Storage,
-        #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage,
-
-        // Core vesting storage
-        vesting_schedules: Map<u256, VestingSchedule>,
-        beneficiary_schedules: Map<ContractAddress, u32>, // Count per beneficiary
-        beneficiary_schedule_ids: Map<(ContractAddress, u32), u256>, // (beneficiary, index) -> schedule_id
-        total_schedules: u256,
-        total_vested_amount: u256,
-        total_released_amount: u256,
-
-        // Token contract
+        // Core state
+        owner: ContractAddress,
         token_contract: ContractAddress,
+        config: VestingConfig,
         
-        // Multi-sig governance
-        multisig_threshold: u8,
-        multisig_members: Map<ContractAddress, bool>,
-        multisig_member_count: u8,
-        proposals: Map<u256, MultiSigProposal>,
-        proposal_votes: Map<(u256, ContractAddress), bool>, // (proposal_id, voter) -> voted
-        next_proposal_id: u256,
-
-        // Compliance tracking
-        compliance_officers: Map<ContractAddress, bool>,
-        flagged_schedules: Map<u256, felt252>, // schedule_id -> reason
-        kyc_approved_addresses: Map<ContractAddress, bool>,
-
-        // Emergency controls
-        emergency_pause_active: bool,
-        emergency_pause_reason: felt252,
-        emergency_pause_timestamp: u64,
-
-        // Statistics for audit trail
-        total_schedules_created: u256,
-        total_schedules_revoked: u256,
-        total_emergency_pauses: u256
+        // Vesting schedules
+        schedule_count: u256,
+        schedules: Map<u256, VestingSchedule>,
+        beneficiary_schedules: Map<ContractAddress, u256>, // beneficiary -> schedule count
+        beneficiary_schedule_ids: Map<(ContractAddress, u256), u256>, // (beneficiary, index) -> schedule_id
+        
+        // Total amounts
+        total_allocated: u256,
+        total_released: u256,
+        
+        // Access control
+        authorized_creators: Map<ContractAddress, bool>,
+        paused: bool,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
-        // Component events
-        #[flat]
-        AccessControlEvent: AccessControlComponent::Event,
-        #[flat]
-        ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
-        #[flat]
-        PausableEvent: PausableComponent::Event,
-        #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event,
-
-        // Vesting events for audit trail
+    pub enum Event {
         VestingScheduleCreated: VestingScheduleCreated,
         TokensReleased: TokensReleased,
-        VestingScheduleRevoked: VestingScheduleRevoked,
-        
-        // Multi-sig governance events
-        ProposalCreated: ProposalCreated,
-        ProposalExecuted: ProposalExecuted,
-        MultiSigThresholdUpdated: MultiSigThresholdUpdated,
-        
-        // Compliance events
-        ScheduleFlaggedForReview: ScheduleFlaggedForReview,
-        ScheduleApproved: ScheduleApproved,
-        ComplianceOfficerAdded: ComplianceOfficerAdded,
-        ComplianceOfficerRemoved: ComplianceOfficerRemoved,
-        
-        // Emergency events
-        EmergencyPauseProposed: EmergencyPauseProposed,
-        EmergencyPauseExecuted: EmergencyPauseExecuted,
-        EmergencyPauseRevoked: EmergencyPauseRevoked
-    }
-
-    // Event structures for comprehensive audit trail
-    #[derive(Drop, starknet::Event)]
-    struct VestingScheduleCreated {
-        #[key]
-        schedule_id: u256,
-        #[key]
-        beneficiary: ContractAddress,
-        total_amount: u256,
-        cliff_duration: u64,
-        vesting_duration: u64,
-        start_time: u64,
-        schedule_type: felt252,
-        creator: ContractAddress,
-        timestamp: u64
+        VestingRevoked: VestingRevoked,
+        VestingTransferred: VestingTransferred,
+        OwnershipTransferred: OwnershipTransferred,
+        CreatorAuthorized: CreatorAuthorized,
+        CreatorDeauthorized: CreatorDeauthorized,
+        ContractPaused: ContractPaused,
+        ContractUnpaused: ContractUnpaused,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct TokensReleased {
-        #[key]
-        schedule_id: u256,
-        #[key]
-        beneficiary: ContractAddress,
-        amount: u256,
-        total_released: u256,
-        remaining_amount: u256,
-        timestamp: u64
+    pub struct OwnershipTransferred {
+        pub previous_owner: ContractAddress,
+        pub new_owner: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct VestingScheduleRevoked {
-        #[key]
-        schedule_id: u256,
-        #[key]
-        beneficiary: ContractAddress,
-        revoked_amount: u256,
-        reason: felt252,
-        executor: ContractAddress,
-        timestamp: u64
+    pub struct CreatorAuthorized {
+        pub creator: ContractAddress,
+        pub authorized_by: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct ProposalCreated {
-        #[key]
-        proposal_id: u256,
-        proposer: ContractAddress,
-        proposal_type: felt252,
-        target_id: u256,
-        reason: felt252,
-        deadline: u64,
-        timestamp: u64
+    pub struct CreatorDeauthorized {
+        pub creator: ContractAddress,
+        pub deauthorized_by: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct ProposalExecuted {
-        #[key]
-        proposal_id: u256,
-        executor: ContractAddress,
-        final_approvals: u8,
-        timestamp: u64
+    pub struct ContractPaused {
+        pub paused_by: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct MultiSigThresholdUpdated {
-        old_threshold: u8,
-        new_threshold: u8,
-        updated_by: ContractAddress,
-        timestamp: u64
+    pub struct ContractUnpaused {
+        pub unpaused_by: ContractAddress,
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct ScheduleFlaggedForReview {
-        #[key]
-        schedule_id: u256,
-        #[key]
-        beneficiary: ContractAddress,
-        reason: felt252,
-        flagged_by: ContractAddress,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct ScheduleApproved {
-        #[key]
-        schedule_id: u256,
-        #[key]
-        beneficiary: ContractAddress,
-        approved_by: ContractAddress,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct ComplianceOfficerAdded {
-        #[key]
-        officer: ContractAddress,
-        added_by: ContractAddress,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct ComplianceOfficerRemoved {
-        #[key]
-        officer: ContractAddress,
-        removed_by: ContractAddress,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct EmergencyPauseProposed {
-        #[key]
-        proposal_id: u256,
-        proposer: ContractAddress,
-        reason: felt252,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct EmergencyPauseExecuted {
-        #[key]
-        proposal_id: u256,
-        executor: ContractAddress,
-        reason: felt252,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct EmergencyPauseRevoked {
-        #[key]
-        executor: ContractAddress,
-        timestamp: u64
-    }
-
-    // Constructor for production deployment
     #[constructor]
     fn constructor(
         ref self: ContractState,
+        owner: ContractAddress,
         token_contract: ContractAddress,
-        initial_multisig_members: Array<ContractAddress>,
-        multisig_threshold: u8,
-        admin: ContractAddress
+        config: VestingConfig
     ) {
-        // Initialize access control
-        self.access_control.initializer();
-        self.access_control._grant_role(ADMIN_ROLE, admin);
-        
-        // Initialize security components
-        self.reentrancy_guard.initializer();
-        self.pausable.initializer();
-        self.upgradeable.initializer(admin);
-
-        // Set token contract
+        self.owner.write(owner);
         self.token_contract.write(token_contract);
+        self.config.write(config);
+        self.schedule_count.write(0);
+        self.total_allocated.write(0);
+        self.total_released.write(0);
+        self.paused.write(false);
         
-        // Initialize multi-sig
-        assert(multisig_threshold > 0 && multisig_threshold <= initial_multisig_members.len().into(), 'Invalid threshold');
-        self.multisig_threshold.write(multisig_threshold);
-        self.multisig_member_count.write(initial_multisig_members.len().try_into().unwrap());
-        
-        let mut i = 0;
-        loop {
-            if i >= initial_multisig_members.len() {
-                break;
-            }
-            let member = *initial_multisig_members.at(i);
-            self.multisig_members.write(member, true);
-            self.access_control._grant_role(MULTISIG_ROLE, member);
-            i += 1;
-        };
-
-        // Initialize counters
-        self.next_proposal_id.write(1);
-        self.total_schedules.write(0);
+        // Owner is automatically authorized creator
+        self.authorized_creators.write(owner, true);
     }
 
     #[abi(embed_v0)]
-    impl LinearVestingWithCliffImpl of super::ILinearVestingWithCliff<ContractState> {
-        
+    impl LinearVestingImpl of super::ILinearVesting<ContractState> {
         fn create_vesting_schedule(
             ref self: ContractState,
             beneficiary: ContractAddress,
             total_amount: u256,
             cliff_duration: u64,
             vesting_duration: u64,
-            start_time: u64,
-            schedule_id: u256
-        ) {
-            // Security checks
-            self.access_control.assert_only_role(ADMIN_ROLE);
-            self.pausable.assert_not_paused();
-            self.reentrancy_guard.start();
-
-            // Input validation
+            revocable: bool
+        ) -> u256 {
+            self._assert_not_paused();
+            let caller = get_caller_address();
+            assert(self.authorized_creators.read(caller), 'Not authorized creator');
             assert(!beneficiary.is_zero(), 'Invalid beneficiary');
             assert(total_amount > 0, 'Amount must be positive');
-            assert(vesting_duration > cliff_duration, 'Invalid vesting duration');
-            assert(start_time >= get_block_timestamp(), 'Start time in past');
-            assert(self.vesting_schedules.read(schedule_id).beneficiary.is_zero(), 'Schedule ID exists');
-
-            // Check token balance
-            let token = IERC20Dispatcher { contract_address: self.token_contract.read() };
-            let contract_balance = token.balance_of(get_contract_address());
-            assert(contract_balance >= total_amount, 'Insufficient token balance');
-
-            // Create vesting schedule
+            
+            let config = self.config.read();
+            self._validate_vesting_parameters(cliff_duration, vesting_duration, config);
+            
+            let schedule_id = self.schedule_count.read();
+            let current_time = get_block_timestamp();
+            
             let schedule = VestingSchedule {
                 beneficiary,
                 total_amount,
                 released_amount: 0,
+                start_time: current_time,
                 cliff_duration,
                 vesting_duration,
-                start_time,
-                created_time: get_block_timestamp(),
-                is_revocable: true,
-                is_active: true,
-                schedule_type: 'LINEAR',
-                compliance_approved: self.kyc_approved_addresses.read(beneficiary)
+                revocable,
+                revoked: false,
+                created_by: caller,
             };
-
-            // Store schedule
-            self.vesting_schedules.write(schedule_id, schedule);
+            
+            self.schedules.write(schedule_id, schedule);
             
             // Update beneficiary tracking
             let beneficiary_count = self.beneficiary_schedules.read(beneficiary);
             self.beneficiary_schedule_ids.write((beneficiary, beneficiary_count), schedule_id);
             self.beneficiary_schedules.write(beneficiary, beneficiary_count + 1);
             
-            // Update totals
-            let total_schedules = self.total_schedules.read() + 1;
-            self.total_schedules.write(total_schedules);
-            self.total_vested_amount.write(self.total_vested_amount.read() + total_amount);
-            self.total_schedules_created.write(self.total_schedules_created.read() + 1);
-
-            // Emit event for audit trail
+            // Update counters
+            self.schedule_count.write(schedule_id + 1);
+            self.total_allocated.write(self.total_allocated.read() + total_amount);
+            
             self.emit(VestingScheduleCreated {
                 schedule_id,
                 beneficiary,
                 total_amount,
+                start_time: current_time,
                 cliff_duration,
                 vesting_duration,
-                start_time,
-                schedule_type: 'LINEAR',
-                creator: get_caller_address(),
-                timestamp: get_block_timestamp()
             });
-
-            self.reentrancy_guard.end();
+            
+            schedule_id
         }
 
-        fn release_vested_tokens(ref self: ContractState, schedule_id: u256) -> u256 {
-            self.pausable.assert_not_paused();
-            self.reentrancy_guard.start();
-
-            let mut schedule = self.vesting_schedules.read(schedule_id);
-            assert(schedule.is_active, 'Schedule not active');
-            assert(!self.emergency_pause_active.read(), 'Emergency pause active');
-
-            // Check compliance approval
-            if !schedule.compliance_approved {
-                assert(self.flagged_schedules.read(schedule_id) == 0, 'Schedule flagged for review');
-            }
-
-            // Calculate releasable amount
-            let releasable = self._calculate_releasable_amount(schedule_id);
-            assert(releasable > 0, 'No tokens to release');
-
-            // Update schedule
-            schedule.released_amount += releasable;
-            self.vesting_schedules.write(schedule_id, schedule);
+        fn release_tokens(ref self: ContractState, schedule_id: u256) -> u256 {
+            self._assert_not_paused();
+            let caller = get_caller_address();
+            let mut schedule = self.schedules.read(schedule_id);
             
-            // Update totals
-            self.total_released_amount.write(self.total_released_amount.read() + releasable);
-
-            // Transfer tokens
-            let token = IERC20Dispatcher { contract_address: self.token_contract.read() };
-            token.transfer(schedule.beneficiary, releasable);
-
-            // Emit event for audit trail
+            assert(schedule.beneficiary == caller || caller == self.owner.read(), 'Not authorized');
+            assert(!schedule.revoked, 'Schedule revoked');
+            
+            let releasable_amount = self._calculate_releasable_amount(schedule);
+            assert(releasable_amount > 0, 'No tokens to release');
+            
+            schedule.released_amount += releasable_amount;
+            self.schedules.write(schedule_id, schedule);
+            
+            self.total_released.write(self.total_released.read() + releasable_amount);
+            
+            // Transfer tokens (in real implementation, would call token contract)
+            // IERC20(token_contract).transfer(schedule.beneficiary, releasable_amount);
+            
             self.emit(TokensReleased {
                 schedule_id,
                 beneficiary: schedule.beneficiary,
-                amount: releasable,
-                total_released: schedule.released_amount,
-                remaining_amount: schedule.total_amount - schedule.released_amount,
-                timestamp: get_block_timestamp()
+                amount: releasable_amount,
+                released_timestamp: get_block_timestamp(),
             });
-
-            self.reentrancy_guard.end();
-            releasable
+            
+            releasable_amount
         }
 
-        fn release_vested_tokens_for_beneficiary(ref self: ContractState, beneficiary: ContractAddress) -> u256 {
-            self.pausable.assert_not_paused();
+        fn revoke_vesting_schedule(ref self: ContractState, schedule_id: u256) {
+            self._assert_only_owner();
+            let mut schedule = self.schedules.read(schedule_id);
             
-            let schedule_count = self.beneficiary_schedules.read(beneficiary);
-            let mut total_released = 0;
-            let mut i = 0;
+            assert(schedule.revocable, 'Schedule not revocable');
+            assert(!schedule.revoked, 'Already revoked');
             
-            loop {
-                if i >= schedule_count {
-                    break;
-                }
-                let schedule_id = self.beneficiary_schedule_ids.read((beneficiary, i));
-                let releasable = self.get_releasable_amount(schedule_id);
-                if releasable > 0 {
-                    total_released += self.release_vested_tokens(schedule_id);
-                }
-                i += 1;
-            };
-
-            total_released
+            let releasable_amount = self._calculate_releasable_amount(schedule);
+            let revoked_amount = schedule.total_amount - schedule.released_amount - releasable_amount;
+            
+            // Release any currently releasable tokens
+            if releasable_amount > 0 {
+                schedule.released_amount += releasable_amount;
+                self.total_released.write(self.total_released.read() + releasable_amount);
+                
+                // Transfer releasable tokens
+                // IERC20(token_contract).transfer(schedule.beneficiary, releasable_amount);
+            }
+            
+            schedule.revoked = true;
+            self.schedules.write(schedule_id, schedule);
+            
+            // Return revoked tokens to owner/treasury
+            if revoked_amount > 0 {
+                // IERC20(token_contract).transfer(owner, revoked_amount);
+            }
+            
+            self.emit(VestingRevoked {
+                schedule_id,
+                beneficiary: schedule.beneficiary,
+                revoked_amount,
+                released_amount: releasable_amount,
+            });
         }
 
-        // View functions
+        fn transfer_vesting_schedule(
+            ref self: ContractState,
+            schedule_id: u256,
+            new_beneficiary: ContractAddress
+        ) {
+            let caller = get_caller_address();
+            let mut schedule = self.schedules.read(schedule_id);
+            
+            assert(schedule.beneficiary == caller, 'Not beneficiary');
+            assert(!new_beneficiary.is_zero(), 'Invalid new beneficiary');
+            assert(!schedule.revoked, 'Schedule revoked');
+            
+            let old_beneficiary = schedule.beneficiary;
+            schedule.beneficiary = new_beneficiary;
+            self.schedules.write(schedule_id, schedule);
+            
+            // Update beneficiary tracking for new beneficiary
+            let new_beneficiary_count = self.beneficiary_schedules.read(new_beneficiary);
+            self.beneficiary_schedule_ids.write((new_beneficiary, new_beneficiary_count), schedule_id);
+            self.beneficiary_schedules.write(new_beneficiary, new_beneficiary_count + 1);
+            
+            self.emit(VestingTransferred {
+                schedule_id,
+                old_beneficiary,
+                new_beneficiary,
+            });
+        }
+
         fn get_vesting_schedule(self: @ContractState, schedule_id: u256) -> VestingSchedule {
-            self.vesting_schedules.read(schedule_id)
-        }
-
-        fn get_vested_amount(self: @ContractState, schedule_id: u256) -> u256 {
-            self._calculate_vested_amount(schedule_id)
+            self.schedules.read(schedule_id)
         }
 
         fn get_releasable_amount(self: @ContractState, schedule_id: u256) -> u256 {
-            self._calculate_releasable_amount(schedule_id)
+            let schedule = self.schedules.read(schedule_id);
+            self._calculate_releasable_amount(schedule)
         }
 
-        fn get_total_vesting_schedules(self: @ContractState) -> u256 {
-            self.total_schedules.read()
-        }
-
-        fn get_beneficiary_schedules(self: @ContractState, beneficiary: ContractAddress) -> Array<u256> {
-            let schedule_count = self.beneficiary_schedules.read(beneficiary);
-            let mut schedules = ArrayTrait::new();
-            let mut i = 0;
+        fn get_beneficiary_schedules(
+            self: @ContractState,
+            beneficiary: ContractAddress
+        ) -> Array<u256> {
+            let mut schedule_ids = ArrayTrait::new();
+            let count = self.beneficiary_schedules.read(beneficiary);
             
-            loop {
-                if i >= schedule_count {
-                    break;
-                }
+            let mut i = 0;
+            while i < count {
                 let schedule_id = self.beneficiary_schedule_ids.read((beneficiary, i));
-                schedules.append(schedule_id);
+                schedule_ids.append(schedule_id);
                 i += 1;
             };
-
-            schedules
+            
+            schedule_ids
         }
 
-        // Multi-sig administration functions
-        fn propose_emergency_pause(ref self: ContractState, reason: felt252) {
-            self.access_control.assert_only_role(EMERGENCY_ROLE);
+        fn get_total_allocated(self: @ContractState) -> u256 {
+            self.total_allocated.read()
+        }
+
+        fn get_total_released(self: @ContractState) -> u256 {
+            self.total_released.read()
+        }
+
+        fn authorize_creator(ref self: ContractState, creator: ContractAddress) {
+            self._assert_only_owner();
+            self.authorized_creators.write(creator, true);
             
-            let proposal_id = self.next_proposal_id.read();
-            let proposal = MultiSigProposal {
-                proposer: get_caller_address(),
-                proposal_type: 'PAUSE',
-                target_id: 0,
-                reason,
-                approvals: 1,
-                executed: false,
-                created_time: get_block_timestamp(),
-                deadline: get_block_timestamp() + 86400 // 24 hours
-            };
-
-            self.proposals.write(proposal_id, proposal);
-            self.proposal_votes.write((proposal_id, get_caller_address()), true);
-            self.next_proposal_id.write(proposal_id + 1);
-
-            self.emit(EmergencyPauseProposed {
-                proposal_id,
-                proposer: get_caller_address(),
-                reason,
-                timestamp: get_block_timestamp()
+            self.emit(CreatorAuthorized {
+                creator,
+                authorized_by: get_caller_address(),
             });
         }
 
-        fn execute_emergency_pause(ref self: ContractState, proposal_id: u256) {
-            self.access_control.assert_only_role(EMERGENCY_ROLE);
+        fn deauthorize_creator(ref self: ContractState, creator: ContractAddress) {
+            self._assert_only_owner();
+            self.authorized_creators.write(creator, false);
             
-            let mut proposal = self.proposals.read(proposal_id);
-            assert(proposal.proposal_type == 'PAUSE', 'Invalid proposal type');
-            assert(!proposal.executed, 'Already executed');
-            assert(get_block_timestamp() <= proposal.deadline, 'Proposal expired');
-
-            // Check if caller already voted
-            if !self.proposal_votes.read((proposal_id, get_caller_address())) {
-                proposal.approvals += 1;
-                self.proposal_votes.write((proposal_id, get_caller_address()), true);
-            }
-
-            // Check if threshold met
-            if proposal.approvals >= self.multisig_threshold.read() {
-                proposal.executed = true;
-                self.emergency_pause_active.write(true);
-                self.emergency_pause_reason.write(proposal.reason);
-                self.emergency_pause_timestamp.write(get_block_timestamp());
-                self.total_emergency_pauses.write(self.total_emergency_pauses.read() + 1);
-
-                self.emit(EmergencyPauseExecuted {
-                    proposal_id,
-                    executor: get_caller_address(),
-                    reason: proposal.reason,
-                    timestamp: get_block_timestamp()
-                });
-            }
-
-            self.proposals.write(proposal_id, proposal);
-        }
-
-        fn propose_schedule_revocation(ref self: ContractState, schedule_id: u256, reason: felt252) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
-            
-            let schedule = self.vesting_schedules.read(schedule_id);
-            assert(schedule.is_active, 'Schedule not active');
-            assert(schedule.is_revocable, 'Schedule not revocable');
-
-            let proposal_id = self.next_proposal_id.read();
-            let proposal = MultiSigProposal {
-                proposer: get_caller_address(),
-                proposal_type: 'REVOKE',
-                target_id: schedule_id,
-                reason,
-                approvals: 1,
-                executed: false,
-                created_time: get_block_timestamp(),
-                deadline: get_block_timestamp() + 604800 // 7 days
-            };
-
-            self.proposals.write(proposal_id, proposal);
-            self.proposal_votes.write((proposal_id, get_caller_address()), true);
-            self.next_proposal_id.write(proposal_id + 1);
-
-            self.emit(ProposalCreated {
-                proposal_id,
-                proposer: get_caller_address(),
-                proposal_type: 'REVOKE',
-                target_id: schedule_id,
-                reason,
-                deadline: proposal.deadline,
-                timestamp: get_block_timestamp()
+            self.emit(CreatorDeauthorized {
+                creator,
+                deauthorized_by: get_caller_address(),
             });
         }
 
-        fn execute_schedule_revocation(ref self: ContractState, proposal_id: u256) {
-            self.access_control.assert_only_role(MULTISIG_ROLE);
+        fn pause(ref self: ContractState) {
+            self._assert_only_owner();
+            self.paused.write(true);
             
-            let mut proposal = self.proposals.read(proposal_id);
-            assert(proposal.proposal_type == 'REVOKE', 'Invalid proposal type');
-            assert(!proposal.executed, 'Already executed');
-            assert(get_block_timestamp() <= proposal.deadline, 'Proposal expired');
-
-            // Check if caller already voted
-            if !self.proposal_votes.read((proposal_id, get_caller_address())) {
-                proposal.approvals += 1;
-                self.proposal_votes.write((proposal_id, get_caller_address()), true);
-            }
-
-            // Check if threshold met
-            if proposal.approvals >= self.multisig_threshold.read() {
-                proposal.executed = true;
-                
-                // Revoke the schedule
-                let schedule_id = proposal.target_id;
-                let mut schedule = self.vesting_schedules.read(schedule_id);
-                let revoked_amount = schedule.total_amount - schedule.released_amount;
-                
-                schedule.is_active = false;
-                self.vesting_schedules.write(schedule_id, schedule);
-                self.total_schedules_revoked.write(self.total_schedules_revoked.read() + 1);
-
-                self.emit(VestingScheduleRevoked {
-                    schedule_id,
-                    beneficiary: schedule.beneficiary,
-                    revoked_amount,
-                    reason: proposal.reason,
-                    executor: get_caller_address(),
-                    timestamp: get_block_timestamp()
-                });
-
-                self.emit(ProposalExecuted {
-                    proposal_id,
-                    executor: get_caller_address(),
-                    final_approvals: proposal.approvals,
-                    timestamp: get_block_timestamp()
-                });
-            }
-
-            self.proposals.write(proposal_id, proposal);
-        }
-
-        fn update_multisig_threshold(ref self: ContractState, new_threshold: u8) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
-            
-            let member_count = self.multisig_member_count.read();
-            assert(new_threshold > 0 && new_threshold <= member_count, 'Invalid threshold');
-            
-            let old_threshold = self.multisig_threshold.read();
-            self.multisig_threshold.write(new_threshold);
-
-            self.emit(MultiSigThresholdUpdated {
-                old_threshold,
-                new_threshold,
-                updated_by: get_caller_address(),
-                timestamp: get_block_timestamp()
+            self.emit(ContractPaused {
+                paused_by: get_caller_address(),
             });
         }
 
-        // Compliance functions
-        fn add_compliance_officer(ref self: ContractState, officer: ContractAddress) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
+        fn unpause(ref self: ContractState) {
+            self._assert_only_owner();
+            self.paused.write(false);
             
-            self.compliance_officers.write(officer, true);
-            self.access_control._grant_role(COMPLIANCE_ROLE, officer);
-
-            self.emit(ComplianceOfficerAdded {
-                officer,
-                added_by: get_caller_address(),
-                timestamp: get_block_timestamp()
+            self.emit(ContractUnpaused {
+                unpaused_by: get_caller_address(),
             });
         }
 
-        fn remove_compliance_officer(ref self: ContractState, officer: ContractAddress) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
+        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
+            self._assert_only_owner();
+            assert(!new_owner.is_zero(), 'Invalid new owner');
             
-            self.compliance_officers.write(officer, false);
-            self.access_control._revoke_role(COMPLIANCE_ROLE, officer);
-
-            self.emit(ComplianceOfficerRemoved {
-                officer,
-                removed_by: get_caller_address(),
-                timestamp: get_block_timestamp()
-            });
-        }
-
-        fn flag_schedule_for_review(ref self: ContractState, schedule_id: u256, reason: felt252) {
-            self.access_control.assert_only_role(COMPLIANCE_ROLE);
+            let previous_owner = self.owner.read();
+            self.owner.write(new_owner);
             
-            let schedule = self.vesting_schedules.read(schedule_id);
-            assert(schedule.is_active, 'Schedule not active');
+            // Deauthorize old owner and authorize new owner
+            self.authorized_creators.write(previous_owner, false);
+            self.authorized_creators.write(new_owner, true);
             
-            self.flagged_schedules.write(schedule_id, reason);
-
-            self.emit(ScheduleFlaggedForReview {
-                schedule_id,
-                beneficiary: schedule.beneficiary,
-                reason,
-                flagged_by: get_caller_address(),
-                timestamp: get_block_timestamp()
-            });
-        }
-
-        fn approve_flagged_schedule(ref self: ContractState, schedule_id: u256) {
-            self.access_control.assert_only_role(COMPLIANCE_ROLE);
-            
-            let schedule = self.vesting_schedules.read(schedule_id);
-            assert(schedule.is_active, 'Schedule not active');
-            assert(self.flagged_schedules.read(schedule_id) != 0, 'Schedule not flagged');
-            
-            self.flagged_schedules.write(schedule_id, 0);
-
-            self.emit(ScheduleApproved {
-                schedule_id,
-                beneficiary: schedule.beneficiary,
-                approved_by: get_caller_address(),
-                timestamp: get_block_timestamp()
+            self.emit(OwnershipTransferred {
+                previous_owner,
+                new_owner,
             });
         }
     }
 
-    // Internal helper functions
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn _calculate_vested_amount(self: @ContractState, schedule_id: u256) -> u256 {
-            let schedule = self.vesting_schedules.read(schedule_id);
-            if !schedule.is_active {
+        fn _assert_only_owner(self: @ContractState) {
+            let caller = get_caller_address();
+            let owner = self.owner.read();
+            assert(caller == owner, 'Only owner');
+        }
+
+        fn _assert_not_paused(self: @ContractState) {
+            assert(!self.paused.read(), 'Contract paused');
+        }
+
+        fn _validate_vesting_parameters(
+            self: @ContractState,
+            cliff_duration: u64,
+            vesting_duration: u64,
+            config: VestingConfig
+        ) {
+            assert(cliff_duration >= config.min_cliff_duration, 'Cliff too short');
+            assert(cliff_duration <= config.max_cliff_duration, 'Cliff too long');
+            assert(vesting_duration >= config.min_vesting_duration, 'Vesting too short');
+            assert(vesting_duration <= config.max_vesting_duration, 'Vesting too long');
+            assert(vesting_duration > cliff_duration, 'Vesting > cliff');
+        }
+
+        fn _calculate_releasable_amount(self: @ContractState, schedule: VestingSchedule) -> u256 {
+            if schedule.revoked {
                 return 0;
             }
-
+            
             let current_time = get_block_timestamp();
             let cliff_end = schedule.start_time + schedule.cliff_duration;
             
-            // Before cliff
+            // Before cliff, nothing is releasable
             if current_time < cliff_end {
                 return 0;
             }
-
+            
             let vesting_end = schedule.start_time + schedule.vesting_duration;
             
-            // After vesting completed
-            if current_time >= vesting_end {
-                return schedule.total_amount;
-            }
-
-            // Linear vesting calculation
-            let vesting_time_elapsed = current_time - cliff_end;
-            let total_vesting_time = vesting_end - cliff_end;
-            
-            (schedule.total_amount * vesting_time_elapsed.into()) / total_vesting_time.into()
-        }
-
-        fn _calculate_releasable_amount(self: @ContractState, schedule_id: u256) -> u256 {
-            let schedule = self.vesting_schedules.read(schedule_id);
-            let vested_amount = self._calculate_vested_amount(schedule_id);
-            
-            if vested_amount <= schedule.released_amount {
-                0
+            let vested_amount = if current_time >= vesting_end {
+                // Fully vested
+                schedule.total_amount
             } else {
+                // Linear vesting after cliff
+                let time_since_cliff = current_time - cliff_end;
+                let vesting_period = vesting_end - cliff_end;
+                (schedule.total_amount * time_since_cliff.into()) / vesting_period.into()
+            };
+            
+            // Return releasable amount (vested - already released)
+            if vested_amount > schedule.released_amount {
                 vested_amount - schedule.released_amount
+            } else {
+                0
             }
         }
     }
+}
+
+/// Interface for Linear Vesting Contract
+#[starknet::interface]
+pub trait ILinearVesting<TContractState> {
+    fn create_vesting_schedule(
+        ref self: TContractState,
+        beneficiary: ContractAddress,
+        total_amount: u256,
+        cliff_duration: u64,
+        vesting_duration: u64,
+        revocable: bool
+    ) -> u256;
+    
+    fn release_tokens(ref self: TContractState, schedule_id: u256) -> u256;
+    fn revoke_vesting_schedule(ref self: TContractState, schedule_id: u256);
+    fn transfer_vesting_schedule(ref self: TContractState, schedule_id: u256, new_beneficiary: ContractAddress);
+    
+    fn get_vesting_schedule(self: @TContractState, schedule_id: u256) -> VestingSchedule;
+    fn get_releasable_amount(self: @TContractState, schedule_id: u256) -> u256;
+    fn get_beneficiary_schedules(self: @TContractState, beneficiary: ContractAddress) -> Array<u256>;
+    fn get_total_allocated(self: @TContractState) -> u256;
+    fn get_total_released(self: @TContractState) -> u256;
+    
+    fn authorize_creator(ref self: TContractState, creator: ContractAddress);
+    fn deauthorize_creator(ref self: TContractState, creator: ContractAddress);
+    fn pause(ref self: TContractState);
+    fn unpause(ref self: TContractState);
+    fn transfer_ownership(ref self: TContractState, new_owner: ContractAddress);
+}
+
+/// Utility functions for vesting calculations
+pub fn calculate_vested_amount(
+    total_amount: u256,
+    start_time: u64,
+    cliff_duration: u64,
+    vesting_duration: u64,
+    current_time: u64
+) -> u256 {
+    let cliff_end = start_time + cliff_duration;
+    
+    if current_time < cliff_end {
+        return 0;
+    }
+    
+    let vesting_end = start_time + vesting_duration;
+    
+    if current_time >= vesting_end {
+        return total_amount;
+    }
+    
+    let time_since_cliff = current_time - cliff_end;
+    let vesting_period = vesting_end - cliff_end;
+    (total_amount * time_since_cliff.into()) / vesting_period.into()
+}
+
+pub fn get_default_vesting_config() -> VestingConfig {
+    VestingConfig {
+        min_cliff_duration: 0,                    // No minimum cliff
+        max_cliff_duration: 365 * 24 * 3600,     // Max 1 year cliff
+        min_vesting_duration: 30 * 24 * 3600,    // Min 30 days vesting
+        max_vesting_duration: 4 * 365 * 24 * 3600, // Max 4 years vesting
+        allow_revocation: true,
+    }
+}
+
+pub fn validate_vesting_schedule(
+    total_amount: u256,
+    cliff_duration: u64,
+    vesting_duration: u64,
+    config: VestingConfig
+) -> bool {
+    total_amount > 0 &&
+    cliff_duration >= config.min_cliff_duration &&
+    cliff_duration <= config.max_cliff_duration &&
+    vesting_duration >= config.min_vesting_duration &&
+    vesting_duration <= config.max_vesting_duration &&
+    vesting_duration > cliff_duration
 } 

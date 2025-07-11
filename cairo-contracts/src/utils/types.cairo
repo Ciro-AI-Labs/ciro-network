@@ -1,184 +1,129 @@
-// CIRO Network Core Types
-// Optimized data structures for gas efficiency and functionality
+/// System-wide utility types for CIRO Network contracts
 
-use starknet::ContractAddress;
-
-/// Packed job data structure optimized for storage
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct JobData {
-    pub requester: ContractAddress,
-    pub model_id: felt252,
-    pub input_data_hash: felt252,
-    pub status: u8,                  // JobStatus as u8 for packing
-    pub priority: u8,                // Job priority level
-    pub worker_id: felt252,          // 0 if not assigned
-    pub result_hash: felt252,        // 0 if not completed
-    pub payment_amount: u256,
-    pub created_at: u64,
-    pub updated_at: u64,
-    pub timeout_at: u64,
+/// Job type enumeration
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
+#[allow(starknet::store_no_default_variant)]
+pub enum JobType {
+    AIInference,
+    AITraining,
+    ProofGeneration,
+    ProofVerification,
+    DataProcessing,
+    Custom
 }
 
-/// Packed worker profile for efficient storage
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct WorkerProfile {
-    pub owner: ContractAddress,
-    pub stake_amount: u256,
-    pub reputation_score: u16,       // 0-1000 scale
-    pub completed_jobs: u32,
-    pub successful_attestations: u32,
-    pub failed_jobs: u32,
-    pub status_flags: u8,            // Bitfield for various statuses
-    pub capabilities: u64,           // Bitfield for supported capabilities
-    pub last_active_time: u64,
-    pub registration_time: u64,
+/// Job state enumeration (external facing)
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
+#[allow(starknet::store_no_default_variant)]
+pub enum JobState {
+    Queued,
+    Processing,
+    Completed,
+    Failed,
+    Cancelled
 }
 
-/// Model requirements for job matching
+/// Verification method enumeration
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
+#[allow(starknet::store_no_default_variant)]
+pub enum VerificationMethod {
+    None,
+    StatisticalSampling,
+    ZeroKnowledgeProof,
+    MultiPartyComputation,
+    ConsensusValidation
+}
+
+/// Model ID wrapper
 #[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct ModelId {
+    pub value: u256
+}
+
+/// Worker ID wrapper  
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct WorkerId {
+    pub value: felt252
+}
+
+/// Job ID wrapper
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct JobId {
+    pub value: u256
+}
+
+/// Model requirements - Remove Copy and Store traits due to Array field
+#[derive(Drop, Serde)]
 pub struct ModelRequirements {
-    pub min_gpu_memory: u64,         // Minimum GPU memory in GB
-    pub min_cpu_cores: u8,           // Minimum CPU cores
-    pub min_ram: u64,                // Minimum RAM in GB
-    pub required_capabilities: u64,   // Required capability flags
-    pub estimated_runtime: u64,      // Estimated runtime in seconds
-    pub complexity_score: u8,        // 1-10 complexity rating
+    pub min_memory_gb: u32,
+    pub min_compute_units: u32,
+    pub required_gpu_type: felt252,
+    pub framework_dependencies: Array<felt252> // Arrays cannot be Copy or Store
 }
 
-/// Result attestation structure
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct ResultAttestation {
-    pub job_id: felt252,
-    pub result_hash: felt252,
-    pub worker_id: felt252,
-    pub timestamp: u64,
-    pub signature_r: felt252,        // ECDSA signature r component
-    pub signature_s: felt252,        // ECDSA signature s component
-    pub verification_status: u8,     // 0=pending, 1=verified, 2=disputed
+/// Job result structure - Remove Copy and Store traits due to Array field
+#[derive(Drop, Serde)]  
+pub struct JobResult {
+    pub job_id: JobId,
+    pub worker_id: WorkerId,
+    pub output_data_hash: felt252,
+    pub computation_proof: Array<felt252>, // Arrays cannot be Copy or Store
+    pub gas_used: u256,
+    pub execution_time: u64
 }
 
-/// Stake information with time-locking
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct StakeInfo {
-    pub amount: u256,
-    pub locked_until: u64,           // Timestamp when stake can be withdrawn
-    pub lock_duration: u64,          // Original lock duration in seconds
-    pub reward_multiplier: u16,      // Multiplier for rewards (100 = 1x)
-    pub slash_count: u8,             // Number of times slashed
-    pub last_slash_time: u64,        // Timestamp of last slash
+/// Priority levels for jobs
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
+#[allow(starknet::store_no_default_variant)]
+pub enum JobPriority {
+    Low,
+    Normal,
+    High,
+    Critical
 }
 
-/// Unstake request for delayed withdrawal
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct UnstakeRequest {
-    pub amount: u256,
-    pub requested_at: u64,
-    pub available_at: u64,           // When withdrawal becomes available
-    pub partial: bool,               // Whether this is a partial unstake
+/// Worker reputation tiers
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
+#[allow(starknet::store_no_default_variant)]
+pub enum WorkerTier {
+    Bronze,
+    Silver,
+    Gold,
+    Platinum,
+    Diamond
 }
 
-/// Performance metrics for workers
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct PerformanceMetrics {
-    pub total_jobs: u32,
-    pub successful_jobs: u32,
-    pub failed_jobs: u32,
-    pub disputed_jobs: u32,
-    pub average_completion_time: u64,
-    pub uptime_percentage: u16,      // 0-10000 (0.00% to 100.00%)
-    pub last_updated: u64,
+/// Allocation status for workers
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
+#[allow(starknet::store_no_default_variant)]
+pub enum AllocationStatus {
+    Available,
+    Reserved,
+    Busy,
+    Offline,
+    Slashed
 }
 
-/// Subscription details for Paymaster
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct Subscription {
-    pub tier: u8,                    // SubscriptionTier as u8
-    pub expires_at: u64,
-    pub daily_limit: u32,
-    pub monthly_limit: u32,
-    pub daily_used: u32,
-    pub monthly_used: u32,
-    pub last_reset_day: u32,         // Day of year for daily reset
-    pub last_reset_month: u8,        // Month for monthly reset
+/// Network phases for governance
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
+#[allow(starknet::store_no_default_variant)]
+pub enum NetworkPhase {
+    Bootstrap,
+    Growth,
+    Maturity,
+    Decline
 }
 
-/// Payment channel for micro-payments
+/// Simple percentage type (0-100)
 #[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct PaymentChannel {
-    pub sender: ContractAddress,
-    pub recipient: ContractAddress,
-    pub balance: u256,
-    pub nonce: u64,
-    pub expiration: u64,
-    pub is_open: bool,
-    pub last_settlement: u64,
+#[allow(starknet::store_no_default_variant)]
+pub enum Percentage {
+    Value: u8 // 0-100
 }
 
-/// Dispute information
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct DisputeInfo {
-    pub job_id: felt252,
-    pub initiator: ContractAddress,
-    pub disputed_party: ContractAddress,
-    pub dispute_type: u8,            // Type of dispute
-    pub evidence_hash: felt252,
-    pub created_at: u64,
-    pub resolved_at: u64,            // 0 if not resolved
-    pub resolution: u8,              // 0=pending, 1=favor_initiator, 2=favor_disputed
-    pub arbitrator: ContractAddress,
-}
-
-/// Slash record for tracking penalties
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct SlashRecord {
-    pub worker_id: felt252,
-    pub reason: u8,                  // SlashReason as u8
-    pub amount: u256,
-    pub timestamp: u64,
-    pub job_id: felt252,             // Related job if applicable
-    pub evidence_hash: felt252,
-}
-
-/// Allocation result for job-worker matching
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct AllocationResult {
-    pub job_id: felt252,
-    pub worker_id: felt252,
-    pub allocated_at: u64,
-    pub expected_completion: u64,
-    pub allocation_score: u16,       // Quality of the match (0-1000)
-    pub backup_workers: Array<felt252>, // Backup workers for failover
-}
-
-/// Pagination info for efficient querying
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct PaginationInfo {
-    pub offset: u32,
-    pub limit: u32,
-    pub total_count: u32,
-    pub has_more: bool,
-}
-
-/// Rate limit information
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct RateLimit {
-    pub requests_per_minute: u32,
-    pub requests_per_hour: u32,
-    pub requests_per_day: u32,
-    pub current_minute_count: u32,
-    pub current_hour_count: u32,
-    pub current_day_count: u32,
-    pub last_reset_minute: u64,
-    pub last_reset_hour: u64,
-    pub last_reset_day: u64,
-}
-
-/// Batch operation result
-#[derive(Copy, Drop, Serde, starknet::Store)]
-pub struct BatchResult {
-    pub total_operations: u32,
-    pub successful_operations: u32,
-    pub failed_operations: u32,
-    pub first_failure_index: u32,    // Index of first failure, u32::MAX if none
-    pub gas_used: u64,
+/// Reputation score (0-1000)
+#[derive(Copy, Drop, Serde, starknet::Store, PartialEq)]
+#[allow(starknet::store_no_default_variant)]
+pub enum ReputationScore {
+    Score: u16 // 0-1000
 } 

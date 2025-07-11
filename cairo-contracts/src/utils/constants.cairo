@@ -1,6 +1,15 @@
 // CIRO Network Constants
 // System-wide constants for gas optimization and configuration
 
+/// Security and access control constants
+pub const DEFAULT_ADMIN_ROLE: felt252 = 0x0; // OpenZeppelin default admin role
+pub const ADMIN_ROLE: felt252 = 'ADMIN_ROLE'; // Admin role for job manager
+pub const WORKER_ROLE: felt252 = 'WORKER_ROLE'; // Worker role
+pub const CLIENT_ROLE: felt252 = 'CLIENT_ROLE'; // Client role
+
+/// API and pagination constants
+pub const PAGINATION_LIMIT: u32 = 100; // Maximum results per page
+
 /// Tokenomics Constants (CIRO Token)
 pub const TOTAL_SUPPLY: u256 = 1_000_000_000_000_000_000_000_000_000; // 1B tokens with 18 decimals
 pub const MAX_MINT_PERCENTAGE: u32 = 1000; // 10% max mint percentage in basis points
@@ -122,14 +131,16 @@ pub const DISPUTE_PERIOD: u64 = 259200;     // 3 days
 
 /// Gas optimization constants
 pub const BATCH_SIZE_LIMIT: u32 = 50;       // Maximum batch size for operations
-pub const PAGINATION_LIMIT: u32 = 100;      // Maximum items per page
 
 /// Reputation scoring constants
 pub const REPUTATION_SCALE: u16 = 1000;     // Maximum reputation score
 pub const REPUTATION_INITIAL: u16 = 500;    // Initial reputation for new workers
+pub const REPUTATION_INITIAL_U64: u64 = 500; // Initial reputation as u64 for compatibility
+pub const REPUTATION_MAX: u64 = 1000;       // Maximum reputation score as u64
+pub const REPUTATION_MIN: u64 = 0;          // Minimum reputation score as u64
 pub const REPUTATION_BONUS_COMPLETION: u16 = 10; // Bonus for job completion
 pub const REPUTATION_PENALTY_TIMEOUT: u16 = 50;  // Penalty for timeout
-pub const REPUTATION_PENALTY_DISPUTE: u16 = 100; // Penalty for dispute loss 
+pub const REPUTATION_PENALTY_DISPUTE: u16 = 100; // Penalty for dispute loss
 
 // Governance Constants
 pub const PROPOSAL_DELAY: u64 = 3600; // 1 hour delay before voting starts
@@ -224,3 +235,35 @@ pub const SECURITY_EVENT_VERSION: u8 = 1;
 pub const BATCH_OPERATION_LIMIT: u32 = 50;
 pub const STORAGE_SLOT_OPTIMIZATION: u32 = 32;
 pub const MEMORY_ALLOCATION_LIMIT: u32 = 1024; 
+
+/// Rate limiting information for transfers
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct RateLimitInfo {
+    pub current_limit: u256,
+    pub current_usage: u256,
+    pub window_start: u64,
+    pub window_duration: u64,
+}
+
+/// Mathematical and scaling constants (SCALE already defined earlier)
+pub const BASIS_POINTS_SCALE: u32 = 10000;   // For percentage calculations (100% = 10000 bp)
+
+/// Network phase constants
+pub const PHASE_BOOTSTRAP: felt252 = 'bootstrap';
+pub const PHASE_GROWTH: felt252 = 'growth';
+pub const PHASE_TRANSITION: felt252 = 'transition';
+pub const PHASE_MATURE: felt252 = 'mature';
+
+/// Token holder tier requirements
+pub const VETERAN_HOLDER_MINIMUM_PERIOD: u64 = 63072000; // 2 years in seconds
+pub const LONG_TERM_HOLDER_MINIMUM_PERIOD: u64 = 31536000; // 1 year in seconds
+
+/// Voting power multipliers (basis points)
+pub const VOTING_POWER_MULTIPLIER_LONG_TERM: u32 = 120; // 1.2x
+pub const VOTING_POWER_MULTIPLIER_VETERAN: u32 = 150;   // 1.5x
+
+/// Additional governance proposal thresholds (MINOR/MAJOR already defined earlier)
+pub const GOVERNANCE_STRATEGIC_THRESHOLD: u256 = 100000000000000000000000; // 100,000 tokens
+
+/// Governance participation requirements
+pub const QUORUM_PERCENTAGE: u32 = 2000; // 20% in basis points 

@@ -1,15 +1,12 @@
-// CIRO Network Upgradability Framework
-// Comprehensive proxy patterns and upgrade mechanisms for DePIN applications
+// CIRO Network Upgradability Module
+// Secure upgrade patterns with proper access controls and governance integration
 
-use starknet::ContractAddress;
-use starknet::class_hash::ClassHash;
-use starknet::get_caller_address;
-use starknet::get_block_timestamp;
-use super::constants::*;
-use super::types::*;
+use starknet::{ContractAddress, ClassHash};
+use core::num::traits::Zero;
 
-/// Upgrade patterns supported by the framework
-#[derive(Drop, Serde, Copy, PartialEq)]
+/// Upgrade pattern types supported by the system
+#[derive(Drop, Serde, starknet::Store, Copy)]
+#[allow(starknet::store_no_default_variant)]
 pub enum UpgradePattern {
     UUPS,           // Universal Upgradeable Proxy Standard
     Transparent,    // Transparent Proxy Pattern
@@ -17,907 +14,424 @@ pub enum UpgradePattern {
     Direct,         // Direct contract replacement
 }
 
+/// Upgrade status tracking
+#[derive(Drop, Serde, starknet::Store, Copy)]
+#[allow(starknet::store_no_default_variant)]
+pub enum UpgradeStatus {
+    Pending,        // Upgrade proposal created
+    Approved,       // Governance approved
+    Queued,         // In timelock queue
+    Executed,       // Successfully executed
+    Cancelled,      // Cancelled by admin/governance
+    Failed,         // Execution failed
+}
+
+/// Upgrade authorization levels
+#[derive(Drop, Serde, starknet::Store, Copy)]
+#[allow(starknet::store_no_default_variant)]
+pub enum UpgradeAuthority {
+    Admin,          // Admin-only upgrade
+    Governance,     // Requires governance approval
+    Emergency,      // Emergency multisig
+    Timelock,       // Timelock controller
+}
+
 /// Upgrade proposal structure
-#[derive(Drop, Serde, starknet::Store)]
+#[derive(Drop, Serde, starknet::Store, Copy)]
 pub struct UpgradeProposal {
     pub id: u256,
     pub proposer: ContractAddress,
     pub target_contract: ContractAddress,
     pub new_implementation: ClassHash,
     pub upgrade_pattern: UpgradePattern,
-    pub migration_data: Array<felt252>,
+    pub authority_required: UpgradeAuthority,
     pub proposed_at: u64,
     pub execution_eta: u64,
-    pub executed: bool,
-    pub cancelled: bool,
-    pub requires_migration: bool,
-    pub active_jobs_count: u256,
+    pub status: UpgradeStatus,
+    pub governance_proposal_id: u256, // Link to governance proposal if applicable
+    pub emergency: bool,
 }
 
-/// Job-aware upgrade state
-#[derive(Drop, Serde, starknet::Store)]
-pub struct UpgradeState {
-    pub upgrade_requested: bool,
-    pub pending_upgrade: UpgradeProposal,
-    pub active_jobs: Map<u256, bool>,
-    pub job_completion_callbacks: Map<u256, ContractAddress>,
-    pub upgrade_window_start: u64,
-    pub upgrade_window_end: u64,
-    pub maintenance_mode: bool,
+/// Contract version tracking
+#[derive(Drop, Serde, starknet::Store, Copy)]
+pub struct ContractVersion {
+    pub implementation: ClassHash,
+    pub version_number: u32,
+    pub deployed_at: u64,
+    pub deployer: ContractAddress,
+    pub deprecated: bool,
 }
 
-/// UUPS Proxy interface
-#[starknet::interface]
-pub trait IUUPSProxy<TContractState> {
-    fn upgrade(ref self: TContractState, new_implementation: ClassHash);
-    fn get_implementation(self: @TContractState) -> ClassHash;
-    fn get_admin(self: @TContractState) -> ContractAddress;
-    fn set_admin(ref self: TContractState, new_admin: ContractAddress);
+/// Upgrade configuration
+#[derive(Drop, Serde, starknet::Store, Copy)]
+pub struct UpgradeConfig {
+    pub timelock_delay: u64,        // Minimum delay before execution
+    pub emergency_delay: u64,       // Delay for emergency upgrades
+    pub max_upgrade_delay: u64,     // Maximum timelock delay
+    pub require_governance: bool,   // Whether to require governance approval
+    pub allow_emergency: bool,      // Whether emergency upgrades are allowed
 }
 
-/// Transparent Proxy interface
-#[starknet::interface]
-pub trait ITransparentProxy<TContractState> {
-    fn upgrade(ref self: TContractState, new_implementation: ClassHash);
-    fn upgrade_and_call(
-        ref self: TContractState,
-        new_implementation: ClassHash,
-        selector: felt252,
-        calldata: Array<felt252>
-    );
-    fn get_implementation(self: @TContractState) -> ClassHash;
-    fn get_admin(self: @TContractState) -> ContractAddress;
-    fn set_admin(ref self: TContractState, new_admin: ContractAddress);
+/// Upgrade security check result
+#[derive(Drop, Serde, starknet::Store, Copy)]
+pub struct SecurityCheck {
+    pub compatibility_verified: bool,
+    pub storage_layout_safe: bool,
+    pub interface_preserved: bool,
+    pub security_audit_passed: bool,
+    pub governance_approved: bool,
 }
 
-/// Diamond Proxy interface
-#[starknet::interface]
-pub trait IDiamondProxy<TContractState> {
-    fn diamond_cut(ref self: TContractState, cuts: Array<FacetCut>);
-    fn get_facet(self: @TContractState, selector: felt252) -> ClassHash;
-    fn get_all_facets(self: @TContractState) -> Array<FacetInfo>;
-    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
+/// Upgrade Events
+#[derive(Drop, starknet::Event)]
+pub struct UpgradeProposed {
+    pub proposal_id: u256,
+    pub proposer: ContractAddress,
+    pub target_contract: ContractAddress,
+    pub new_implementation: ClassHash,
+    pub upgrade_pattern: UpgradePattern,
+    pub execution_eta: u64,
 }
 
-/// Job-aware upgrade interface
-#[starknet::interface]
-pub trait IJobAwareUpgrade<TContractState> {
-    fn request_upgrade(ref self: TContractState, new_implementation: ClassHash);
-    fn check_upgrade_readiness(self: @TContractState) -> bool;
-    fn execute_pending_upgrade(ref self: TContractState);
-    fn cancel_upgrade(ref self: TContractState);
-    fn get_active_jobs_count(self: @TContractState) -> u256;
-    fn register_job_completion(ref self: TContractState, job_id: u256);
-    fn enter_maintenance_mode(ref self: TContractState);
-    fn exit_maintenance_mode(ref self: TContractState);
+#[derive(Drop, starknet::Event)]
+pub struct UpgradeApproved {
+    pub proposal_id: u256,
+    pub approver: ContractAddress,
+    pub authority: UpgradeAuthority,
 }
 
-/// Facet cut structure for Diamond pattern
-#[derive(Drop, Serde, starknet::Store)]
-pub struct FacetCut {
-    pub facet_address: ClassHash,
-    pub action: FacetCutAction,
-    pub function_selectors: Array<felt252>,
+#[derive(Drop, starknet::Event)]
+pub struct UpgradeExecuted {
+    pub proposal_id: u256,
+    pub executor: ContractAddress,
+    pub target_contract: ContractAddress,
+    pub old_implementation: ClassHash,
+    pub new_implementation: ClassHash,
+    pub success: bool,
 }
 
-/// Facet cut actions
-#[derive(Drop, Serde, Copy, PartialEq)]
-pub enum FacetCutAction {
-    Add,
-    Replace,
-    Remove,
+#[derive(Drop, starknet::Event)]
+pub struct UpgradeCancelled {
+    pub proposal_id: u256,
+    pub canceller: ContractAddress,
+    pub reason: felt252,
 }
 
-/// Facet information
-#[derive(Drop, Serde, starknet::Store)]
-pub struct FacetInfo {
-    pub facet_address: ClassHash,
-    pub function_selectors: Array<felt252>,
+#[derive(Drop, starknet::Event)]
+pub struct EmergencyUpgrade {
+    pub executor: ContractAddress,
+    pub target_contract: ContractAddress,
+    pub new_implementation: ClassHash,
+    pub reason: felt252,
 }
 
-/// UUPS Proxy Component
-#[starknet::component]
-pub mod UUPSProxyComponent {
-    use super::*;
-    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+#[derive(Drop, starknet::Event)]
+pub struct ContractDeprecated {
+    pub contract_address: ContractAddress,
+    pub implementation: ClassHash,
+    pub deprecator: ContractAddress,
+    pub reason: felt252,
+}
 
-    #[storage]
-    struct Storage {
-        implementation: ClassHash,
-        admin: ContractAddress,
-        initialized: bool,
-    }
+/// Utility functions for upgradability
 
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    pub enum Event {
-        Upgraded: Upgraded,
-        AdminChanged: AdminChanged,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct Upgraded {
-        pub implementation: ClassHash,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct AdminChanged {
-        pub previous_admin: ContractAddress,
-        pub new_admin: ContractAddress,
-    }
-
-    #[embeddable_as(UUPSProxyImpl)]
-    impl UUPSProxy<
-        TContractState, +HasComponent<TContractState>
-    > of IUUPSProxy<ComponentState<TContractState>> {
-        fn upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            assert(caller == admin, 'Caller is not admin');
-            assert(new_implementation != 0.try_into().unwrap(), 'Invalid implementation');
-            
-            let old_implementation = self.implementation.read();
-            self.implementation.write(new_implementation);
-            
-            // Use replace_class_syscall for UUPS pattern
-            starknet::replace_class_syscall(new_implementation).unwrap();
-            
-            self.emit(Upgraded { implementation: new_implementation });
-        }
-
-        fn get_implementation(self: @ComponentState<TContractState>) -> ClassHash {
-            self.implementation.read()
-        }
-
-        fn get_admin(self: @ComponentState<TContractState>) -> ContractAddress {
-            self.admin.read()
-        }
-
-        fn set_admin(ref self: ComponentState<TContractState>, new_admin: ContractAddress) {
-            let caller = get_caller_address();
-            let current_admin = self.admin.read();
-            
-            assert(caller == current_admin, 'Caller is not admin');
-            assert(new_admin != starknet::contract_address_const::<0>(), 'Invalid admin address');
-            
-            self.admin.write(new_admin);
-            
-            self.emit(AdminChanged {
-                previous_admin: current_admin,
-                new_admin,
-            });
-        }
-    }
-
-    #[generate_trait]
-    pub impl InternalImpl<
-        TContractState, +HasComponent<TContractState>
-    > of InternalTrait<TContractState> {
-        fn initializer(
-            ref self: ComponentState<TContractState>,
-            implementation: ClassHash,
-            admin: ContractAddress
-        ) {
-            assert(!self.initialized.read(), 'Already initialized');
-            
-            self.implementation.write(implementation);
-            self.admin.write(admin);
-            self.initialized.write(true);
-        }
-
-        fn _upgrade_to_and_call(
-            ref self: ComponentState<TContractState>,
-            new_implementation: ClassHash,
-            selector: felt252,
-            calldata: Array<felt252>
-        ) {
-            self.upgrade(new_implementation);
-            
-            if selector != 0 {
-                starknet::call_contract_syscall(
-                    starknet::get_contract_address(),
-                    selector,
-                    calldata.span()
-                ).unwrap();
-            }
-        }
+/// Validate upgrade pattern compatibility
+pub fn validate_upgrade_pattern(
+    current_pattern: UpgradePattern,
+    new_pattern: UpgradePattern
+) -> bool {
+    match (current_pattern, new_pattern) {
+        (UpgradePattern::UUPS, UpgradePattern::UUPS) => true,
+        (UpgradePattern::Transparent, UpgradePattern::Transparent) => true,
+        (UpgradePattern::Diamond, UpgradePattern::Diamond) => true,
+        (UpgradePattern::Direct, _) => true, // Direct can upgrade to any pattern
+        (_, UpgradePattern::Direct) => true, // Any pattern can upgrade to direct
+        _ => false, // Cross-pattern upgrades not supported
     }
 }
 
-/// Transparent Proxy Component
-#[starknet::component]
-pub mod TransparentProxyComponent {
-    use super::*;
-    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
+/// Calculate upgrade execution deadline
+pub fn calculate_execution_deadline(
+    proposed_at: u64,
+    authority: UpgradeAuthority,
+    config: UpgradeConfig
+) -> u64 {
+    let delay = match authority {
+        UpgradeAuthority::Emergency => config.emergency_delay,
+        UpgradeAuthority::Admin => config.timelock_delay / 2, // Reduced delay for admin
+        _ => config.timelock_delay,
+    };
+    
+    proposed_at + delay
+}
 
-    #[storage]
-    struct Storage {
-        implementation: ClassHash,
-        admin: ContractAddress,
-        initialized: bool,
-    }
-
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    pub enum Event {
-        Upgraded: Upgraded,
-        AdminChanged: AdminChanged,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct Upgraded {
-        pub implementation: ClassHash,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct AdminChanged {
-        pub previous_admin: ContractAddress,
-        pub new_admin: ContractAddress,
-    }
-
-    #[embeddable_as(TransparentProxyImpl)]
-    impl TransparentProxy<
-        TContractState, +HasComponent<TContractState>
-    > of ITransparentProxy<ComponentState<TContractState>> {
-        fn upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            assert(caller == admin, 'Caller is not admin');
-            assert(new_implementation != 0.try_into().unwrap(), 'Invalid implementation');
-            
-            self.implementation.write(new_implementation);
-            
-            self.emit(Upgraded { implementation: new_implementation });
-        }
-
-        fn upgrade_and_call(
-            ref self: ComponentState<TContractState>,
-            new_implementation: ClassHash,
-            selector: felt252,
-            calldata: Array<felt252>
-        ) {
-            self.upgrade(new_implementation);
-            
-            if selector != 0 {
-                starknet::library_call_syscall(
-                    new_implementation,
-                    selector,
-                    calldata.span()
-                ).unwrap();
-            }
-        }
-
-        fn get_implementation(self: @ComponentState<TContractState>) -> ClassHash {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            // Admin cannot call implementation functions to avoid selector clashes
-            assert(caller != admin, 'Admin cannot call implementation');
-            
-            self.implementation.read()
-        }
-
-        fn get_admin(self: @ComponentState<TContractState>) -> ContractAddress {
-            self.admin.read()
-        }
-
-        fn set_admin(ref self: ComponentState<TContractState>, new_admin: ContractAddress) {
-            let caller = get_caller_address();
-            let current_admin = self.admin.read();
-            
-            assert(caller == current_admin, 'Caller is not admin');
-            assert(new_admin != starknet::contract_address_const::<0>(), 'Invalid admin address');
-            
-            self.admin.write(new_admin);
-            
-            self.emit(AdminChanged {
-                previous_admin: current_admin,
-                new_admin,
-            });
-        }
-    }
-
-    #[generate_trait]
-    pub impl InternalImpl<
-        TContractState, +HasComponent<TContractState>
-    > of InternalTrait<TContractState> {
-        fn initializer(
-            ref self: ComponentState<TContractState>,
-            implementation: ClassHash,
-            admin: ContractAddress
-        ) {
-            assert(!self.initialized.read(), 'Already initialized');
-            
-            self.implementation.write(implementation);
-            self.admin.write(admin);
-            self.initialized.write(true);
-        }
-
-        fn _fallback(self: @ComponentState<TContractState>, selector: felt252, calldata: Array<felt252>) -> Array<felt252> {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            // Check if admin is calling admin functions
-            if caller == admin && self._is_admin_function(selector) {
-                panic_with_felt252('Admin cannot call implementation');
-            }
-            
-            let implementation = self.implementation.read();
-            starknet::library_call_syscall(implementation, selector, calldata.span()).unwrap()
-        }
-
-        fn _is_admin_function(self: @ComponentState<TContractState>, selector: felt252) -> bool {
-            // Check if selector matches admin functions
-            selector == selector!("upgrade") ||
-            selector == selector!("upgrade_and_call") ||
-            selector == selector!("set_admin") ||
-            selector == selector!("get_admin") ||
-            selector == selector!("get_implementation")
-        }
+/// Validate upgrade authority permissions
+pub fn validate_upgrade_authority(
+    caller: ContractAddress,
+    authority: UpgradeAuthority,
+    admin: ContractAddress,
+    emergency_council: ContractAddress,
+    governance_contract: ContractAddress
+) -> bool {
+    match authority {
+        UpgradeAuthority::Admin => caller == admin,
+        UpgradeAuthority::Emergency => caller == emergency_council,
+        UpgradeAuthority::Governance => caller == governance_contract,
+        UpgradeAuthority::Timelock => caller == admin || caller == governance_contract,
     }
 }
 
-/// Diamond Proxy Component
-#[starknet::component]
-pub mod DiamondProxyComponent {
-    use super::*;
-    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-
-    #[storage]
-    #[allow(starknet::invalid_storage_member_types)]
-    struct Storage {
-        admin: ContractAddress,
-        selector_to_facet: Map<felt252, ClassHash>,
-        facet_to_selectors: Map<ClassHash, Array<felt252>>,
-        facets: Array<ClassHash>,
-        initialized: bool,
-    }
-
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    pub enum Event {
-        DiamondCut: DiamondCut,
-        AdminChanged: AdminChanged,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct DiamondCut {
-        pub cuts: Array<FacetCut>,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct AdminChanged {
-        pub previous_admin: ContractAddress,
-        pub new_admin: ContractAddress,
-    }
-
-    #[embeddable_as(DiamondProxyImpl)]
-    impl DiamondProxy<
-        TContractState, +HasComponent<TContractState>
-    > of IDiamondProxy<ComponentState<TContractState>> {
-        fn diamond_cut(ref self: ComponentState<TContractState>, cuts: Array<FacetCut>) {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            assert(caller == admin, 'Caller is not admin');
-            
-            let mut i = 0;
-            let cuts_len = cuts.len();
-            
-            while i < cuts_len {
-                let cut = cuts.at(i);
-                let facet = *cut.facet_address;
-                let action = *cut.action;
-                let selectors = cut.function_selectors;
-                
-                self._execute_facet_cut(facet, action, selectors);
-                i += 1;
-            };
-            
-            self.emit(DiamondCut { cuts });
-        }
-
-        fn get_facet(self: @ComponentState<TContractState>, selector: felt252) -> ClassHash {
-            self.selector_to_facet.read(selector)
-        }
-
-        fn get_all_facets(self: @ComponentState<TContractState>) -> Array<FacetInfo> {
-            let mut facet_infos = ArrayTrait::new();
-            let facets = self.facets.read();
-            
-            let mut i = 0;
-            let facets_len = facets.len();
-            
-            while i < facets_len {
-                let facet = *facets.at(i);
-                let selectors = self.facet_to_selectors.read(facet);
-                
-                facet_infos.append(FacetInfo {
-                    facet_address: facet,
-                    function_selectors: selectors,
-                });
-                
-                i += 1;
-            };
-            
-            facet_infos
-        }
-
-        fn supports_interface(self: @ComponentState<TContractState>, interface_id: felt252) -> bool {
-            // ERC-165 interface support
-            interface_id == 0x01ffc9a7 || // ERC-165
-            interface_id == 0x48e2b093    // Diamond interface
-        }
-    }
-
-    #[generate_trait]
-    pub impl InternalImpl<
-        TContractState, +HasComponent<TContractState>
-    > of InternalTrait<TContractState> {
-        fn initializer(
-            ref self: ComponentState<TContractState>,
-            admin: ContractAddress,
-            initial_cuts: Array<FacetCut>
-        ) {
-            assert(!self.initialized.read(), 'Already initialized');
-            
-            self.admin.write(admin);
-            self.initialized.write(true);
-            
-            // Apply initial cuts
-            if initial_cuts.len() > 0 {
-                self.diamond_cut(initial_cuts);
-            }
-        }
-
-        fn _execute_facet_cut(
-            ref self: ComponentState<TContractState>,
-            facet: ClassHash,
-            action: FacetCutAction,
-            selectors: @Array<felt252>
-        ) {
-            let mut i = 0;
-            let selectors_len = selectors.len();
-            
-            while i < selectors_len {
-                let selector = *selectors.at(i);
-                
-                match action {
-                    FacetCutAction::Add => {
-                        assert(self.selector_to_facet.read(selector) == 0.try_into().unwrap(), 'Function already exists');
-                        self.selector_to_facet.write(selector, facet);
-                    },
-                    FacetCutAction::Replace => {
-                        assert(self.selector_to_facet.read(selector) != 0.try_into().unwrap(), 'Function does not exist');
-                        self.selector_to_facet.write(selector, facet);
-                    },
-                    FacetCutAction::Remove => {
-                        assert(self.selector_to_facet.read(selector) != 0.try_into().unwrap(), 'Function does not exist');
-                        self.selector_to_facet.write(selector, 0.try_into().unwrap());
-                    },
-                }
-                
-                i += 1;
-            };
-        }
-
-        fn _fallback(self: @ComponentState<TContractState>, selector: felt252, calldata: Array<felt252>) -> Array<felt252> {
-            let facet = self.selector_to_facet.read(selector);
-            assert(facet != 0.try_into().unwrap(), 'Function does not exist');
-            
-            starknet::library_call_syscall(facet, selector, calldata.span()).unwrap()
-        }
+/// Check if upgrade timing is valid
+pub fn is_upgrade_timing_valid(
+    current_time: u64,
+    execution_eta: u64,
+    authority: UpgradeAuthority
+) -> bool {
+    match authority {
+        UpgradeAuthority::Emergency => current_time >= execution_eta, // No additional delay
+        _ => current_time >= execution_eta && current_time <= execution_eta + (7 * 24 * 3600), // 7-day execution window
     }
 }
 
-/// Job-Aware Upgrade Component
-#[starknet::component]
-pub mod JobAwareUpgradeComponent {
-    use super::*;
-    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-
-    #[storage]
-    #[allow(starknet::invalid_storage_member_types)]
-    struct Storage {
-        admin: ContractAddress,
-        upgrade_state: UpgradeState,
-        job_registry: ContractAddress,
-        upgrade_proposals: Map<u256, UpgradeProposal>,
-        proposal_count: u256,
-        grace_period: u64,
-        max_upgrade_delay: u64,
-    }
-
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    pub enum Event {
-        UpgradeRequested: UpgradeRequested,
-        UpgradeExecuted: UpgradeExecuted,
-        UpgradeCancelled: UpgradeCancelled,
-        MaintenanceModeEntered: MaintenanceModeEntered,
-        MaintenanceModeExited: MaintenanceModeExited,
-        JobCompleted: JobCompleted,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct UpgradeRequested {
-        pub proposal_id: u256,
-        pub new_implementation: ClassHash,
-        pub execution_eta: u64,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct UpgradeExecuted {
-        pub proposal_id: u256,
-        pub implementation: ClassHash,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct UpgradeCancelled {
-        pub proposal_id: u256,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct MaintenanceModeEntered {
-        pub reason: felt252,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct MaintenanceModeExited {
-        pub duration: u64,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub struct JobCompleted {
-        pub job_id: u256,
-        pub remaining_jobs: u256,
-    }
-
-    #[embeddable_as(JobAwareUpgradeImpl)]
-    impl JobAwareUpgrade<
-        TContractState, +HasComponent<TContractState>
-    > of IJobAwareUpgrade<ComponentState<TContractState>> {
-        fn request_upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            assert(caller == admin, 'Caller is not admin');
-            assert(new_implementation != 0.try_into().unwrap(), 'Invalid implementation');
-            
-            let current_time = get_block_timestamp();
-            let proposal_id = self.proposal_count.read() + 1;
-            self.proposal_count.write(proposal_id);
-            
-            let active_jobs = self._count_active_jobs();
-            let execution_eta = if active_jobs > 0 {
-                // Wait for jobs to complete, but set a maximum delay
-                current_time + self.max_upgrade_delay.read()
-            } else {
-                // Can execute immediately after grace period
-                current_time + self.grace_period.read()
-            };
-            
-            let proposal = UpgradeProposal {
-                id: proposal_id,
-                proposer: caller,
-                target_contract: starknet::get_contract_address(),
-                new_implementation,
-                upgrade_pattern: UpgradePattern::UUPS,
-                migration_data: ArrayTrait::new(),
-                proposed_at: current_time,
-                execution_eta,
-                executed: false,
-                cancelled: false,
-                requires_migration: false,
-                active_jobs_count: active_jobs,
-            };
-            
-            self.upgrade_proposals.write(proposal_id, proposal);
-            
-            // Update upgrade state
-            let mut upgrade_state = self.upgrade_state.read();
-            upgrade_state.upgrade_requested = true;
-            upgrade_state.pending_upgrade = proposal;
-            self.upgrade_state.write(upgrade_state);
-            
-            self.emit(UpgradeRequested {
-                proposal_id,
-                new_implementation,
-                execution_eta,
-            });
-        }
-
-        fn check_upgrade_readiness(self: @ComponentState<TContractState>) -> bool {
-            let upgrade_state = self.upgrade_state.read();
-            
-            if !upgrade_state.upgrade_requested {
-                return false;
-            }
-            
-            let current_time = get_block_timestamp();
-            let proposal = upgrade_state.pending_upgrade;
-            
-            // Check if execution time has passed
-            if current_time < proposal.execution_eta {
-                return false;
-            }
-            
-            // Check if there are active jobs
-            let active_jobs = self._count_active_jobs();
-            if active_jobs > 0 {
-                // Check if we've exceeded the maximum delay
-                if current_time > proposal.proposed_at + self.max_upgrade_delay.read() {
-                    // Force upgrade despite active jobs (emergency case)
-                    return true;
-                }
-                return false;
-            }
-            
-            true
-        }
-
-        fn execute_pending_upgrade(ref self: ComponentState<TContractState>) {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            assert(caller == admin, 'Caller is not admin');
-            assert(self.check_upgrade_readiness(), 'Upgrade not ready');
-            
-            let mut upgrade_state = self.upgrade_state.read();
-            let proposal = upgrade_state.pending_upgrade;
-            
-            // Execute the upgrade
-            starknet::replace_class_syscall(proposal.new_implementation).unwrap();
-            
-            // Update state
-            upgrade_state.upgrade_requested = false;
-            upgrade_state.maintenance_mode = false;
-            self.upgrade_state.write(upgrade_state);
-            
-            // Mark proposal as executed
-            let mut executed_proposal = proposal;
-            executed_proposal.executed = true;
-            self.upgrade_proposals.write(proposal.id, executed_proposal);
-            
-            self.emit(UpgradeExecuted {
-                proposal_id: proposal.id,
-                implementation: proposal.new_implementation,
-            });
-        }
-
-        fn cancel_upgrade(ref self: ComponentState<TContractState>) {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            assert(caller == admin, 'Caller is not admin');
-            
-            let mut upgrade_state = self.upgrade_state.read();
-            assert(upgrade_state.upgrade_requested, 'No upgrade pending');
-            
-            let proposal = upgrade_state.pending_upgrade;
-            
-            // Cancel the upgrade
-            upgrade_state.upgrade_requested = false;
-            upgrade_state.maintenance_mode = false;
-            self.upgrade_state.write(upgrade_state);
-            
-            // Mark proposal as cancelled
-            let mut cancelled_proposal = proposal;
-            cancelled_proposal.cancelled = true;
-            self.upgrade_proposals.write(proposal.id, cancelled_proposal);
-            
-            self.emit(UpgradeCancelled {
-                proposal_id: proposal.id,
-            });
-        }
-
-        fn get_active_jobs_count(self: @ComponentState<TContractState>) -> u256 {
-            self._count_active_jobs()
-        }
-
-        fn register_job_completion(ref self: ComponentState<TContractState>, job_id: u256) {
-            // This would typically be called by the JobMgr contract
-            let upgrade_state = self.upgrade_state.read();
-            
-            if upgrade_state.upgrade_requested {
-                let remaining_jobs = self._count_active_jobs() - 1;
-                
-                self.emit(JobCompleted {
-                    job_id,
-                    remaining_jobs,
-                });
-                
-                // If no jobs remain and upgrade is pending, it can now be executed
-                if remaining_jobs == 0 {
-                    // Auto-execute if conditions are met
-                    if self.check_upgrade_readiness() {
-                        self.execute_pending_upgrade();
-                    }
-                }
-            }
-        }
-
-        fn enter_maintenance_mode(ref self: ComponentState<TContractState>) {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            assert(caller == admin, 'Caller is not admin');
-            
-            let mut upgrade_state = self.upgrade_state.read();
-            upgrade_state.maintenance_mode = true;
-            self.upgrade_state.write(upgrade_state);
-            
-            self.emit(MaintenanceModeEntered {
-                reason: 'Upgrade preparation',
-            });
-        }
-
-        fn exit_maintenance_mode(ref self: ComponentState<TContractState>) {
-            let caller = get_caller_address();
-            let admin = self.admin.read();
-            
-            assert(caller == admin, 'Caller is not admin');
-            
-            let mut upgrade_state = self.upgrade_state.read();
-            upgrade_state.maintenance_mode = false;
-            self.upgrade_state.write(upgrade_state);
-            
-            self.emit(MaintenanceModeExited {
-                duration: 0, // Calculate actual duration
-            });
-        }
-    }
-
-    #[generate_trait]
-    pub impl InternalImpl<
-        TContractState, +HasComponent<TContractState>
-    > of InternalTrait<TContractState> {
-        fn initializer(
-            ref self: ComponentState<TContractState>,
-            admin: ContractAddress,
-            job_registry: ContractAddress,
-            grace_period: u64,
-            max_upgrade_delay: u64
-        ) {
-            self.admin.write(admin);
-            self.job_registry.write(job_registry);
-            self.grace_period.write(grace_period);
-            self.max_upgrade_delay.write(max_upgrade_delay);
-            
-            // Initialize upgrade state
-            let upgrade_state = UpgradeState {
-                upgrade_requested: false,
-                pending_upgrade: UpgradeProposal {
-                    id: 0,
-                    proposer: starknet::contract_address_const::<0>(),
-                    target_contract: starknet::contract_address_const::<0>(),
-                    new_implementation: 0.try_into().unwrap(),
-                    upgrade_pattern: UpgradePattern::UUPS,
-                    migration_data: ArrayTrait::new(),
-                    proposed_at: 0,
-                    execution_eta: 0,
-                    executed: false,
-                    cancelled: false,
-                    requires_migration: false,
-                    active_jobs_count: 0,
-                },
-                active_jobs: Default::default(),
-                job_completion_callbacks: Default::default(),
-                upgrade_window_start: 0,
-                upgrade_window_end: 0,
-                maintenance_mode: false,
-            };
-            
-            self.upgrade_state.write(upgrade_state);
-        }
-
-        fn _count_active_jobs(self: @ComponentState<TContractState>) -> u256 {
-            // This would query the job registry or job manager contract
-            // For now, return a placeholder
-            let job_registry = self.job_registry.read();
-            
-            // In a real implementation, this would call:
-            // IJobRegistryDispatcher { contract_address: job_registry }.get_active_jobs_count()
-            0 // Placeholder
-        }
-
-        fn _is_maintenance_mode(self: @ComponentState<TContractState>) -> bool {
-            self.upgrade_state.read().maintenance_mode
-        }
-
-        fn _require_not_maintenance_mode(self: @ComponentState<TContractState>) {
-            assert(!self._is_maintenance_mode(), 'Contract in maintenance mode');
-        }
+/// Perform comprehensive security checks
+pub fn perform_security_checks(
+    current_implementation: ClassHash,
+    new_implementation: ClassHash,
+    governance_approved: bool
+) -> SecurityCheck {
+    // In a real implementation, these would perform actual checks
+    // For now, return basic validation results
+    
+    let compatibility_verified = new_implementation != current_implementation;
+    let storage_layout_safe = true; // Would check storage compatibility
+    let interface_preserved = true; // Would verify interface compatibility
+    let security_audit_passed = true; // Would check audit status
+    
+    SecurityCheck {
+        compatibility_verified,
+        storage_layout_safe,
+        interface_preserved,
+        security_audit_passed,
+        governance_approved,
     }
 }
 
-/// Upgrade utilities and helper functions
-pub mod upgrade_utils {
-    use super::*;
-
-    /// Validate upgrade proposal
-    pub fn validate_upgrade_proposal(
-        current_implementation: ClassHash,
-        new_implementation: ClassHash,
-        upgrade_pattern: UpgradePattern
-    ) -> bool {
-        // Basic validation
-        if new_implementation == 0.try_into().unwrap() {
-            return false;
-        }
-        
-        if current_implementation == new_implementation {
-            return false;
-        }
-        
-        // Pattern-specific validation
-        match upgrade_pattern {
-            UpgradePattern::UUPS => {
-                // UUPS requires the new implementation to support upgrades
-                // This would check if the new implementation has the upgrade function
-                true // Placeholder
-            },
-            UpgradePattern::Diamond => {
-                // Diamond pattern validation
-                true // Placeholder
-            },
-            _ => true
-        }
+/// Validate upgrade proposal parameters
+pub fn validate_upgrade_proposal(
+    target_contract: ContractAddress,
+    new_implementation: ClassHash,
+    upgrade_pattern: UpgradePattern,
+    authority: UpgradeAuthority,
+    config: UpgradeConfig
+) -> bool {
+    // Basic validation checks
+    if target_contract.is_zero() || new_implementation.is_zero() {
+        return false;
     }
-
-    /// Calculate upgrade timing based on job load
-    pub fn calculate_upgrade_timing(
-        active_jobs: u256,
-        average_job_duration: u64,
-        max_delay: u64
-    ) -> (u64, u64) {
-        let current_time = get_block_timestamp();
-        
-        if active_jobs == 0 {
-            // Can upgrade immediately after grace period
-            (current_time + 3600, current_time + 3600) // 1 hour grace period
-        } else {
-            // Estimate completion time
-            let estimated_completion = current_time + (active_jobs.try_into().unwrap() * average_job_duration);
-            let max_allowed_time = current_time + max_delay;
-            
-            // Use the minimum of estimated completion and max allowed time
-            let upgrade_time = if estimated_completion < max_allowed_time {
-                estimated_completion
-            } else {
-                max_allowed_time
-            };
-            
-            (upgrade_time, max_allowed_time)
+    
+    // Check if governance is required but authority is not governance
+    if config.require_governance {
+        match authority {
+            UpgradeAuthority::Governance => true,
+            UpgradeAuthority::Emergency => config.allow_emergency,
+            _ => false,
         }
+    } else {
+        true
     }
+}
 
-    /// Check if contract supports interface for upgrade compatibility
-    pub fn check_interface_support(
-        contract_address: ContractAddress,
-        interface_id: felt252
-    ) -> bool {
-        // This would call the contract's supports_interface function
-        // For ERC-165 compliance checking
-        true // Placeholder
-    }
+/// Check upgrade readiness
+pub fn is_upgrade_ready(
+    proposal: UpgradeProposal,
+    current_time: u64,
+    security_checks: SecurityCheck
+) -> bool {
+    // Must be approved and timing valid
+    let timing_valid = is_upgrade_timing_valid(current_time, proposal.execution_eta, proposal.authority_required);
+    let status_valid = match proposal.status {
+        UpgradeStatus::Approved => true,
+        UpgradeStatus::Queued => true,
+        _ => false,
+    };
+    
+    // All security checks must pass
+    let security_valid = security_checks.compatibility_verified &&
+                        security_checks.storage_layout_safe &&
+                        security_checks.interface_preserved &&
+                        security_checks.security_audit_passed;
+    
+    timing_valid && status_valid && security_valid
+}
 
-    /// Generate migration plan for storage layout changes
-    pub fn generate_migration_plan(
-        old_storage_layout: Array<felt252>,
-        new_storage_layout: Array<felt252>
-    ) -> Array<felt252> {
-        // This would analyze storage layout differences and generate migration steps
-        let migration_steps = ArrayTrait::new();
-        // Implementation would go here
-        migration_steps
+/// Generate upgrade proposal ID
+pub fn generate_proposal_id(
+    target_contract: ContractAddress,
+    new_implementation: ClassHash,
+    proposer: ContractAddress,
+    timestamp: u64
+) -> u256 {
+    // Simple hash-based ID generation using felt252 arithmetic
+    let target_felt: felt252 = target_contract.into();
+    let impl_felt: felt252 = new_implementation.into();
+    let proposer_felt: felt252 = proposer.into();
+    let timestamp_felt: felt252 = timestamp.into();
+    
+    let hash_input: felt252 = target_felt + impl_felt + proposer_felt + timestamp_felt;
+    hash_input.into()
+}
+
+/// Get upgrade pattern name
+pub fn get_upgrade_pattern_name(pattern: UpgradePattern) -> felt252 {
+    match pattern {
+        UpgradePattern::UUPS => 'uups',
+        UpgradePattern::Transparent => 'transparent',
+        UpgradePattern::Diamond => 'diamond',
+        UpgradePattern::Direct => 'direct',
     }
+}
+
+/// Get upgrade status name
+pub fn get_upgrade_status_name(status: UpgradeStatus) -> felt252 {
+    match status {
+        UpgradeStatus::Pending => 'pending',
+        UpgradeStatus::Approved => 'approved',
+        UpgradeStatus::Queued => 'queued',
+        UpgradeStatus::Executed => 'executed',
+        UpgradeStatus::Cancelled => 'cancelled',
+        UpgradeStatus::Failed => 'failed',
+    }
+}
+
+/// Get upgrade authority name
+pub fn get_upgrade_authority_name(authority: UpgradeAuthority) -> felt252 {
+    match authority {
+        UpgradeAuthority::Admin => 'admin',
+        UpgradeAuthority::Governance => 'governance',
+        UpgradeAuthority::Emergency => 'emergency',
+        UpgradeAuthority::Timelock => 'timelock',
+    }
+}
+
+/// Calculate upgrade risk score
+pub fn calculate_upgrade_risk_score(
+    upgrade_pattern: UpgradePattern,
+    authority: UpgradeAuthority,
+    emergency: bool,
+    time_since_last_upgrade: u64
+) -> u32 {
+    let mut risk_score = 0;
+    
+    // Pattern risk
+    risk_score += match upgrade_pattern {
+        UpgradePattern::Direct => 80,      // Highest risk
+        UpgradePattern::Transparent => 60, // High risk
+        UpgradePattern::UUPS => 40,        // Medium risk
+        UpgradePattern::Diamond => 20,     // Lower risk
+    };
+    
+    // Authority risk
+    risk_score += match authority {
+        UpgradeAuthority::Emergency => 50, // High risk
+        UpgradeAuthority::Admin => 30,     // Medium risk
+        UpgradeAuthority::Timelock => 10,  // Low risk
+        UpgradeAuthority::Governance => 0, // Lowest risk
+    };
+    
+    // Emergency upgrade penalty
+    if emergency {
+        risk_score += 40;
+    }
+    
+    // Recent upgrade penalty
+    if time_since_last_upgrade < 7 * 24 * 3600 { // Less than 7 days
+        risk_score += 30;
+    }
+    
+    // Cap at 100
+    if risk_score > 100 {
+        100
+    } else {
+        risk_score
+    }
+}
+
+/// Check upgrade cooldown period
+pub fn is_upgrade_cooldown_respected(
+    last_upgrade_time: u64,
+    current_time: u64,
+    min_cooldown: u64,
+    emergency: bool
+) -> bool {
+    if emergency {
+        return true; // Emergency upgrades bypass cooldown
+    }
+    
+    current_time >= last_upgrade_time + min_cooldown
+}
+
+/// Validate contract version progression
+pub fn validate_version_progression(
+    current_version: u32,
+    new_version: u32,
+    allow_downgrade: bool
+) -> bool {
+    if allow_downgrade {
+        new_version != current_version
+    } else {
+        new_version > current_version
+    }
+}
+
+/// Get default upgrade configuration
+pub fn get_default_upgrade_config() -> UpgradeConfig {
+    UpgradeConfig {
+        timelock_delay: 2 * 24 * 3600,    // 2 days
+        emergency_delay: 6 * 3600,        // 6 hours
+        max_upgrade_delay: 30 * 24 * 3600, // 30 days
+        require_governance: true,
+        allow_emergency: true,
+    }
+}
+
+/// Validate upgrade configuration
+pub fn validate_upgrade_config(config: UpgradeConfig) -> bool {
+    config.timelock_delay >= config.emergency_delay &&
+    config.timelock_delay <= config.max_upgrade_delay &&
+    config.emergency_delay > 0 &&
+    config.max_upgrade_delay > 0
+}
+
+/// Calculate upgrade fee based on risk
+pub fn calculate_upgrade_fee(risk_score: u32, base_fee: u256) -> u256 {
+    let risk_multiplier = if risk_score > 80 {
+        300 // 3x for very high risk
+    } else if risk_score > 60 {
+        200 // 2x for high risk
+    } else if risk_score > 40 {
+        150 // 1.5x for medium risk
+    } else {
+        100 // 1x for low risk
+    };
+    
+    (base_fee * risk_multiplier.into()) / 100
+}
+
+/// Check if emergency upgrade is justified
+pub fn is_emergency_justified(
+    security_vulnerability: bool,
+    critical_bug: bool,
+    governance_failure: bool
+) -> bool {
+    security_vulnerability || critical_bug || governance_failure
 }
 
 /// Upgrade constants
-pub const DEFAULT_GRACE_PERIOD: u64 = 3600; // 1 hour
-pub const DEFAULT_MAX_UPGRADE_DELAY: u64 = 604800; // 7 days
-pub const EMERGENCY_UPGRADE_DELAY: u64 = 0; // Immediate
-pub const STANDARD_UPGRADE_DELAY: u64 = 86400; // 24 hours 
+pub const MIN_TIMELOCK_DELAY: u64 = 3600; // 1 hour minimum
+pub const MAX_TIMELOCK_DELAY: u64 = 30 * 24 * 3600; // 30 days maximum
+pub const EMERGENCY_MIN_DELAY: u64 = 1800; // 30 minutes minimum for emergency
+pub const UPGRADE_COOLDOWN_PERIOD: u64 = 24 * 3600; // 24 hours between upgrades
+pub const MAX_RISK_SCORE: u32 = 100;
+pub const UPGRADE_EXECUTION_WINDOW: u64 = 7 * 24 * 3600; // 7 days to execute after timelock
+pub const MIN_VERSION_NUMBER: u32 = 1;
+pub const MAX_PENDING_UPGRADES: u32 = 5; // Maximum concurrent pending upgrades per contract 

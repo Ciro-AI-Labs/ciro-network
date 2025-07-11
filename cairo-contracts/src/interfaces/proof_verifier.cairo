@@ -43,7 +43,7 @@ pub enum ProofPriority {
 }
 
 // Proof job specification
-#[derive(Drop, Serde, starknet::Store)]
+#[derive(Drop, Serde)]
 pub struct ProofJobSpec {
     pub job_id: ProofJobId,
     pub proof_type: ProofType,
@@ -58,7 +58,7 @@ pub struct ProofJobSpec {
 }
 
 // Proof submission from workers
-#[derive(Drop, Serde, starknet::Store)]
+#[derive(Drop, Serde)]
 pub struct ProofSubmission {
     pub job_id: ProofJobId,
     pub worker_id: WorkerId,

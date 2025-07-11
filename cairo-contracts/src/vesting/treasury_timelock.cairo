@@ -29,7 +29,7 @@ pub trait ITreasuryTimelock<TContractState> {
     fn update_threshold(ref self: TContractState, new_threshold: u32);
 }
 
-#[derive(Drop, Serde, starknet::Store)]
+#[derive(Drop, Serde, starknet::Store, Copy)]
 pub struct TimelockTransaction {
     pub tx_id: u256,
     pub proposer: ContractAddress,
@@ -45,33 +45,40 @@ pub struct TimelockTransaction {
     pub approval_threshold: u32
 }
 
-// Component imports
+// Component imports  
 use openzeppelin::access::accesscontrol::AccessControlComponent;
 use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
 use openzeppelin::security::pausable::PausableComponent;
+use openzeppelin::introspection::src5::SRC5Component;
 
 #[starknet::contract]
 mod TreasuryTimelock {
     use super::*;
-    use starknet::{ContractAddress, get_caller_address, get_block_timestamp, storage::Map};
+    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
+    use starknet::storage::{
+        Map, StoragePointerReadAccess, StoragePointerWriteAccess,
+        StorageMapReadAccess, StorageMapWriteAccess
+    };
 
     // Component declarations
     component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
     component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
+    component!(path: SRC5Component, storage: src5, event: SRC5Event);
 
     // Embedded implementations
     #[abi(embed_v0)]
     impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
     #[abi(embed_v0)]
-    impl ReentrancyGuardImpl = ReentrancyGuardComponent::ReentrancyGuardImpl<ContractState>;
-    #[abi(embed_v0)]
     impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
+    #[abi(embed_v0)]
+    impl SRC5Impl = SRC5Component::SRC5Impl<ContractState>;
 
     // Internal implementations
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
     impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
     impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
+    impl SRC5InternalImpl = SRC5Component::InternalImpl<ContractState>;
 
     const ADMIN_ROLE: felt252 = 0x0;
     const MULTISIG_ROLE: felt252 = 'MULTISIG';
@@ -85,6 +92,8 @@ mod TreasuryTimelock {
         reentrancy_guard: ReentrancyGuardComponent::Storage,
         #[substorage(v0)]
         pausable: PausableComponent::Storage,
+        #[substorage(v0)]
+        src5: SRC5Component::Storage,
 
         // Core storage
         transactions: Map<u256, TimelockTransaction>,
@@ -105,6 +114,8 @@ mod TreasuryTimelock {
         ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
         #[flat]
         PausableEvent: PausableComponent::Event,
+        #[flat]
+        SRC5Event: SRC5Component::Event,
         
         TransactionProposed: TransactionProposed,
         TransactionApproved: TransactionApproved,
@@ -154,9 +165,9 @@ mod TreasuryTimelock {
         admin: ContractAddress
     ) {
         self.access_control.initializer();
-        self.access_control._grant_role(ADMIN_ROLE, admin);
-        self.reentrancy_guard.initializer();
+        self.src5.initializer();
         self.pausable.initializer();
+        self.access_control._grant_role(ADMIN_ROLE, admin);
 
         let member_count: u32 = multisig_members.len().try_into().unwrap();
         assert(threshold > 0 && threshold <= member_count, 'Invalid threshold');
@@ -221,33 +232,58 @@ mod TreasuryTimelock {
         fn approve_transaction(ref self: ContractState, tx_id: u256) {
             self.access_control.assert_only_role(MULTISIG_ROLE);
             
-            let mut tx = self.transactions.read(tx_id);
+            let tx = self.transactions.read(tx_id);
             assert(!tx.executed && !tx.cancelled, 'Invalid transaction state');
             assert(!self.approvals.read((tx_id, get_caller_address())), 'Already approved');
 
-            tx.approvals += 1;
-            self.transactions.write(tx_id, tx);
+            let updated_tx = TimelockTransaction {
+                tx_id: tx.tx_id,
+                proposer: tx.proposer,
+                target: tx.target,
+                value: tx.value,
+                data_hash: tx.data_hash,
+                description: tx.description,
+                created_time: tx.created_time,
+                execution_time: tx.execution_time,
+                approvals: tx.approvals + 1,
+                executed: tx.executed,
+                cancelled: tx.cancelled,
+                approval_threshold: tx.approval_threshold
+            };
+            self.transactions.write(tx_id, updated_tx);
             self.approvals.write((tx_id, get_caller_address()), true);
 
             self.emit(TransactionApproved {
                 tx_id,
                 approver: get_caller_address(),
-                approvals: tx.approvals,
-                threshold: tx.approval_threshold
+                approvals: updated_tx.approvals,
+                threshold: updated_tx.approval_threshold
             });
         }
 
         fn execute_transaction(ref self: ContractState, tx_id: u256) {
             self.access_control.assert_only_role(MULTISIG_ROLE);
-            self.reentrancy_guard.start();
 
-            let mut tx = self.transactions.read(tx_id);
+            let tx = self.transactions.read(tx_id);
             assert(!tx.executed && !tx.cancelled, 'Invalid transaction state');
             assert(tx.approvals >= tx.approval_threshold, 'Insufficient approvals');
             assert(get_block_timestamp() >= tx.execution_time, 'Timelock not expired');
 
-            tx.executed = true;
-            self.transactions.write(tx_id, tx);
+            let updated_tx = TimelockTransaction {
+                tx_id: tx.tx_id,
+                proposer: tx.proposer,
+                target: tx.target,
+                value: tx.value,
+                data_hash: tx.data_hash,
+                description: tx.description,
+                created_time: tx.created_time,
+                execution_time: tx.execution_time,
+                approvals: tx.approvals,
+                executed: true,
+                cancelled: tx.cancelled,
+                approval_threshold: tx.approval_threshold
+            };
+            self.transactions.write(tx_id, updated_tx);
 
             // Execute the transaction
             // Note: Actual execution would require call_contract_syscall
@@ -256,8 +292,6 @@ mod TreasuryTimelock {
                 tx_id,
                 executor: get_caller_address()
             });
-
-            self.reentrancy_guard.end();
         }
 
         fn cancel_transaction(ref self: ContractState, tx_id: u256) {
@@ -265,8 +299,20 @@ mod TreasuryTimelock {
             assert(get_caller_address() == tx.proposer || self.access_control.has_role(ADMIN_ROLE, get_caller_address()), 'Unauthorized');
             assert(!tx.executed && !tx.cancelled, 'Invalid transaction state');
 
-            let mut updated_tx = tx;
-            updated_tx.cancelled = true;
+            let updated_tx = TimelockTransaction {
+                tx_id: tx.tx_id,
+                proposer: tx.proposer,
+                target: tx.target,
+                value: tx.value,
+                data_hash: tx.data_hash,
+                description: tx.description,
+                created_time: tx.created_time,
+                execution_time: tx.execution_time,
+                approvals: tx.approvals,
+                executed: tx.executed,
+                cancelled: true,
+                approval_threshold: tx.approval_threshold
+            };
             self.transactions.write(tx_id, updated_tx);
 
             self.emit(TransactionCancelled {
@@ -277,7 +323,7 @@ mod TreasuryTimelock {
 
         fn emergency_pause(ref self: ContractState, reason: felt252) {
             self.access_control.assert_only_role(EMERGENCY_ROLE);
-            self.pausable._pause();
+            self.pausable.pause();
         }
 
         fn emergency_cancel_all(ref self: ContractState) {

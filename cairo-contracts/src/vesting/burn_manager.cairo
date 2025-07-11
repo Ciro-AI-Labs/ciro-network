@@ -1,1078 +1,681 @@
-//! Burn Manager Contract - Hybrid Burning System
-//! CIRO Network - Sophisticated Token Burning Mechanics
-//! Implements automatic protocol burns + DAO-triggered Treasury burns with KPI gates
+// CIRO Network Burn Manager
+// Token buyback and burn mechanisms for ecosystem value accrual
 
-use starknet::ContractAddress;
+use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
+use starknet::storage::{
+    StoragePointerReadAccess, StoragePointerWriteAccess,
+    StorageMapReadAccess, StorageMapWriteAccess, Map
+};
+use core::num::traits::Zero;
 
-#[starknet::interface]
-pub trait IBurnManager<TContractState> {
-    // Automatic burning functions
-    fn burn_from_job_fees(ref self: TContractState, amount: u256);
-    fn burn_from_slashing(ref self: TContractState, amount: u256);
-    fn burn_from_gas_fees(ref self: TContractState, amount: u256);
-    
-    // KPI-based Treasury burns
-    fn propose_kpi_burn(ref self: TContractState, milestone_type: felt252, required_amount: u256, evidence_hash: felt252);
-    fn validate_kpi_achievement(ref self: TContractState, proposal_id: u256, validation_result: bool, validator_evidence: felt252);
-    fn execute_kpi_burn(ref self: TContractState, proposal_id: u256);
-    fn challenge_kpi_validation(ref self: TContractState, proposal_id: u256, challenge_reason: felt252);
-    
-    // Emergency burns
-    fn propose_emergency_burn(ref self: TContractState, amount: u256, reason: felt252);
-    fn execute_emergency_burn(ref self: TContractState, proposal_id: u256);
-    
-    // View functions
-    fn get_total_burned(self: @TContractState) -> u256;
-    fn get_burn_statistics(self: @TContractState) -> BurnStatistics;
-    fn get_kpi_burn_proposal(self: @TContractState, proposal_id: u256) -> KPIBurnProposal;
-    fn get_daily_burn_limits(self: @TContractState) -> (u256, u256, u256); // (automatic, treasury, total)
-    fn get_remaining_daily_limits(self: @TContractState) -> (u256, u256, u256);
-    fn can_execute_burn(self: @TContractState, burn_type: felt252, amount: u256) -> bool;
-    
-    // Administration
-    fn update_burn_limits(ref self: TContractState, automatic_daily_limit: u256, treasury_daily_limit: u256);
-    fn update_kpi_milestones(ref self: TContractState, milestone_updates: Array<KPIMilestone>);
-    fn add_burn_authority(ref self: TContractState, authority: ContractAddress, role: felt252);
-    fn remove_burn_authority(ref self: TContractState, authority: ContractAddress);
-    fn pause_burn_type(ref self: TContractState, burn_type: felt252, reason: felt252);
-    fn resume_burn_type(ref self: TContractState, burn_type: felt252);
+/// Burn schedule structure
+#[derive(Drop, Serde, starknet::Store, Copy)]
+pub struct BurnSchedule {
+    pub id: u256,
+    pub total_amount: u256,
+    pub burned_amount: u256,
+    pub burn_rate: u256,        // tokens per period
+    pub period_duration: u64,   // seconds between burns
+    pub start_time: u64,
+    pub end_time: u64,
+    pub active: bool,
+    pub schedule_type: BurnType,
 }
 
-#[derive(Drop, Serde, starknet::Store)]
-pub struct BurnStatistics {
+/// Types of burn mechanisms
+#[derive(Drop, Serde, starknet::Store, Copy)]
+#[allow(starknet::store_no_default_variant)]
+pub enum BurnType {
+    Fixed,      // Fixed schedule burn
+    Revenue,    // Revenue-based burn
+    Buyback,    // Market buyback and burn
+    Emergency,  // Emergency burn
+}
+
+/// Revenue burn configuration
+#[derive(Drop, Serde, starknet::Store, Copy)]
+pub struct RevenueBurnConfig {
+    pub revenue_percentage: u256,  // percentage in basis points (10000 = 100%)
+    pub min_burn_amount: u256,
+    pub max_burn_amount: u256,
+    pub accumulation_period: u64,
+}
+
+/// Buyback configuration
+#[derive(Drop, Serde, starknet::Store, Copy)]
+pub struct BuybackConfig {
+    pub treasury_allocation: u256,  // percentage for buybacks
+    pub price_threshold: u256,      // minimum price for buybacks
+    pub max_slippage: u256,         // maximum slippage in basis points
+    pub cooldown_period: u64,       // minimum time between buybacks
+}
+
+/// Events
+#[derive(Drop, starknet::Event)]
+pub struct TokensBurned {
+    pub schedule_id: u256,
+    pub amount: u256,
+    pub burn_type: BurnType,
+    pub timestamp: u64,
     pub total_burned: u256,
-    pub job_fee_burns: u256,
-    pub slashing_burns: u256,
-    pub gas_fee_burns: u256,
-    pub kpi_burns: u256,
-    pub emergency_burns: u256,
-    pub total_burn_events: u256,
-    pub daily_burned_today: u256,
-    pub last_burn_timestamp: u64,
-    pub average_daily_burn: u256,
-    pub burn_rate_7d: u256,       // 7-day moving average
-    pub burn_rate_30d: u256       // 30-day moving average
 }
 
-#[derive(Drop, Serde, starknet::Store)]
-pub struct KPIBurnProposal {
-    pub proposal_id: u256,
-    pub proposer: ContractAddress,
-    pub milestone_type: felt252,   // 'ARR_250K', 'WORKERS_250', 'BREAKEVEN', etc.
-    pub required_burn_amount: u256,
-    pub evidence_hash: felt252,    // IPFS hash of achievement evidence
-    pub created_time: u64,
-    pub validation_deadline: u64,
-    pub execution_deadline: u64,
-    pub validator: ContractAddress,
-    pub validation_result: bool,
-    pub validation_evidence: felt252,
-    pub validation_time: u64,
-    pub status: ProposalStatus,
-    pub challenge_count: u32,
-    pub dao_approvals: u32,
-    pub dao_threshold: u32,
-    pub executed: bool,
-    pub execution_time: u64
+#[derive(Drop, starknet::Event)]
+pub struct BurnScheduleCreated {
+    pub schedule_id: u256,
+    pub total_amount: u256,
+    pub burn_rate: u256,
+    pub start_time: u64,
+    pub end_time: u64,
+    pub schedule_type: BurnType,
 }
 
-#[derive(Drop, Serde, starknet::Store)]
-pub struct KPIMilestone {
-    pub milestone_id: felt252,     // 'ARR_250K', 'WORKERS_250', etc.
-    pub description: felt252,      // Short description
-    pub target_value: u256,        // Target achievement value
-    pub burn_amount: u256,         // Tokens to burn upon achievement
-    pub oracle_source: ContractAddress, // Oracle for verification
-    pub is_active: bool,
-    pub achieved: bool,
-    pub achievement_time: u64,
-    pub evidence_hash: felt252,
-    pub validator_required: bool
+#[derive(Drop, starknet::Event)]
+pub struct RevenueBurnExecuted {
+    pub revenue_amount: u256,
+    pub burn_amount: u256,
+    pub burn_percentage: u256,
 }
 
-#[derive(Drop, Serde, starknet::Store)]
-pub enum ProposalStatus {
-    Pending,
-    Validated,
-    Challenged,
-    Approved,
-    Rejected,
-    Executed,
-    Expired
+#[derive(Drop, starknet::Event)]
+pub struct BuybackExecuted {
+    pub eth_amount: u256,
+    pub tokens_bought: u256,
+    pub tokens_burned: u256,
+    pub average_price: u256,
 }
 
-#[derive(Drop, Serde, starknet::Store)]
-pub struct DailyBurnData {
-    pub date: u64,                 // Unix timestamp (day start)
-    pub automatic_burns: u256,
-    pub treasury_burns: u256,
-    pub total_burns: u256,
-    pub burn_events_count: u32
-}
-
-#[derive(Drop, Serde, starknet::Store)]
-pub struct Challenge {
-    pub challenge_id: u256,
-    pub proposal_id: u256,
-    pub challenger: ContractAddress,
+#[derive(Drop, starknet::Event)]
+pub struct EmergencyBurn {
+    pub amount: u256,
     pub reason: felt252,
-    pub evidence_hash: felt252,
-    pub created_time: u64,
-    pub resolved: bool,
-    pub resolution_outcome: bool,
-    pub resolved_by: ContractAddress,
-    pub resolution_time: u64
+    pub authorized_by: ContractAddress,
 }
 
-// Component imports for production security
-use openzeppelin::access::accesscontrol::AccessControlComponent;
-use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
-use openzeppelin::security::pausable::PausableComponent;
-use openzeppelin::upgrades::UpgradeableComponent;
-use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-
+/// Burn Manager Contract
 #[starknet::contract]
-mod BurnManager {
-    use super::*;
-    use starknet::{
-        ContractAddress, get_caller_address, get_contract_address, get_block_timestamp,
-        storage::{Map, Vec}
+pub mod BurnManager {
+    use super::{
+        BurnSchedule, BurnType, RevenueBurnConfig, BuybackConfig,
+        TokensBurned, BurnScheduleCreated, RevenueBurnExecuted,
+        BuybackExecuted, EmergencyBurn
     };
-
-    // Component declarations
-    component!(path: AccessControlComponent, storage: access_control, event: AccessControlEvent);
-    component!(path: ReentrancyGuardComponent, storage: reentrancy_guard, event: ReentrancyGuardEvent);
-    component!(path: PausableComponent, storage: pausable, event: PausableEvent);
-    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
-
-    // Embedded implementations
-    #[abi(embed_v0)]
-    impl AccessControlImpl = AccessControlComponent::AccessControlImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl ReentrancyGuardImpl = ReentrancyGuardComponent::ReentrancyGuardImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
-    #[abi(embed_v0)]
-    impl UpgradeableImpl = UpgradeableComponent::UpgradeableImpl<ContractState>;
-
-    // Internal implementations
-    impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
-    impl ReentrancyGuardInternalImpl = ReentrancyGuardComponent::InternalImpl<ContractState>;
-    impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
-    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
-
-    // Role constants
-    const ADMIN_ROLE: felt252 = 0x0;
-    const BURN_AUTHORITY_ROLE: felt252 = 'BURN_AUTHORITY';
-    const KPI_VALIDATOR_ROLE: felt252 = 'KPI_VALIDATOR';
-    const DAO_ROLE: felt252 = 'DAO';
-    const ORACLE_ROLE: felt252 = 'ORACLE';
-    const EMERGENCY_ROLE: felt252 = 'EMERGENCY';
+    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
+    use starknet::storage::{
+        StoragePointerReadAccess, StoragePointerWriteAccess,
+        StorageMapReadAccess, StorageMapWriteAccess, Map
+    };
+    use core::num::traits::Zero;
 
     #[storage]
     struct Storage {
-        // Component storages
-        #[substorage(v0)]
-        access_control: AccessControlComponent::Storage,
-        #[substorage(v0)]
-        reentrancy_guard: ReentrancyGuardComponent::Storage,
-        #[substorage(v0)]
-        pausable: PausableComponent::Storage,
-        #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage,
-
-        // Core burn tracking
-        total_burned: u256,
-        burn_statistics: BurnStatistics,
-        daily_burn_data: Map<u64, DailyBurnData>, // date -> burn data
-
-        // Token contracts
-        ciro_token: ContractAddress,
+        // Core state
+        owner: ContractAddress,
+        token_contract: ContractAddress,
         treasury_contract: ContractAddress,
-
-        // Burn limits and controls
-        automatic_daily_limit: u256,      // Max automatic burns per day
-        treasury_daily_limit: u256,       // Max treasury burns per day
-        total_daily_limit: u256,         // Max total burns per day
-        emergency_daily_limit: u256,      // Max emergency burns per day
         
-        // Daily tracking
-        today_date: u64,                  // Current day timestamp
-        today_automatic_burned: u256,
-        today_treasury_burned: u256,
-        today_total_burned: u256,
-
-        // KPI burn proposals
-        kpi_burn_proposals: Map<u256, KPIBurnProposal>,
-        next_proposal_id: u256,
-        kpi_milestones: Map<felt252, KPIMilestone>,
-        active_milestone_count: u32,
-
-        // Challenge system
-        challenges: Map<u256, Challenge>,
-        proposal_challenges: Map<u256, u32>, // proposal_id -> challenge count
-        next_challenge_id: u256,
-        challenge_period: u64,             // Time window for challenges
-
-        // DAO governance
-        dao_multisig_threshold: u32,
-        dao_proposal_votes: Map<(u256, ContractAddress), bool>, // (proposal_id, voter) -> voted
-
-        // Burn type controls
-        burn_type_paused: Map<felt252, bool>, // burn_type -> paused status
-        burn_type_pause_reason: Map<felt252, felt252>,
-
-        // Historical tracking for analytics
-        burn_history: Map<u256, u256>,     // block_number -> amount burned
-        monthly_burns: Map<u64, u256>,     // month -> total burned
-        yearly_burns: Map<u64, u256>,      // year -> total burned
-
-        // Oracle integration
-        price_oracle: ContractAddress,
-        kpi_oracles: Map<felt252, ContractAddress>, // milestone_type -> oracle
-
-        // Statistics for audit trail
-        total_proposals_created: u256,
-        total_proposals_executed: u256,
-        total_challenges_raised: u256,
-        total_challenges_upheld: u256
+        // Burn schedules
+        schedule_count: u256,
+        schedules: Map<u256, BurnSchedule>,
+        last_burn_time: Map<u256, u64>,
+        
+        // Revenue burns
+        revenue_config: RevenueBurnConfig,
+        accumulated_revenue: u256,
+        last_revenue_burn: u64,
+        
+        // Buyback configuration
+        buyback_config: BuybackConfig,
+        last_buyback_time: u64,
+        
+        // Statistics
+        total_burned: u256,
+        total_revenue_burned: u256,
+        total_buyback_burned: u256,
+        total_emergency_burned: u256,
+        burn_count: u256,
+        
+        // Access control
+        authorized_burners: Map<ContractAddress, bool>,
+        paused: bool,
+        
+        // Revenue sources
+        revenue_sources: Map<ContractAddress, bool>,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
-        // Component events
-        #[flat]
-        AccessControlEvent: AccessControlComponent::Event,
-        #[flat]
-        ReentrancyGuardEvent: ReentrancyGuardComponent::Event,
-        #[flat]
-        PausableEvent: PausableComponent::Event,
-        #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event,
-
-        // Burn events for audit trail
-        AutomaticBurnExecuted: AutomaticBurnExecuted,
-        KPIBurnProposed: KPIBurnProposed,
-        KPIBurnValidated: KPIBurnValidated,
-        KPIBurnExecuted: KPIBurnExecuted,
-        EmergencyBurnExecuted: EmergencyBurnExecuted,
-        
-        // Challenge events
-        BurnProposalChallenged: BurnProposalChallenged,
-        ChallengeResolved: ChallengeResolved,
-        
-        // Administration events
-        BurnLimitsUpdated: BurnLimitsUpdated,
-        KPIMilestoneUpdated: KPIMilestoneUpdated,
-        BurnTypePaused: BurnTypePaused,
-        BurnTypeResumed: BurnTypeResumed,
-        BurnAuthorityUpdated: BurnAuthorityUpdated,
-        
-        // Milestone achievement events
-        KPIMilestoneAchieved: KPIMilestoneAchieved,
-        
-        // Analytics events
-        DailyBurnLimitReached: DailyBurnLimitReached,
-        BurnRateAlert: BurnRateAlert
-    }
-
-    // Event structures for comprehensive audit trail
-    #[derive(Drop, starknet::Event)]
-    struct AutomaticBurnExecuted {
-        #[key]
-        burn_type: felt252,
-        amount: u256,
-        source_contract: ContractAddress,
-        total_burned_today: u256,
-        remaining_daily_limit: u256,
-        executor: ContractAddress,
-        timestamp: u64
+    pub enum Event {
+        TokensBurned: TokensBurned,
+        BurnScheduleCreated: BurnScheduleCreated,
+        RevenueBurnExecuted: RevenueBurnExecuted,
+        BuybackExecuted: BuybackExecuted,
+        EmergencyBurn: EmergencyBurn,
+        BurnerAuthorized: BurnerAuthorized,
+        BurnerDeauthorized: BurnerDeauthorized,
+        RevenueSourceAdded: RevenueSourceAdded,
+        RevenueSourceRemoved: RevenueSourceRemoved,
+        OwnershipTransferred: OwnershipTransferred,
+        ContractPaused: ContractPaused,
+        ContractUnpaused: ContractUnpaused,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct KPIBurnProposed {
-        #[key]
-        proposal_id: u256,
-        #[key]
-        proposer: ContractAddress,
-        milestone_type: felt252,
-        required_amount: u256,
-        evidence_hash: felt252,
-        validation_deadline: u64,
-        execution_deadline: u64,
-        timestamp: u64
+    pub struct BurnerAuthorized {
+        pub burner: ContractAddress,
+        pub authorized_by: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct KPIBurnValidated {
-        #[key]
-        proposal_id: u256,
-        #[key]
-        validator: ContractAddress,
-        validation_result: bool,
-        validation_evidence: felt252,
-        timestamp: u64
+    pub struct BurnerDeauthorized {
+        pub burner: ContractAddress,
+        pub deauthorized_by: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct KPIBurnExecuted {
-        #[key]
-        proposal_id: u256,
-        milestone_type: felt252,
-        amount: u256,
-        treasury_balance_before: u256,
-        treasury_balance_after: u256,
-        executor: ContractAddress,
-        timestamp: u64
+    pub struct RevenueSourceAdded {
+        pub source: ContractAddress,
+        pub added_by: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct EmergencyBurnExecuted {
-        #[key]
-        proposal_id: u256,
-        amount: u256,
-        reason: felt252,
-        executor: ContractAddress,
-        approvals_count: u32,
-        timestamp: u64
+    pub struct RevenueSourceRemoved {
+        pub source: ContractAddress,
+        pub removed_by: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct BurnProposalChallenged {
-        #[key]
-        challenge_id: u256,
-        #[key]
-        proposal_id: u256,
-        #[key]
-        challenger: ContractAddress,
-        reason: felt252,
-        timestamp: u64
+    pub struct OwnershipTransferred {
+        pub previous_owner: ContractAddress,
+        pub new_owner: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct ChallengeResolved {
-        #[key]
-        challenge_id: u256,
-        proposal_id: u256,
-        resolution_outcome: bool,
-        resolved_by: ContractAddress,
-        timestamp: u64
+    pub struct ContractPaused {
+        pub paused_by: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct BurnLimitsUpdated {
-        old_automatic_limit: u256,
-        new_automatic_limit: u256,
-        old_treasury_limit: u256,
-        new_treasury_limit: u256,
-        updated_by: ContractAddress,
-        timestamp: u64
+    pub struct ContractUnpaused {
+        pub unpaused_by: ContractAddress,
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct KPIMilestoneUpdated {
-        #[key]
-        milestone_id: felt252,
-        target_value: u256,
-        burn_amount: u256,
-        oracle_source: ContractAddress,
-        updated_by: ContractAddress,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct BurnTypePaused {
-        #[key]
-        burn_type: felt252,
-        reason: felt252,
-        paused_by: ContractAddress,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct BurnTypeResumed {
-        #[key]
-        burn_type: felt252,
-        resumed_by: ContractAddress,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct BurnAuthorityUpdated {
-        #[key]
-        authority: ContractAddress,
-        role: felt252,
-        action: felt252, // 'ADDED' or 'REMOVED'
-        updated_by: ContractAddress,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct KPIMilestoneAchieved {
-        #[key]
-        milestone_id: felt252,
-        achieved_value: u256,
-        target_value: u256,
-        burn_amount: u256,
-        evidence_hash: felt252,
-        validator: ContractAddress,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct DailyBurnLimitReached {
-        #[key]
-        limit_type: felt252,
-        limit_amount: u256,
-        attempted_amount: u256,
-        timestamp: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct BurnRateAlert {
-        alert_type: felt252, // 'HIGH_RATE' or 'LOW_RATE'
-        current_rate: u256,
-        threshold_rate: u256,
-        period: felt252, // '7D' or '30D'
-        timestamp: u64
-    }
-
-    // Constructor for production deployment
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        ciro_token: ContractAddress,
+        owner: ContractAddress,
+        token_contract: ContractAddress,
         treasury_contract: ContractAddress,
-        price_oracle: ContractAddress,
-        admin: ContractAddress,
-        dao_multisig_threshold: u32,
-        initial_limits: (u256, u256, u256, u256) // (automatic, treasury, total, emergency)
+        revenue_config: RevenueBurnConfig,
+        buyback_config: BuybackConfig
     ) {
-        // Initialize access control
-        self.access_control.initializer();
-        self.access_control._grant_role(ADMIN_ROLE, admin);
-        
-        // Initialize security components
-        self.reentrancy_guard.initializer();
-        self.pausable.initializer();
-        self.upgradeable.initializer(admin);
-
-        // Set contracts
-        self.ciro_token.write(ciro_token);
+        self.owner.write(owner);
+        self.token_contract.write(token_contract);
         self.treasury_contract.write(treasury_contract);
-        self.price_oracle.write(price_oracle);
-
-        // Set limits
-        let (automatic_limit, treasury_limit, total_limit, emergency_limit) = initial_limits;
-        self.automatic_daily_limit.write(automatic_limit);
-        self.treasury_daily_limit.write(treasury_limit);
-        self.total_daily_limit.write(total_limit);
-        self.emergency_daily_limit.write(emergency_limit);
-
-        // Initialize governance
-        self.dao_multisig_threshold.write(dao_multisig_threshold);
-
-        // Initialize counters
-        self.next_proposal_id.write(1);
-        self.next_challenge_id.write(1);
+        self.revenue_config.write(revenue_config);
+        self.buyback_config.write(buyback_config);
         
-        // Set challenge period to 72 hours
-        self.challenge_period.write(259200);
-
-        // Initialize daily tracking
-        self.today_date.write(self._get_day_start(get_block_timestamp()));
-
-        // Initialize burn statistics
-        let initial_stats = BurnStatistics {
-            total_burned: 0,
-            job_fee_burns: 0,
-            slashing_burns: 0,
-            gas_fee_burns: 0,
-            kpi_burns: 0,
-            emergency_burns: 0,
-            total_burn_events: 0,
-            daily_burned_today: 0,
-            last_burn_timestamp: 0,
-            average_daily_burn: 0,
-            burn_rate_7d: 0,
-            burn_rate_30d: 0
-        };
-        self.burn_statistics.write(initial_stats);
+        self.schedule_count.write(0);
+        self.total_burned.write(0);
+        self.total_revenue_burned.write(0);
+        self.total_buyback_burned.write(0);
+        self.total_emergency_burned.write(0);
+        self.burn_count.write(0);
+        self.paused.write(false);
+        
+        // Owner is automatically authorized burner
+        self.authorized_burners.write(owner, true);
     }
 
     #[abi(embed_v0)]
     impl BurnManagerImpl of super::IBurnManager<ContractState> {
-        
-        fn burn_from_job_fees(ref self: ContractState, amount: u256) {
-            // Only authorized contracts can trigger automatic burns
-            self.access_control.assert_only_role(BURN_AUTHORITY_ROLE);
-            self.pausable.assert_not_paused();
-            assert(!self.burn_type_paused.read('JOB_FEES'), 'Job fee burns paused');
+        fn create_burn_schedule(
+            ref self: ContractState,
+            total_amount: u256,
+            burn_rate: u256,
+            period_duration: u64,
+            start_time: u64,
+            end_time: u64,
+            schedule_type: BurnType
+        ) -> u256 {
+            self._assert_only_owner();
+            self._assert_not_paused();
+            assert(total_amount > 0, 'Amount must be positive');
+            assert(burn_rate > 0, 'Rate must be positive');
+            assert(period_duration > 0, 'Period must be positive');
+            assert(end_time > start_time, 'Invalid time range');
             
-            self._execute_automatic_burn('JOB_FEES', amount);
-        }
-
-        fn burn_from_slashing(ref self: ContractState, amount: u256) {
-            self.access_control.assert_only_role(BURN_AUTHORITY_ROLE);
-            self.pausable.assert_not_paused();
-            assert(!self.burn_type_paused.read('SLASHING'), 'Slashing burns paused');
-            
-            self._execute_automatic_burn('SLASHING', amount);
-        }
-
-        fn burn_from_gas_fees(ref self: ContractState, amount: u256) {
-            self.access_control.assert_only_role(BURN_AUTHORITY_ROLE);
-            self.pausable.assert_not_paused();
-            assert(!self.burn_type_paused.read('GAS_FEES'), 'Gas fee burns paused');
-            
-            self._execute_automatic_burn('GAS_FEES', amount);
-        }
-
-        fn propose_kpi_burn(ref self: ContractState, milestone_type: felt252, required_amount: u256, evidence_hash: felt252) {
-            self.access_control.assert_only_role(DAO_ROLE);
-            self.pausable.assert_not_paused();
-            
-            // Validate milestone exists and is active
-            let milestone = self.kpi_milestones.read(milestone_type);
-            assert(milestone.is_active, 'Milestone not active');
-            assert(!milestone.achieved, 'Milestone already achieved');
-            assert(required_amount == milestone.burn_amount, 'Amount mismatch');
-
-            // Check treasury-only source protection
-            let treasury_balance = IERC20Dispatcher { contract_address: self.ciro_token.read() }
-                .balance_of(self.treasury_contract.read());
-            assert(treasury_balance >= required_amount, 'Insufficient treasury balance');
-
-            let proposal_id = self.next_proposal_id.read();
+            let schedule_id = self.schedule_count.read();
             let current_time = get_block_timestamp();
             
-            let proposal = KPIBurnProposal {
-                proposal_id,
-                proposer: get_caller_address(),
-                milestone_type,
-                required_burn_amount: required_amount,
-                evidence_hash,
-                created_time: current_time,
-                validation_deadline: current_time + 604800, // 7 days
-                execution_deadline: current_time + 1209600, // 14 days
-                validator: ContractAddress::default(),
-                validation_result: false,
-                validation_evidence: 0,
-                validation_time: 0,
-                status: ProposalStatus::Pending,
-                challenge_count: 0,
-                dao_approvals: 1, // Proposer's vote
-                dao_threshold: self.dao_multisig_threshold.read(),
-                executed: false,
-                execution_time: 0
+            let schedule = BurnSchedule {
+                id: schedule_id,
+                total_amount,
+                burned_amount: 0,
+                burn_rate,
+                period_duration,
+                start_time,
+                end_time,
+                active: true,
+                schedule_type,
             };
-
-            self.kpi_burn_proposals.write(proposal_id, proposal);
-            self.dao_proposal_votes.write((proposal_id, get_caller_address()), true);
-            self.next_proposal_id.write(proposal_id + 1);
-            self.total_proposals_created.write(self.total_proposals_created.read() + 1);
-
-            self.emit(KPIBurnProposed {
-                proposal_id,
-                proposer: get_caller_address(),
-                milestone_type,
-                required_amount,
-                evidence_hash,
-                validation_deadline: proposal.validation_deadline,
-                execution_deadline: proposal.execution_deadline,
-                timestamp: current_time
+            
+            self.schedules.write(schedule_id, schedule);
+            self.last_burn_time.write(schedule_id, if start_time > current_time { start_time } else { current_time });
+            self.schedule_count.write(schedule_id + 1);
+            
+            self.emit(BurnScheduleCreated {
+                schedule_id,
+                total_amount,
+                burn_rate,
+                start_time,
+                end_time,
+                schedule_type,
             });
+            
+            schedule_id
         }
 
-        fn validate_kpi_achievement(ref self: ContractState, proposal_id: u256, validation_result: bool, validator_evidence: felt252) {
-            self.access_control.assert_only_role(KPI_VALIDATOR_ROLE);
+        fn execute_scheduled_burn(ref self: ContractState, schedule_id: u256) -> u256 {
+            self._assert_not_paused();
+            let caller = get_caller_address();
+            assert(self.authorized_burners.read(caller) || caller == self.owner.read(), 'Not authorized');
             
-            let mut proposal = self.kpi_burn_proposals.read(proposal_id);
-            assert(proposal.status == ProposalStatus::Pending, 'Invalid proposal status');
-            assert(get_block_timestamp() <= proposal.validation_deadline, 'Validation deadline passed');
-
-            // Update proposal with validation
-            proposal.validator = get_caller_address();
-            proposal.validation_result = validation_result;
-            proposal.validation_evidence = validator_evidence;
-            proposal.validation_time = get_block_timestamp();
-            proposal.status = if validation_result { ProposalStatus::Validated } else { ProposalStatus::Rejected };
-
-            self.kpi_burn_proposals.write(proposal_id, proposal);
-
-            // If validated, mark milestone as achieved
-            if validation_result {
-                let mut milestone = self.kpi_milestones.read(proposal.milestone_type);
-                milestone.achieved = true;
-                milestone.achievement_time = get_block_timestamp();
-                milestone.evidence_hash = proposal.evidence_hash;
-                self.kpi_milestones.write(proposal.milestone_type, milestone);
-
-                self.emit(KPIMilestoneAchieved {
-                    milestone_id: proposal.milestone_type,
-                    achieved_value: milestone.target_value,
-                    target_value: milestone.target_value,
-                    burn_amount: milestone.burn_amount,
-                    evidence_hash: proposal.evidence_hash,
-                    validator: get_caller_address(),
-                    timestamp: get_block_timestamp()
-                });
+            let mut schedule = self.schedules.read(schedule_id);
+            assert(schedule.active, 'Schedule not active');
+            
+            let current_time = get_block_timestamp();
+            assert(current_time >= schedule.start_time, 'Schedule not started');
+            assert(current_time <= schedule.end_time, 'Schedule ended');
+            
+            let last_burn = self.last_burn_time.read(schedule_id);
+            let time_since_last_burn = current_time - last_burn;
+            
+            // Check if enough time has passed
+            assert(time_since_last_burn >= schedule.period_duration, 'Too early for burn');
+            
+            // Calculate burn amount
+            let periods_elapsed = time_since_last_burn / schedule.period_duration;
+            let burn_amount = schedule.burn_rate * periods_elapsed.into();
+            
+            // Ensure we don't exceed total amount
+            let remaining = schedule.total_amount - schedule.burned_amount;
+            let actual_burn = if burn_amount > remaining { remaining } else { burn_amount };
+            
+            assert(actual_burn > 0, 'No tokens to burn');
+            
+            // Update schedule
+            schedule.burned_amount += actual_burn;
+            if schedule.burned_amount >= schedule.total_amount {
+                schedule.active = false;
             }
-
-            self.emit(KPIBurnValidated {
-                proposal_id,
-                validator: get_caller_address(),
-                validation_result,
-                validation_evidence: validator_evidence,
-                timestamp: get_block_timestamp()
+            self.schedules.write(schedule_id, schedule);
+            self.last_burn_time.write(schedule_id, current_time);
+            
+            // Execute burn
+            self._burn_tokens(actual_burn);
+            
+            self.emit(TokensBurned {
+                schedule_id,
+                amount: actual_burn,
+                burn_type: schedule.schedule_type,
+                timestamp: current_time,
+                total_burned: self.total_burned.read(),
             });
+            
+            actual_burn
         }
 
-        fn execute_kpi_burn(ref self: ContractState, proposal_id: u256) {
-            self.access_control.assert_only_role(DAO_ROLE);
-            self.reentrancy_guard.start();
-
-            let mut proposal = self.kpi_burn_proposals.read(proposal_id);
-            assert(proposal.status == ProposalStatus::Validated, 'Proposal not validated');
-            assert(!proposal.executed, 'Already executed');
-            assert(get_block_timestamp() <= proposal.execution_deadline, 'Execution deadline passed');
-
-            // Check if caller already voted
-            if !self.dao_proposal_votes.read((proposal_id, get_caller_address())) {
-                proposal.dao_approvals += 1;
-                self.dao_proposal_votes.write((proposal_id, get_caller_address()), true);
-            }
-
-            // Check if DAO threshold met
-            assert(proposal.dao_approvals >= proposal.dao_threshold, 'Insufficient DAO approvals');
-
-            // Check challenge period has passed
-            let challenge_window_end = proposal.validation_time + self.challenge_period.read();
-            assert(get_block_timestamp() >= challenge_window_end, 'Challenge period active');
-
-            // Check daily limits for treasury burns
-            self._update_daily_tracking();
-            let remaining_treasury_limit = self._get_remaining_treasury_limit();
-            assert(proposal.required_burn_amount <= remaining_treasury_limit, 'Daily treasury limit exceeded');
-
-            // Execute burn from treasury (TREASURY-ONLY SOURCE PROTECTION)
-            let treasury_balance_before = IERC20Dispatcher { contract_address: self.ciro_token.read() }
-                .balance_of(self.treasury_contract.read());
+        fn execute_revenue_burn(ref self: ContractState, revenue_amount: u256) -> u256 {
+            self._assert_not_paused();
+            let caller = get_caller_address();
+            assert(self.revenue_sources.read(caller), 'Not authorized revenue source');
             
-            // Transfer tokens from treasury to burn manager and burn them
-            let token = IERC20Dispatcher { contract_address: self.ciro_token.read() };
-            // Note: This requires treasury contract to approve burn manager first
-            token.transfer_from(self.treasury_contract.read(), get_contract_address(), proposal.required_burn_amount);
-            token.burn(proposal.required_burn_amount);
-
-            let treasury_balance_after = token.balance_of(self.treasury_contract.read());
-
-            // Update tracking
-            self._update_burn_statistics('KPI_BURN', proposal.required_burn_amount);
-            proposal.executed = true;
-            proposal.execution_time = get_block_timestamp();
-            proposal.status = ProposalStatus::Executed;
-            self.kpi_burn_proposals.write(proposal_id, proposal);
-            self.total_proposals_executed.write(self.total_proposals_executed.read() + 1);
-
-            self.emit(KPIBurnExecuted {
-                proposal_id,
-                milestone_type: proposal.milestone_type,
-                amount: proposal.required_burn_amount,
-                treasury_balance_before,
-                treasury_balance_after,
-                executor: get_caller_address(),
-                timestamp: get_block_timestamp()
-            });
-
-            self.reentrancy_guard.end();
-        }
-
-        fn challenge_kpi_validation(ref self: ContractState, proposal_id: u256, challenge_reason: felt252) {
-            // Any DAO member can challenge
-            self.access_control.assert_only_role(DAO_ROLE);
-            
-            let proposal = self.kpi_burn_proposals.read(proposal_id);
-            assert(proposal.status == ProposalStatus::Validated, 'Invalid proposal status');
-            assert(!proposal.executed, 'Already executed');
-
-            // Check if within challenge period
-            let challenge_deadline = proposal.validation_time + self.challenge_period.read();
-            assert(get_block_timestamp() <= challenge_deadline, 'Challenge period expired');
-
-            let challenge_id = self.next_challenge_id.read();
-            let challenge = Challenge {
-                challenge_id,
-                proposal_id,
-                challenger: get_caller_address(),
-                reason: challenge_reason,
-                evidence_hash: 0, // To be provided separately
-                created_time: get_block_timestamp(),
-                resolved: false,
-                resolution_outcome: false,
-                resolved_by: ContractAddress::default(),
-                resolution_time: 0
-            };
-
-            self.challenges.write(challenge_id, challenge);
-            let challenge_count = self.proposal_challenges.read(proposal_id);
-            self.proposal_challenges.write(proposal_id, challenge_count + 1);
-            self.next_challenge_id.write(challenge_id + 1);
-            self.total_challenges_raised.write(self.total_challenges_raised.read() + 1);
-
-            // Update proposal status
-            let mut updated_proposal = proposal;
-            updated_proposal.status = ProposalStatus::Challenged;
-            updated_proposal.challenge_count += 1;
-            self.kpi_burn_proposals.write(proposal_id, updated_proposal);
-
-            self.emit(BurnProposalChallenged {
-                challenge_id,
-                proposal_id,
-                challenger: get_caller_address(),
-                reason: challenge_reason,
-                timestamp: get_block_timestamp()
-            });
-        }
-
-        fn propose_emergency_burn(ref self: ContractState, amount: u256, reason: felt252) {
-            self.access_control.assert_only_role(EMERGENCY_ROLE);
-            
-            // Create emergency proposal with shorter timeframes
-            let proposal_id = self.next_proposal_id.read();
+            let config = self.revenue_config.read();
             let current_time = get_block_timestamp();
             
-            let proposal = KPIBurnProposal {
-                proposal_id,
-                proposer: get_caller_address(),
-                milestone_type: 'EMERGENCY',
-                required_burn_amount: amount,
-                evidence_hash: reason,
-                created_time: current_time,
-                validation_deadline: current_time + 86400, // 24 hours
-                execution_deadline: current_time + 172800, // 48 hours
-                validator: get_caller_address(),
-                validation_result: true,
-                validation_evidence: reason,
-                validation_time: current_time,
-                status: ProposalStatus::Validated,
-                challenge_count: 0,
-                dao_approvals: 1,
-                dao_threshold: 2, // Lower threshold for emergencies
-                executed: false,
-                execution_time: 0
-            };
-
-            self.kpi_burn_proposals.write(proposal_id, proposal);
-            self.dao_proposal_votes.write((proposal_id, get_caller_address()), true);
-            self.next_proposal_id.write(proposal_id + 1);
-        }
-
-        fn execute_emergency_burn(ref self: ContractState, proposal_id: u256) {
-            self.access_control.assert_only_role(EMERGENCY_ROLE);
-            self.reentrancy_guard.start();
-
-            let mut proposal = self.kpi_burn_proposals.read(proposal_id);
-            assert(proposal.milestone_type == 'EMERGENCY', 'Not emergency proposal');
-            assert(proposal.status == ProposalStatus::Validated, 'Not validated');
-            assert(!proposal.executed, 'Already executed');
-
-            // Check emergency limits
-            self._update_daily_tracking();
-            assert(proposal.required_burn_amount <= self.emergency_daily_limit.read(), 'Emergency limit exceeded');
-
-            // Vote if not already voted
-            if !self.dao_proposal_votes.read((proposal_id, get_caller_address())) {
-                proposal.dao_approvals += 1;
-                self.dao_proposal_votes.write((proposal_id, get_caller_address()), true);
+            // Add to accumulated revenue
+            let new_accumulated = self.accumulated_revenue.read() + revenue_amount;
+            self.accumulated_revenue.write(new_accumulated);
+            
+            // Check if accumulation period has passed
+            let last_burn = self.last_revenue_burn.read();
+            if current_time - last_burn < config.accumulation_period {
+                return 0; // Not time for revenue burn yet
             }
-
-            assert(proposal.dao_approvals >= proposal.dao_threshold, 'Insufficient approvals');
-
-            // Execute emergency burn
-            let token = IERC20Dispatcher { contract_address: self.ciro_token.read() };
-            token.transfer_from(self.treasury_contract.read(), get_contract_address(), proposal.required_burn_amount);
-            token.burn(proposal.required_burn_amount);
-
-            // Update tracking
-            self._update_burn_statistics('EMERGENCY', proposal.required_burn_amount);
-            proposal.executed = true;
-            proposal.execution_time = get_block_timestamp();
-            proposal.status = ProposalStatus::Executed;
-            self.kpi_burn_proposals.write(proposal_id, proposal);
-
-            self.emit(EmergencyBurnExecuted {
-                proposal_id,
-                amount: proposal.required_burn_amount,
-                reason: proposal.evidence_hash,
-                executor: get_caller_address(),
-                approvals_count: proposal.dao_approvals,
-                timestamp: get_block_timestamp()
+            
+            // Calculate burn amount
+            let burn_amount = (new_accumulated * config.revenue_percentage) / 10000;
+            
+            // Apply min/max limits
+            let actual_burn = if burn_amount < config.min_burn_amount {
+                if new_accumulated >= config.min_burn_amount {
+                    config.min_burn_amount
+                } else {
+                    0
+                }
+            } else if burn_amount > config.max_burn_amount {
+                config.max_burn_amount
+            } else {
+                burn_amount
+            };
+            
+            if actual_burn == 0 {
+                return 0;
+            }
+            
+            // Reset accumulated revenue and update last burn time
+            self.accumulated_revenue.write(0);
+            self.last_revenue_burn.write(current_time);
+            
+            // Execute burn
+            self._burn_tokens(actual_burn);
+            self.total_revenue_burned.write(self.total_revenue_burned.read() + actual_burn);
+            
+            self.emit(RevenueBurnExecuted {
+                revenue_amount: new_accumulated,
+                burn_amount: actual_burn,
+                burn_percentage: config.revenue_percentage,
             });
-
-            self.reentrancy_guard.end();
+            
+            actual_burn
         }
 
-        // View functions
-        fn get_total_burned(self: @ContractState) -> u256 {
-            self.total_burned.read()
+        fn execute_buyback_burn(ref self: ContractState, eth_amount: u256, expected_tokens: u256) -> u256 {
+            self._assert_only_owner();
+            self._assert_not_paused();
+            
+            let config = self.buyback_config.read();
+            let current_time = get_block_timestamp();
+            
+            // Check cooldown period
+            let last_buyback = self.last_buyback_time.read();
+            assert(current_time - last_buyback >= config.cooldown_period, 'Cooldown period active');
+            
+            // Validate amounts
+            assert(eth_amount > 0, 'ETH amount must be positive');
+            assert(expected_tokens > 0, 'Expected tokens > 0');
+            
+            // Calculate slippage (simplified - in real implementation would use DEX oracle)
+            let average_price = eth_amount / expected_tokens;
+            
+            // In real implementation, would:
+            // 1. Check current market price against threshold
+            // 2. Execute DEX swap
+            // 3. Validate slippage
+            // 4. Burn received tokens
+            
+            // For now, simulate the process
+            let tokens_bought = expected_tokens; // Assume perfect execution
+            
+            // Execute burn
+            self._burn_tokens(tokens_bought);
+            self.total_buyback_burned.write(self.total_buyback_burned.read() + tokens_bought);
+            self.last_buyback_time.write(current_time);
+            
+            self.emit(BuybackExecuted {
+                eth_amount,
+                tokens_bought,
+                tokens_burned: tokens_bought,
+                average_price,
+            });
+            
+            tokens_bought
         }
 
-        fn get_burn_statistics(self: @ContractState) -> BurnStatistics {
-            self.burn_statistics.read()
+        fn execute_emergency_burn(ref self: ContractState, amount: u256, reason: felt252) -> u256 {
+            self._assert_only_owner();
+            assert(amount > 0, 'Amount must be positive');
+            
+            // Execute burn
+            self._burn_tokens(amount);
+            self.total_emergency_burned.write(self.total_emergency_burned.read() + amount);
+            
+            self.emit(EmergencyBurn {
+                amount,
+                reason,
+                authorized_by: get_caller_address(),
+            });
+            
+            amount
         }
 
-        fn get_kpi_burn_proposal(self: @ContractState, proposal_id: u256) -> KPIBurnProposal {
-            self.kpi_burn_proposals.read(proposal_id)
+        fn get_burn_schedule(self: @ContractState, schedule_id: u256) -> BurnSchedule {
+            self.schedules.read(schedule_id)
         }
 
-        fn get_daily_burn_limits(self: @ContractState) -> (u256, u256, u256) {
+        fn get_next_burn_time(self: @ContractState, schedule_id: u256) -> u64 {
+            let schedule = self.schedules.read(schedule_id);
+            if !schedule.active {
+                return 0;
+            }
+            
+            let last_burn = self.last_burn_time.read(schedule_id);
+            last_burn + schedule.period_duration
+        }
+
+        fn get_burnable_amount(self: @ContractState, schedule_id: u256) -> u256 {
+            let schedule = self.schedules.read(schedule_id);
+            if !schedule.active {
+                return 0;
+            }
+            
+            let current_time = get_block_timestamp();
+            if current_time < schedule.start_time || current_time > schedule.end_time {
+                return 0;
+            }
+            
+            let last_burn = self.last_burn_time.read(schedule_id);
+            let time_since_last_burn = current_time - last_burn;
+            
+            if time_since_last_burn < schedule.period_duration {
+                return 0;
+            }
+            
+            let periods_elapsed = time_since_last_burn / schedule.period_duration;
+            let burn_amount = schedule.burn_rate * periods_elapsed.into();
+            let remaining = schedule.total_amount - schedule.burned_amount;
+            
+            if burn_amount > remaining { remaining } else { burn_amount }
+        }
+
+        fn get_revenue_burn_status(self: @ContractState) -> (u256, u256, u64) {
+            let accumulated = self.accumulated_revenue.read();
+            let config = self.revenue_config.read();
+            let potential_burn = (accumulated * config.revenue_percentage) / 10000;
+            let next_burn_time = self.last_revenue_burn.read() + config.accumulation_period;
+            
+            (accumulated, potential_burn, next_burn_time)
+        }
+
+        fn get_burn_statistics(self: @ContractState) -> (u256, u256, u256, u256, u256) {
             (
-                self.automatic_daily_limit.read(),
-                self.treasury_daily_limit.read(),
-                self.total_daily_limit.read()
+                self.total_burned.read(),
+                self.total_revenue_burned.read(),
+                self.total_buyback_burned.read(),
+                self.total_emergency_burned.read(),
+                self.burn_count.read()
             )
         }
 
-        fn get_remaining_daily_limits(self: @ContractState) -> (u256, u256, u256) {
-            let automatic_remaining = self._get_remaining_automatic_limit();
-            let treasury_remaining = self._get_remaining_treasury_limit();
-            let total_remaining = self._get_remaining_total_limit();
+        fn add_revenue_source(ref self: ContractState, source: ContractAddress) {
+            self._assert_only_owner();
+            self.revenue_sources.write(source, true);
             
-            (automatic_remaining, treasury_remaining, total_remaining)
-        }
-
-        fn can_execute_burn(self: @ContractState, burn_type: felt252, amount: u256) -> bool {
-            if self.burn_type_paused.read(burn_type) {
-                return false;
-            }
-
-            if burn_type == 'JOB_FEES' || burn_type == 'SLASHING' || burn_type == 'GAS_FEES' {
-                amount <= self._get_remaining_automatic_limit()
-            } else {
-                amount <= self._get_remaining_treasury_limit()
-            }
-        }
-
-        // Administration functions
-        fn update_burn_limits(ref self: ContractState, automatic_daily_limit: u256, treasury_daily_limit: u256) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
-            
-            let old_automatic = self.automatic_daily_limit.read();
-            let old_treasury = self.treasury_daily_limit.read();
-            
-            self.automatic_daily_limit.write(automatic_daily_limit);
-            self.treasury_daily_limit.write(treasury_daily_limit);
-            self.total_daily_limit.write(automatic_daily_limit + treasury_daily_limit);
-
-            self.emit(BurnLimitsUpdated {
-                old_automatic_limit: old_automatic,
-                new_automatic_limit: automatic_daily_limit,
-                old_treasury_limit: old_treasury,
-                new_treasury_limit: treasury_daily_limit,
-                updated_by: get_caller_address(),
-                timestamp: get_block_timestamp()
+            self.emit(RevenueSourceAdded {
+                source,
+                added_by: get_caller_address(),
             });
         }
 
-        fn update_kpi_milestones(ref self: ContractState, milestone_updates: Array<KPIMilestone>) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
+        fn remove_revenue_source(ref self: ContractState, source: ContractAddress) {
+            self._assert_only_owner();
+            self.revenue_sources.write(source, false);
             
-            let mut i = 0;
-            loop {
-                if i >= milestone_updates.len() {
-                    break;
-                }
-                let milestone = *milestone_updates.at(i);
-                self.kpi_milestones.write(milestone.milestone_id, milestone);
-
-                self.emit(KPIMilestoneUpdated {
-                    milestone_id: milestone.milestone_id,
-                    target_value: milestone.target_value,
-                    burn_amount: milestone.burn_amount,
-                    oracle_source: milestone.oracle_source,
-                    updated_by: get_caller_address(),
-                    timestamp: get_block_timestamp()
-                });
-                
-                i += 1;
-            };
-        }
-
-        fn add_burn_authority(ref self: ContractState, authority: ContractAddress, role: felt252) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
-            
-            self.access_control._grant_role(BURN_AUTHORITY_ROLE, authority);
-
-            self.emit(BurnAuthorityUpdated {
-                authority,
-                role,
-                action: 'ADDED',
-                updated_by: get_caller_address(),
-                timestamp: get_block_timestamp()
+            self.emit(RevenueSourceRemoved {
+                source,
+                removed_by: get_caller_address(),
             });
         }
 
-        fn remove_burn_authority(ref self: ContractState, authority: ContractAddress) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
+        fn authorize_burner(ref self: ContractState, burner: ContractAddress) {
+            self._assert_only_owner();
+            self.authorized_burners.write(burner, true);
             
-            self.access_control._revoke_role(BURN_AUTHORITY_ROLE, authority);
-
-            self.emit(BurnAuthorityUpdated {
-                authority,
-                role: BURN_AUTHORITY_ROLE,
-                action: 'REMOVED',
-                updated_by: get_caller_address(),
-                timestamp: get_block_timestamp()
+            self.emit(BurnerAuthorized {
+                burner,
+                authorized_by: get_caller_address(),
             });
         }
 
-        fn pause_burn_type(ref self: ContractState, burn_type: felt252, reason: felt252) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
+        fn deauthorize_burner(ref self: ContractState, burner: ContractAddress) {
+            self._assert_only_owner();
+            self.authorized_burners.write(burner, false);
             
-            self.burn_type_paused.write(burn_type, true);
-            self.burn_type_pause_reason.write(burn_type, reason);
+            self.emit(BurnerDeauthorized {
+                burner,
+                deauthorized_by: get_caller_address(),
+            });
+        }
 
-            self.emit(BurnTypePaused {
-                burn_type,
-                reason,
+        fn update_revenue_config(ref self: ContractState, config: RevenueBurnConfig) {
+            self._assert_only_owner();
+            assert(config.revenue_percentage <= 10000, 'Invalid percentage');
+            assert(config.min_burn_amount <= config.max_burn_amount, 'Invalid burn limits');
+            
+            self.revenue_config.write(config);
+        }
+
+        fn update_buyback_config(ref self: ContractState, config: BuybackConfig) {
+            self._assert_only_owner();
+            assert(config.treasury_allocation <= 10000, 'Invalid allocation');
+            assert(config.max_slippage <= 1000, 'Invalid slippage'); // Max 10%
+            
+            self.buyback_config.write(config);
+        }
+
+        fn pause(ref self: ContractState) {
+            self._assert_only_owner();
+            self.paused.write(true);
+            
+            self.emit(ContractPaused {
                 paused_by: get_caller_address(),
-                timestamp: get_block_timestamp()
             });
         }
 
-        fn resume_burn_type(ref self: ContractState, burn_type: felt252) {
-            self.access_control.assert_only_role(ADMIN_ROLE);
+        fn unpause(ref self: ContractState) {
+            self._assert_only_owner();
+            self.paused.write(false);
             
-            self.burn_type_paused.write(burn_type, false);
-            self.burn_type_pause_reason.write(burn_type, 0);
+            self.emit(ContractUnpaused {
+                unpaused_by: get_caller_address(),
+            });
+        }
 
-            self.emit(BurnTypeResumed {
-                burn_type,
-                resumed_by: get_caller_address(),
-                timestamp: get_block_timestamp()
+        fn transfer_ownership(ref self: ContractState, new_owner: ContractAddress) {
+            self._assert_only_owner();
+            assert(!new_owner.is_zero(), 'Invalid new owner');
+            
+            let previous_owner = self.owner.read();
+            self.owner.write(new_owner);
+            
+            // Transfer burner authorization
+            self.authorized_burners.write(previous_owner, false);
+            self.authorized_burners.write(new_owner, true);
+            
+            self.emit(OwnershipTransferred {
+                previous_owner,
+                new_owner,
             });
         }
     }
 
-    // Internal helper functions
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn _execute_automatic_burn(ref self: ContractState, burn_type: felt252, amount: u256) {
-            self.reentrancy_guard.start();
+        fn _assert_only_owner(self: @ContractState) {
+            let caller = get_caller_address();
+            let owner = self.owner.read();
+            assert(caller == owner, 'Only owner');
+        }
 
-            // Update daily tracking
-            self._update_daily_tracking();
+        fn _assert_not_paused(self: @ContractState) {
+            assert(!self.paused.read(), 'Contract paused');
+        }
 
-            // Check automatic burn limits
-            let remaining_automatic_limit = self._get_remaining_automatic_limit();
-            let remaining_total_limit = self._get_remaining_total_limit();
+        fn _burn_tokens(ref self: ContractState, amount: u256) {
+            // In real implementation, would call token contract burn function
+            // IERC20Burnable(token_contract).burn(amount);
             
-            assert(amount <= remaining_automatic_limit, 'Automatic daily limit exceeded');
-            assert(amount <= remaining_total_limit, 'Total daily limit exceeded');
-
-            // Execute burn
-            let token = IERC20Dispatcher { contract_address: self.ciro_token.read() };
-            token.burn(amount);
-
-            // Update tracking
-            self._update_burn_statistics(burn_type, amount);
-
-            self.emit(AutomaticBurnExecuted {
-                burn_type,
-                amount,
-                source_contract: get_caller_address(),
-                total_burned_today: self.today_total_burned.read() + amount,
-                remaining_daily_limit: remaining_automatic_limit - amount,
-                executor: get_caller_address(),
-                timestamp: get_block_timestamp()
-            });
-
-            self.reentrancy_guard.end();
+            // Update statistics
+            self.total_burned.write(self.total_burned.read() + amount);
+            self.burn_count.write(self.burn_count.read() + 1);
         }
+    }
+}
 
-        fn _update_burn_statistics(ref self: ContractState, burn_type: felt252, amount: u256) {
-            let mut stats = self.burn_statistics.read();
-            
-            // Update totals
-            stats.total_burned += amount;
-            stats.total_burn_events += 1;
-            stats.last_burn_timestamp = get_block_timestamp();
+/// Interface for Burn Manager Contract
+#[starknet::interface]
+pub trait IBurnManager<TContractState> {
+    fn create_burn_schedule(
+        ref self: TContractState,
+        total_amount: u256,
+        burn_rate: u256,
+        period_duration: u64,
+        start_time: u64,
+        end_time: u64,
+        schedule_type: BurnType
+    ) -> u256;
+    
+    fn execute_scheduled_burn(ref self: TContractState, schedule_id: u256) -> u256;
+    fn execute_revenue_burn(ref self: TContractState, revenue_amount: u256) -> u256;
+    fn execute_buyback_burn(ref self: TContractState, eth_amount: u256, expected_tokens: u256) -> u256;
+    fn execute_emergency_burn(ref self: TContractState, amount: u256, reason: felt252) -> u256;
+    
+    fn get_burn_schedule(self: @TContractState, schedule_id: u256) -> BurnSchedule;
+    fn get_next_burn_time(self: @TContractState, schedule_id: u256) -> u64;
+    fn get_burnable_amount(self: @TContractState, schedule_id: u256) -> u256;
+    fn get_revenue_burn_status(self: @TContractState) -> (u256, u256, u64);
+    fn get_burn_statistics(self: @TContractState) -> (u256, u256, u256, u256, u256);
+    
+    fn add_revenue_source(ref self: TContractState, source: ContractAddress);
+    fn remove_revenue_source(ref self: TContractState, source: ContractAddress);
+    fn authorize_burner(ref self: TContractState, burner: ContractAddress);
+    fn deauthorize_burner(ref self: TContractState, burner: ContractAddress);
+    fn update_revenue_config(ref self: TContractState, config: RevenueBurnConfig);
+    fn update_buyback_config(ref self: TContractState, config: BuybackConfig);
+    fn pause(ref self: TContractState);
+    fn unpause(ref self: TContractState);
+    fn transfer_ownership(ref self: TContractState, new_owner: ContractAddress);
+}
 
-            // Update by type
-            if burn_type == 'JOB_FEES' {
-                stats.job_fee_burns += amount;
-            } else if burn_type == 'SLASHING' {
-                stats.slashing_burns += amount;
-            } else if burn_type == 'GAS_FEES' {
-                stats.gas_fee_burns += amount;
-            } else if burn_type == 'KPI_BURN' {
-                stats.kpi_burns += amount;
-            } else if burn_type == 'EMERGENCY' {
-                stats.emergency_burns += amount;
-            }
+/// Utility functions for burn calculations
+pub fn calculate_total_burn_periods(
+    start_time: u64,
+    end_time: u64,
+    period_duration: u64
+) -> u256 {
+    if end_time <= start_time || period_duration == 0 {
+        return 0;
+    }
+    
+    let total_duration = end_time - start_time;
+    (total_duration / period_duration).into()
+}
 
-            // Update daily tracking
-            let today_burned = self.today_total_burned.read() + amount;
-            self.today_total_burned.write(today_burned);
-            
-            if burn_type == 'JOB_FEES' || burn_type == 'SLASHING' || burn_type == 'GAS_FEES' {
-                self.today_automatic_burned.write(self.today_automatic_burned.read() + amount);
-            } else {
-                self.today_treasury_burned.write(self.today_treasury_burned.read() + amount);
-            }
+pub fn get_default_revenue_config() -> RevenueBurnConfig {
+    RevenueBurnConfig {
+        revenue_percentage: 2000,      // 20%
+        min_burn_amount: 1000000,      // 1M tokens minimum
+        max_burn_amount: 10000000,     // 10M tokens maximum
+        accumulation_period: 7 * 24 * 3600, // 1 week
+    }
+}
 
-            stats.daily_burned_today = today_burned;
-
-            // Update total burned in contract storage
-            self.total_burned.write(stats.total_burned);
-            self.burn_statistics.write(stats);
-        }
-
-        fn _update_daily_tracking(ref self: ContractState) {
-            let current_day = self._get_day_start(get_block_timestamp());
-            let today_stored = self.today_date.read();
-
-            if current_day != today_stored {
-                // Store yesterday's data
-                let yesterday_data = DailyBurnData {
-                    date: today_stored,
-                    automatic_burns: self.today_automatic_burned.read(),
-                    treasury_burns: self.today_treasury_burned.read(),
-                    total_burns: self.today_total_burned.read(),
-                    burn_events_count: 0 // Could be tracked separately
-                };
-                self.daily_burn_data.write(today_stored, yesterday_data);
-
-                // Reset for new day
-                self.today_date.write(current_day);
-                self.today_automatic_burned.write(0);
-                self.today_treasury_burned.write(0);
-                self.today_total_burned.write(0);
-            }
-        }
-
-        fn _get_day_start(self: @ContractState, timestamp: u64) -> u64 {
-            (timestamp / 86400) * 86400
-        }
-
-        fn _get_remaining_automatic_limit(self: @ContractState) -> u256 {
-            let limit = self.automatic_daily_limit.read();
-            let used = self.today_automatic_burned.read();
-            if used >= limit { 0 } else { limit - used }
-        }
-
-        fn _get_remaining_treasury_limit(self: @ContractState) -> u256 {
-            let limit = self.treasury_daily_limit.read();
-            let used = self.today_treasury_burned.read();
-            if used >= limit { 0 } else { limit - used }
-        }
-
-        fn _get_remaining_total_limit(self: @ContractState) -> u256 {
-            let limit = self.total_daily_limit.read();
-            let used = self.today_total_burned.read();
-            if used >= limit { 0 } else { limit - used }
-        }
+pub fn get_default_buyback_config() -> BuybackConfig {
+    BuybackConfig {
+        treasury_allocation: 1000,     // 10% of treasury for buybacks
+        price_threshold: 0,            // No minimum price threshold
+        max_slippage: 500,            // 5% maximum slippage
+        cooldown_period: 24 * 3600,   // 24 hours between buybacks
     }
 } 

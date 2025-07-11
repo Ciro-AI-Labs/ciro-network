@@ -1,39 +1,39 @@
 // CIRO Network Smart Contracts
 // Main library file for Cairo 2.x smart contracts
 
-pub mod interfaces {
+mod cdc_pool;
+mod ciro_token;
+mod job_manager;
+
+mod interfaces {
     pub mod cdc_pool;
-    pub mod job_manager;
     pub mod ciro_token;
-    pub mod paymaster;
-    pub mod proof_verifier;  // NEW: ZK proof generation & verification
+    pub mod job_manager;
+    pub mod proof_verifier;
+    // TODO: Create these interface files when needed
+    // mod reputation_manager;
+    // mod task_allocator;
 }
 
-pub mod utils {
+mod utils {
     pub mod constants;
-    pub mod security;
     pub mod types;
-    pub mod storage;
+    pub mod security;
     pub mod interactions;
     pub mod governance;
     pub mod upgradability;
 }
 
-// Core contract implementations
-pub mod job_manager;
-pub mod cdc_pool;
-pub mod ciro_token;
+mod vesting {
+    pub mod linear_vesting_with_cliff;
+    pub mod milestone_vesting;
+    pub mod burn_manager;
+    // pub mod treasury_timelock;  // Temporarily disabled due to OpenZeppelin issues
+}
 
-// Vesting and tokenomics system (directory-based module) 
-// TODO: Temporarily disabled due to OpenZeppelin 0.20.0 compatibility issues
-// These contracts need storage access trait updates and component structure changes
-// Will be re-enabled in separate vesting update task
-// pub mod vesting {
-//     pub mod linear_vesting_with_cliff;
-//     pub mod milestone_vesting;
-//     pub mod burn_manager;
-//     pub mod treasury_timelock;
-// }
+mod governance {
+    pub mod governance_treasury;
+}
 
 #[cfg(test)]
 pub mod tests; 
