@@ -1,0 +1,129 @@
+/* Custom CSS for CIRO Network Documentation */
+/* This file can be used for additional customizations */
+
+/* Simple fix: When sidebar is hidden, expand content to full width */
+/* The checkbox is a sibling of #page-wrapper, so use adjacent sibling selector */
+#sidebar-toggle-anchor:not(:checked) ~ #page-wrapper {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Future custom styles can be added here */
+
+/* Cover image styling for mdBook landing page */
+.book .cover {
+  background-image: url("../images/ciro-cover.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-height: 340px; /* ensure it shows on all screen sizes */
+}
+
+/* KaTeX Math Rendering */
+.katex {
+    font-size: 1.1em;
+}
+
+.katex-display {
+    margin: 1em 0;
+    text-align: center;
+}
+
+.katex-display > .katex {
+    display: inline-block;
+    text-align: initial;
+}
+
+/* Equation blocks with syntax highlighting */
+.equation-block {
+    background: rgba(51, 65, 85, 0.3);
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    position: relative;
+}
+
+.equation-block::before {
+    content: "⚡ Mathematical Model";
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: #1e293b;
+    color: #3b82f6;
+    padding: 0 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Math expression highlighting */
+.math-expression {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 4px;
+    padding: 0.8rem;
+    margin: 0.5rem 0;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+}
+
+/* Wolfram Alpha integration styles */
+.wolfram-widget {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.wolfram-widget::before {
+    content: "🧮 Wolfram|Alpha";
+    position: absolute;
+    top: -15px;
+    left: 20px;
+    background: #f59e0b;
+    color: #000;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+/* Better code block styling for equations */
+pre.equation-code {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid #3b82f6;
+    border-left: 4px solid #3b82f6;
+    color: #e2e8f0;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+/* Math variable highlighting */
+.math-var {
+    color: #3b82f6;
+    font-weight: 600;
+    font-style: italic;
+}
+
+/* Math constants */
+.math-const {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+/* Math operators */
+.math-op {
+    color: #10b981;
+    font-weight: 600;
+}
+
+/* Fix potential Mermaid diagram conflicts with sidebar */
+.mermaid {
+    max-width: 100%;
+    overflow-x: auto;
+}

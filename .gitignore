@@ -1,129 +1,83 @@
-# ================================================================
-# CIRO Network .gitignore - Comprehensive Security Configuration
-# ================================================================
-
-# ==================== CRITICAL SECURITY FILES ====================
-# Private keys, keystores, and wallet files
-*keystore*.json
-*.key
-*.pem
-*.p12
-*.pfx
-private_key*
-wallet.json
-account.json
-
-# Environment and configuration files with secrets
-.env
-.env.*
-!.env.example
-*.secret
-*secrets*
-config.json
-
-# Taskmaster AI project management (contains internal project data)
-.taskmaster/
-
-# Deployment scripts (may contain sensitive parameters)
-**/scripts/deploy_*.sh
-**/scripts/*deploy*.sh
-deploy_*
-*_deploy*
-
-# ==================== DEVELOPMENT ENVIRONMENT ====================
-# Virtual environments
-.venv/
-venv/
-env/
-ENV/
-.virtualenv/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Node.js
+# Dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Database and SQL files
+*.sql
+private-docs/
+*.db
+*.sqlite
+*.sqlite3
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Debug logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
 .npm
+
+# Optional eslint cache
 .eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
 .node_repl_history
-package-lock.json
-yarn.lock
 
-# ==================== CAIRO & STARKNET ====================
-# Compiled Cairo files
-target/
-*.sierra.json
-*.casm.json
-.snfoundry_cache/
+# Output of 'npm pack'
+*.tgz
 
-# Scarb
-Scarb.lock
+# Yarn Integrity file
+.yarn-integrity
 
-# ==================== RUST ====================
-# Rust compilation artifacts
-target/
-Cargo.lock
-*.rs.bk
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
 
-# ==================== IDE & EDITORS ====================
-# VS Code
-.vscode/
-*.code-workspace
-
-# Cursor
-.cursor/
-
-# JetBrains IDEs
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# Vim
-*.swp
-*.swo
-*~
-
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# ==================== OPERATING SYSTEM ====================
-# macOS
+# MacOS
 .DS_Store
 .AppleDouble
 .LSOverride
-Icon*
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
 ._*
+
+# Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
 .Spotlight-V100
@@ -132,167 +86,37 @@ Icon*
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
 
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msm
-*.msp
-*.lnk
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
-# Linux
-*~
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
+# Rust build artifacts - COMPREHENSIVE
+target/
+*/target/
+**/target/
+rust-node/target/
+cairo-contracts/target/
+Cargo.lock
+*.rs.bk
 
-# ==================== LOGS & TEMPORARY FILES ====================
-# Log files
-*.log
-*.log.*
-logs/
-*.out
-*.err
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Temporary files
-*.tmp
-*.temp
-.cache/
-.tmp/
-temp/
-
-# ==================== DOCUMENTATION BUILD ====================
-# mdBook output
-docs/book/
-!docs/book.toml
-
-# ==================== TESTING & COVERAGE ====================
-# Test results
-.coverage
-htmlcov/
-.tox/
-.nox/
-.pytest_cache/
-coverage.xml
-*.cover
-.hypothesis/
-
-# ==================== DEPLOYMENT & PRODUCTION ====================
-# Docker
-.dockerignore
-docker-compose.override.yml
-
-# Kubernetes
-*.kubeconfig
-
-# SSL Certificates
-*.crt
-*.key
-*.pem
-*.ca
-*.cert
-
-# ==================== BACKUP & ARCHIVE FILES ====================
-# Backup files
-*.bak
-*.backup
-*.old
-*.orig
-*.save
-*.swp
-
-# Archive files
-*.zip
-*.tar.gz
-*.rar
-*.7z
-
-# ==================== PROJECT SPECIFIC ====================
-# Compiled test errors documentation
-compilerrors.md
-CAIRO_ERRORS_TASK_BREAKDOWN.md
-
-# Internal development documentation (NOT for public consumption)
-cairo-contracts/*.md
-!cairo-contracts/README.md
-cairo-contracts/docs/*.md
-cairo-contracts/security/
-cairo-contracts/optimization/
-**/DEPLOYMENT_*.md
-**/TESTNET_*.md
-**/MAINNET_*.md
-**/INTEGRATION_*.md
-**/*_STATUS.md
-**/*_SUMMARY.md
-**/*_GUIDE.md
-**/*_RECOMMENDATION.md
-
-# Internal documentation from docs/ directory  
-docs/*.md
-!docs/README.md
-docs/security/
-docs/project-management/
-docs/src/
-docs/user-guides/
-docs/development/
-docs/deployment/
-docs/architecture/
-docs/api-reference/
-
-# Testnet deployment artifacts (internal use)
-testnet_*.json
-**/testnet_*.json
-mainnet_*.json
-**/mainnet_*.json
-
-# Tauri build artifacts
-tauri-app/src-tauri/target/
-
-# Custom deployment configurations
-deployment_config.json
-mainnet_config.json
-testnet_config.json
-
-# Local development databases
-*.db
-*.sqlite
-*.sqlite3
-
-# ==================== SECURITY SCANNING ====================
-# Security scan results
-.security/
-security-report*
-vulnerability-report*
-
-# ==================== VERSION CONTROL ====================
-# Git
-.git/
-*.patch
-*.diff
-
-# ==================== PACKAGE MANAGERS ====================
-# Pip
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Poetry
-poetry.lock
-
-# ==================== MISC ====================
-# Editor swapfiles
-.*.swp
-.*.swo
-
-# OS generated files
-.DS_Store?
-ehthumbs.db
-Thumbs.db
-
-# ==================== END OF .gitignore ====================
-# Next.js build output
-.next/
+# Vercel
 .vercel
+
+# JetBrains IDEs
+.idea/
+
+# Generated files
+generated/
+temp/
+tmp/
+
+# Private docs (already added but ensuring it's here)
+private-docs/

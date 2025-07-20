@@ -1,0 +1,89 @@
+# Task ID: 7
+# Title: Kafka Integration for Job Intake
+# Status: pending
+# Dependencies: 6
+# Priority: high
+# Description: Implement Kafka consumer in the Coordinator service to receive and parse job requests from the CIRO platform.
+# Details:
+1. Implement Kafka consumer using rdkafka crate
+2. Set up consumer group configuration for load balancing
+3. Implement message parsing and validation
+4. Create job queue for processing
+5. Implement error handling and dead letter queue
+6. Add metrics for message processing
+7. Implement reconnection logic
+8. Create schema for job messages:
+
+```rust
+#[derive(Serialize, Deserialize)]
+struct JobRequest {
+    job_id: String,
+    model_id: String,
+    inputs: Vec<String>,
+    priority: JobPriority,
+    requester: String,
+    max_price: u64,
+    callback_topic: String,
+}
+
+#[derive(Serialize, Deserialize)]
+enum JobPriority {
+    Low,
+    Medium,
+    High,
+}
+```
+
+9. Implement message acknowledgement and commit strategy
+
+# Test Strategy:
+1. Unit tests for message parsing and validation
+2. Integration tests with local Kafka instance
+3. Test error handling and recovery
+4. Benchmark message processing throughput
+5. Test with various message formats and sizes
+6. Verify metrics collection
+
+# Subtasks:
+## 1. Database Integration - PostgreSQL Schema [pending]
+### Dependencies: None
+### Description: Implement PostgreSQL schema for job persistence and worker state management
+### Details:
+Set up PostgreSQL database with tables for jobs, workers, tasks, and system state. Include proper indexing for performance and migrations for schema evolution.
+
+## 2. Blockchain Integration - Smart Contract Connection [pending]
+### Dependencies: None
+### Description: Connect coordinator to deployed smart contracts (JobMgr, CDC Pool, Paymaster)
+### Details:
+Implement Starknet client integration to interact with deployed contracts on Sepolia testnet. Include transaction signing, state queries, and event monitoring.
+
+## 3. P2P Networking - Worker Discovery [pending]
+### Dependencies: None
+### Description: Implement worker discovery and communication protocols
+### Details:
+Build peer-to-peer networking layer for worker discovery, direct communication, and distributed coordination. Include DHT for worker registration and capability advertising.
+
+## 4. Docker Integration - Containerized Job Execution [pending]
+### Dependencies: None
+### Description: Add containerized job execution with isolated environments
+### Details:
+Implement Docker integration for secure, reproducible compute environments. Include container management, resource limits, and job isolation for different workload types.
+
+## 5. GPU Compute Integration - PyTorch/CUDA Support [pending]
+### Dependencies: None
+### Description: Add PyTorch/CUDA support for GPU-accelerated compute jobs
+### Details:
+Implement GPU compute capabilities with PyTorch and CUDA integration. Include GPU resource management, memory optimization, and support for AI/ML workloads.
+
+## 6. Advanced Kafka Integration - High-Volume Queue [pending]
+### Dependencies: None
+### Description: Implement high-volume job queue with Apache Kafka
+### Details:
+Build enterprise-scale Kafka integration with reliable message queuing, partitioning strategies, consumer groups, and fault tolerance for high-throughput job processing.
+
+## 7. AI/ML/CV Pipeline Integration [pending]
+### Dependencies: None
+### Description: Add advanced compute pipelines for machine learning and computer vision workloads
+### Details:
+Implement specialized AI/ML/CV pipeline support including multi-stage processing, model inference optimization, computer vision workflows, and custom pipeline orchestration for complex workloads.
+

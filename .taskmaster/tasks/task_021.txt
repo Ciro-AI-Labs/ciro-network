@@ -1,0 +1,50 @@
+# Task ID: 21
+# Title: Network Dashboard Implementation
+# Status: pending
+# Dependencies: 20
+# Priority: medium
+# Description: Implement the network dashboard for public statistics, worker leaderboards, and economic analytics.
+# Details:
+1. Set up Next.js project with Tailwind CSS
+2. Implement the following sections:
+   - Network overview with key metrics
+   - Worker leaderboards
+   - Job completion statistics
+   - Economic analytics (TVL, rewards)
+   - Model performance metrics
+   - Network health indicators
+3. Integrate with CDC API
+4. Implement data visualizations
+5. Add filtering and search functionality
+6. Implement responsive layouts
+7. Add dark and light themes
+8. Create CI/CD pipeline for deployment
+
+Next.js configuration:
+```javascript
+// next.config.js
+module.exports = {
+  reactStrictMode: true,
+  images: {
+    domains: ['api.ciro.network'],
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://api.ciro.network/api/:path*',
+      },
+    ];
+  },
+};
+```
+
+# Test Strategy:
+1. Unit tests for components
+2. Integration tests with API
+3. Test responsive layouts
+4. Test data visualizations
+5. Test filtering and search
+6. Test dark and light themes
+7. Test accessibility compliance
+8. Conduct user acceptance testing

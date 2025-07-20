@@ -1,0 +1,619 @@
+<!DOCTYPE HTML>
+<html lang="en" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🎉 Community, Grants &amp; Bounties - CIRO Network Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Complete documentation for the CIRO Network decentralized compute layer">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/ciro-theme.css">
+        <link rel="stylesheet" href="../theme/custom.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">CIRO Network Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network/edit/main/docs/src/contributing/community.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="community-guidelines"><a class="header" href="#community-guidelines">Community Guidelines</a></h1>
+<p>Welcome to the Ciro Network community! 🌟</p>
+<p>We're building something extraordinary together—a decentralized network that makes AI computing accessible to everyone. This community is the heart of our mission, and these guidelines help us create a space where everyone feels welcome, valued, and empowered to contribute.</p>
+<h2 id="-our-values"><a class="header" href="#-our-values">🤝 Our Values</a></h2>
+<h3 id="inclusivity"><a class="header" href="#inclusivity"><strong>Inclusivity</strong></a></h3>
+<p>We welcome contributors from all backgrounds, experiences, and perspectives. Diversity makes us stronger, and we're committed to creating an environment where everyone can thrive.</p>
+<h3 id="respect"><a class="header" href="#respect"><strong>Respect</strong></a></h3>
+<p>We treat each other with kindness, empathy, and respect. We value different viewpoints and approaches, even when we disagree.</p>
+<h3 id="transparency"><a class="header" href="#transparency"><strong>Transparency</strong></a></h3>
+<p>We believe in open communication and honest dialogue. We share our challenges, celebrate our successes, and learn from our mistakes together.</p>
+<h3 id="collaboration"><a class="header" href="#collaboration"><strong>Collaboration</strong></a></h3>
+<p>We succeed when we work together. We support each other's growth, share knowledge freely, and build on each other's ideas.</p>
+<h3 id="impact"><a class="header" href="#impact"><strong>Impact</strong></a></h3>
+<p>We're driven by the real-world impact of our work. Every contribution, no matter how small, helps make AI computing more accessible to people around the world.</p>
+<h2 id="-communication-standards"><a class="header" href="#-communication-standards">💬 Communication Standards</a></h2>
+<h3 id="be-welcoming"><a class="header" href="#be-welcoming"><strong>Be Welcoming</strong></a></h3>
+<ul>
+<li><strong>Greet newcomers warmly</strong> and help them feel included</li>
+<li><strong>Use inclusive language</strong> that respects all identities</li>
+<li><strong>Ask questions</strong> to understand different perspectives</li>
+<li><strong>Celebrate contributions</strong> of all sizes and types</li>
+</ul>
+<h3 id="be-clear-and-constructive"><a class="header" href="#be-clear-and-constructive"><strong>Be Clear and Constructive</strong></a></h3>
+<ul>
+<li><strong>Explain your reasoning</strong> when sharing ideas or feedback</li>
+<li><strong>Ask clarifying questions</strong> before making assumptions</li>
+<li><strong>Provide context</strong> for your suggestions or concerns</li>
+<li><strong>Focus on the work</strong> rather than the person</li>
+</ul>
+<h3 id="be-patient-and-supportive"><a class="header" href="#be-patient-and-supportive"><strong>Be Patient and Supportive</strong></a></h3>
+<ul>
+<li><strong>Remember that everyone learns at different paces</strong></li>
+<li><strong>Offer help</strong> when you see someone struggling</li>
+<li><strong>Share resources</strong> and knowledge freely</li>
+<li><strong>Encourage questions</strong> and curiosity</li>
+</ul>
+<h3 id="be-professional"><a class="header" href="#be-professional"><strong>Be Professional</strong></a></h3>
+<ul>
+<li><strong>Stay on topic</strong> in discussions</li>
+<li><strong>Respect time zones</strong> and availability</li>
+<li><strong>Use appropriate channels</strong> for different types of communication</li>
+<li><strong>Follow platform-specific etiquette</strong></li>
+</ul>
+<h2 id="-what-we-dont-tolerate"><a class="header" href="#-what-we-dont-tolerate">🚫 What We Don't Tolerate</a></h2>
+<h3 id="harassment-and-discrimination"><a class="header" href="#harassment-and-discrimination"><strong>Harassment and Discrimination</strong></a></h3>
+<p>We have zero tolerance for:</p>
+<ul>
+<li><strong>Harassment</strong> of any kind (sexual, racial, religious, etc.)</li>
+<li><strong>Discrimination</strong> based on identity or background</li>
+<li><strong>Bullying</strong> or intimidation</li>
+<li><strong>Hate speech</strong> or offensive language</li>
+</ul>
+<h3 id="disruptive-behavior"><a class="header" href="#disruptive-behavior"><strong>Disruptive Behavior</strong></a></h3>
+<p>We don't allow:</p>
+<ul>
+<li><strong>Spam</strong> or off-topic content</li>
+<li><strong>Trolling</strong> or inflammatory comments</li>
+<li><strong>Personal attacks</strong> or name-calling</li>
+<li><strong>Disrespectful</strong> or dismissive behavior</li>
+</ul>
+<h3 id="unprofessional-conduct"><a class="header" href="#unprofessional-conduct"><strong>Unprofessional Conduct</strong></a></h3>
+<p>We expect everyone to:</p>
+<ul>
+<li><strong>Respect confidentiality</strong> when appropriate</li>
+<li><strong>Follow security guidelines</strong> for sensitive information</li>
+<li><strong>Maintain professional boundaries</strong></li>
+<li><strong>Report concerns</strong> to community moderators</li>
+</ul>
+<h2 id="-community-spaces"><a class="header" href="#-community-spaces">🌍 Community Spaces</a></h2>
+<h3 id="discord-server"><a class="header" href="#discord-server"><strong>Discord Server</strong></a></h3>
+<p>Our main community hub where you can:</p>
+<ul>
+<li><strong>Chat with the team</strong> and other contributors</li>
+<li><strong>Ask questions</strong> and get help</li>
+<li><strong>Share ideas</strong> and feedback</li>
+<li><strong>Join topic-specific channels</strong> (development, research, community, etc.)</li>
+<li><strong>Participate in events</strong> and discussions</li>
+</ul>
+<p><strong>Guidelines for Discord:</strong></p>
+<ul>
+<li>Use appropriate channels for your questions</li>
+<li>Be patient with response times</li>
+<li>Respect voice channel etiquette</li>
+<li>Use threads for longer discussions</li>
+</ul>
+<h3 id="github-discussions"><a class="header" href="#github-discussions"><strong>GitHub Discussions</strong></a></h3>
+<p>For technical discussions and project planning:</p>
+<ul>
+<li><strong>Ask technical questions</strong> about the codebase</li>
+<li><strong>Share ideas</strong> for new features</li>
+<li><strong>Discuss architecture</strong> and design decisions</li>
+<li><strong>Plan community events</strong> and initiatives</li>
+</ul>
+<p><strong>Guidelines for GitHub:</strong></p>
+<ul>
+<li>Search existing discussions before posting</li>
+<li>Use clear, descriptive titles</li>
+<li>Tag relevant team members when needed</li>
+<li>Follow up on resolved discussions</li>
+</ul>
+<h3 id="social-media"><a class="header" href="#social-media"><strong>Social Media</strong></a></h3>
+<p>Stay connected and share our mission:</p>
+<ul>
+<li><strong>Follow us</strong> on <a href="https://twitter.com/ciro_network">Twitter</a></li>
+<li><strong>Share updates</strong> and achievements</li>
+<li><strong>Engage with the community</strong> respectfully</li>
+<li><strong>Represent the project</strong> positively</li>
+</ul>
+<h3 id="meetups-and-events"><a class="header" href="#meetups-and-events"><strong>Meetups and Events</strong></a></h3>
+<p>Join us in person or virtually:</p>
+<ul>
+<li><strong>Local meetups</strong> in your area</li>
+<li><strong>Virtual events</strong> and workshops</li>
+<li><strong>Hackathons</strong> and coding sessions</li>
+<li><strong>Conference presentations</strong> and panels</li>
+</ul>
+<h2 id="-how-to-contribute-to-the-community"><a class="header" href="#-how-to-contribute-to-the-community">🤝 How to Contribute to the Community</a></h2>
+<h3 id="for-newcomers"><a class="header" href="#for-newcomers"><strong>For Newcomers</strong></a></h3>
+<ul>
+<li><strong>Introduce yourself</strong> in the #introductions channel</li>
+<li><strong>Ask questions</strong> - there are no stupid questions!</li>
+<li><strong>Start small</strong> with simple contributions</li>
+<li><strong>Find a mentor</strong> or buddy to help you get started</li>
+</ul>
+<h3 id="for-experienced-contributors"><a class="header" href="#for-experienced-contributors"><strong>For Experienced Contributors</strong></a></h3>
+<ul>
+<li><strong>Welcome newcomers</strong> and help them feel included</li>
+<li><strong>Share your knowledge</strong> and experience</li>
+<li><strong>Mentor others</strong> who are learning</li>
+<li><strong>Lead by example</strong> with positive behavior</li>
+</ul>
+<h3 id="for-everyone"><a class="header" href="#for-everyone"><strong>For Everyone</strong></a></h3>
+<ul>
+<li><strong>Participate actively</strong> in discussions</li>
+<li><strong>Share your ideas</strong> and feedback</li>
+<li><strong>Help others</strong> when you can</li>
+<li><strong>Celebrate successes</strong> and milestones</li>
+</ul>
+<h2 id="-technical-discussions"><a class="header" href="#-technical-discussions">🔧 Technical Discussions</a></h2>
+<h3 id="code-reviews"><a class="header" href="#code-reviews"><strong>Code Reviews</strong></a></h3>
+<p>When reviewing code:</p>
+<ul>
+<li><strong>Be constructive</strong> and specific</li>
+<li><strong>Focus on the code</strong>, not the person</li>
+<li><strong>Explain your reasoning</strong> for suggestions</li>
+<li><strong>Acknowledge good work</strong> and improvements</li>
+<li><strong>Ask questions</strong> to understand the approach</li>
+</ul>
+<h3 id="design-discussions"><a class="header" href="#design-discussions"><strong>Design Discussions</strong></a></h3>
+<p>When discussing architecture or design:</p>
+<ul>
+<li><strong>Consider multiple perspectives</strong> and approaches</li>
+<li><strong>Weigh trade-offs</strong> honestly</li>
+<li><strong>Focus on user needs</strong> and impact</li>
+<li><strong>Be open to changing your mind</strong></li>
+<li><strong>Document decisions</strong> for future reference</li>
+</ul>
+<h3 id="bug-reports-and-issues"><a class="header" href="#bug-reports-and-issues"><strong>Bug Reports and Issues</strong></a></h3>
+<p>When reporting problems:</p>
+<ul>
+<li><strong>Provide clear, detailed information</strong></li>
+<li><strong>Include steps to reproduce</strong></li>
+<li><strong>Be patient</strong> with the resolution process</li>
+<li><strong>Follow up</strong> on your reports</li>
+<li><strong>Thank people</strong> who help you</li>
+</ul>
+<h2 id="-conflict-resolution"><a class="header" href="#-conflict-resolution">⚖️ Conflict Resolution</a></h2>
+<h3 id="addressing-issues"><a class="header" href="#addressing-issues"><strong>Addressing Issues</strong></a></h3>
+<p>If you encounter a problem:</p>
+<ol>
+<li><strong>Talk directly</strong> to the person involved (if comfortable)</li>
+<li><strong>Use private messages</strong> for sensitive discussions</li>
+<li><strong>Contact moderators</strong> if the issue persists</li>
+<li><strong>Document the situation</strong> for reference</li>
+</ol>
+<h3 id="mediation-process"><a class="header" href="#mediation-process"><strong>Mediation Process</strong></a></h3>
+<p>When conflicts arise:</p>
+<ul>
+<li><strong>Listen to all perspectives</strong> with an open mind</li>
+<li><strong>Focus on the issue</strong>, not personalities</li>
+<li><strong>Seek common ground</strong> and shared goals</li>
+<li><strong>Find solutions</strong> that work for everyone</li>
+<li><strong>Learn from the experience</strong> to prevent future issues</li>
+</ul>
+<h3 id="escalation"><a class="header" href="#escalation"><strong>Escalation</strong></a></h3>
+<p>If conflicts can't be resolved informally:</p>
+<ul>
+<li><strong>Contact community moderators</strong> for assistance</li>
+<li><strong>Provide specific details</strong> about the situation</li>
+<li><strong>Be patient</strong> with the resolution process</li>
+<li><strong>Respect the final decision</strong> of the moderation team</li>
+</ul>
+<h2 id="-recognition-and-celebration"><a class="header" href="#-recognition-and-celebration">🎉 Recognition and Celebration</a></h2>
+<h3 id="acknowledging-contributions"><a class="header" href="#acknowledging-contributions"><strong>Acknowledging Contributions</strong></a></h3>
+<p>We believe in recognizing and celebrating contributions:</p>
+<ul>
+<li><strong>Thank people</strong> for their help and contributions</li>
+<li><strong>Highlight great work</strong> in community channels</li>
+<li><strong>Share success stories</strong> and achievements</li>
+<li><strong>Nominate contributors</strong> for recognition</li>
+</ul>
+<h3 id="community-milestones"><a class="header" href="#community-milestones"><strong>Community Milestones</strong></a></h3>
+<p>We celebrate together:</p>
+<ul>
+<li><strong>Project milestones</strong> and releases</li>
+<li><strong>Individual achievements</strong> and growth</li>
+<li><strong>Community events</strong> and meetups</li>
+<li><strong>Positive impact</strong> stories</li>
+</ul>
+<h3 id="contributor-spotlight"><a class="header" href="#contributor-spotlight"><strong>Contributor Spotlight</strong></a></h3>
+<p>We regularly feature:</p>
+<ul>
+<li><strong>New contributors</strong> and their first contributions</li>
+<li><strong>Long-time members</strong> and their impact</li>
+<li><strong>Special achievements</strong> and milestones</li>
+<li><strong>Community leaders</strong> and mentors</li>
+</ul>
+<h2 id="-safety-and-security"><a class="header" href="#-safety-and-security">🛡️ Safety and Security</a></h2>
+<h3 id="personal-information"><a class="header" href="#personal-information"><strong>Personal Information</strong></a></h3>
+<ul>
+<li><strong>Respect privacy</strong> and don't share personal information</li>
+<li><strong>Use appropriate channels</strong> for sensitive discussions</li>
+<li><strong>Report privacy violations</strong> to moderators</li>
+<li><strong>Be mindful</strong> of what you share publicly</li>
+</ul>
+<h3 id="security-best-practices"><a class="header" href="#security-best-practices"><strong>Security Best Practices</strong></a></h3>
+<ul>
+<li><strong>Follow security guidelines</strong> for the project</li>
+<li><strong>Report security issues</strong> through proper channels</li>
+<li><strong>Don't share sensitive information</strong> in public channels</li>
+<li><strong>Use secure communication</strong> when needed</li>
+</ul>
+<h3 id="mental-health-and-well-being"><a class="header" href="#mental-health-and-well-being"><strong>Mental Health and Well-being</strong></a></h3>
+<ul>
+<li><strong>Take breaks</strong> when you need them</li>
+<li><strong>Set healthy boundaries</strong> for your involvement</li>
+<li><strong>Support others</strong> who may be struggling</li>
+<li><strong>Seek help</strong> if you're experiencing difficulties</li>
+</ul>
+<h2 id="-learning-and-growth"><a class="header" href="#-learning-and-growth">📚 Learning and Growth</a></h2>
+<h3 id="continuous-learning"><a class="header" href="#continuous-learning"><strong>Continuous Learning</strong></a></h3>
+<p>We encourage:</p>
+<ul>
+<li><strong>Asking questions</strong> and seeking knowledge</li>
+<li><strong>Sharing what you learn</strong> with others</li>
+<li><strong>Trying new things</strong> and taking risks</li>
+<li><strong>Learning from mistakes</strong> and failures</li>
+</ul>
+<h3 id="skill-development"><a class="header" href="#skill-development"><strong>Skill Development</strong></a></h3>
+<p>We support:</p>
+<ul>
+<li><strong>Mentorship</strong> and coaching relationships</li>
+<li><strong>Skill-sharing</strong> sessions and workshops</li>
+<li><strong>Learning resources</strong> and documentation</li>
+<li><strong>Career development</strong> and growth opportunities</li>
+</ul>
+<h3 id="feedback-and-improvement"><a class="header" href="#feedback-and-improvement"><strong>Feedback and Improvement</strong></a></h3>
+<p>We value:</p>
+<ul>
+<li><strong>Constructive feedback</strong> that helps us grow</li>
+<li><strong>Regular reflection</strong> on our practices</li>
+<li><strong>Continuous improvement</strong> of our processes</li>
+<li><strong>Open dialogue</strong> about community needs</li>
+</ul>
+<h2 id="-reporting-issues"><a class="header" href="#-reporting-issues">🚨 Reporting Issues</a></h2>
+<h3 id="how-to-report"><a class="header" href="#how-to-report"><strong>How to Report</strong></a></h3>
+<p>If you experience or witness inappropriate behavior:</p>
+<ol>
+<li><strong>Document the incident</strong> with specific details</li>
+<li><strong>Contact moderators</strong> through appropriate channels</li>
+<li><strong>Provide context</strong> and any relevant information</li>
+<li><strong>Follow up</strong> if needed</li>
+</ol>
+<h3 id="what-we-need"><a class="header" href="#what-we-need"><strong>What We Need</strong></a></h3>
+<p>When reporting, please include:</p>
+<ul>
+<li><strong>What happened</strong> (specific details)</li>
+<li><strong>When it happened</strong> (date and time)</li>
+<li><strong>Where it happened</strong> (which platform/channel)</li>
+<li><strong>Who was involved</strong> (if known)</li>
+<li><strong>How it made you feel</strong> (impact)</li>
+</ul>
+<h3 id="what-happens-next"><a class="header" href="#what-happens-next"><strong>What Happens Next</strong></a></h3>
+<p>After you report:</p>
+<ul>
+<li><strong>We'll investigate</strong> the situation thoroughly</li>
+<li><strong>We'll communicate</strong> with you about the process</li>
+<li><strong>We'll take appropriate action</strong> based on our guidelines</li>
+<li><strong>We'll follow up</strong> to ensure the issue is resolved</li>
+</ul>
+<h2 id="-community-leadership"><a class="header" href="#-community-leadership">🌟 Community Leadership</a></h2>
+<h3 id="moderators"><a class="header" href="#moderators"><strong>Moderators</strong></a></h3>
+<p>Our community moderators:</p>
+<ul>
+<li><strong>Enforce guidelines</strong> fairly and consistently</li>
+<li><strong>Help resolve conflicts</strong> and issues</li>
+<li><strong>Support community growth</strong> and development</li>
+<li><strong>Represent the community</strong> values and mission</li>
+</ul>
+<h3 id="community-champions"><a class="header" href="#community-champions"><strong>Community Champions</strong></a></h3>
+<p>We recognize community members who:</p>
+<ul>
+<li><strong>Lead by example</strong> with positive behavior</li>
+<li><strong>Help others</strong> and share knowledge</li>
+<li><strong>Contribute consistently</strong> to the community</li>
+<li><strong>Represent our values</strong> in their interactions</li>
+</ul>
+<h3 id="getting-involved"><a class="header" href="#getting-involved"><strong>Getting Involved</strong></a></h3>
+<p>Want to help lead the community?</p>
+<ul>
+<li><strong>Start small</strong> by helping newcomers</li>
+<li><strong>Share your expertise</strong> in your areas of knowledge</li>
+<li><strong>Organize events</strong> or discussions</li>
+<li><strong>Mentor others</strong> who are learning</li>
+</ul>
+<h2 id="-getting-help"><a class="header" href="#-getting-help">📞 Getting Help</a></h2>
+<h3 id="community-support"><a class="header" href="#community-support"><strong>Community Support</strong></a></h3>
+<p>Need help with:</p>
+<ul>
+<li><strong>Technical questions</strong> → Ask in #help or #questions</li>
+<li><strong>Community issues</strong> → Contact moderators</li>
+<li><strong>Project questions</strong> → Use GitHub Discussions</li>
+<li><strong>General support</strong> → Ask in #general</li>
+</ul>
+<h3 id="emergency-contacts"><a class="header" href="#emergency-contacts"><strong>Emergency Contacts</strong></a></h3>
+<p>For urgent issues:</p>
+<ul>
+<li><strong>Security concerns</strong> → security@ciro.network</li>
+<li><strong>Code of conduct violations</strong> → community@ciro.network</li>
+<li><strong>Technical emergencies</strong> → dev@ciro.network</li>
+</ul>
+<h3 id="resources"><a class="header" href="#resources"><strong>Resources</strong></a></h3>
+<p>Additional resources:</p>
+<ul>
+<li><strong><a href="/contributing/guide/">Contributing Guide</a></strong> - How to contribute</li>
+<li><strong><a href="/docs/">Documentation</a></strong> - Project documentation</li>
+<li><strong><a href="https://github.com/ciro-network/ciro-network/issues">GitHub Issues</a></strong> - Bug reports and feature requests</li>
+<li><strong><a href="https://discord.gg/ciro-network">Discord</a></strong> - Community chat</li>
+</ul>
+<h2 id="-guidelines-updates"><a class="header" href="#-guidelines-updates">🔄 Guidelines Updates</a></h2>
+<h3 id="review-process"><a class="header" href="#review-process"><strong>Review Process</strong></a></h3>
+<p>We regularly review and update these guidelines:</p>
+<ul>
+<li><strong>Community feedback</strong> helps us improve</li>
+<li><strong>Changing needs</strong> require updates</li>
+<li><strong>New challenges</strong> need new approaches</li>
+<li><strong>Growth</strong> requires adaptation</li>
+</ul>
+<h3 id="suggestions"><a class="header" href="#suggestions"><strong>Suggestions</strong></a></h3>
+<p>Have ideas for improving our community?</p>
+<ul>
+<li><strong>Share your suggestions</strong> in #community-feedback</li>
+<li><strong>Start discussions</strong> about community needs</li>
+<li><strong>Propose changes</strong> to these guidelines</li>
+<li><strong>Help implement</strong> improvements</li>
+</ul>
+<hr />
+<h2 id="-thank-you"><a class="header" href="#-thank-you">🌟 Thank You</a></h2>
+<p>Thank you for being part of our community! Together, we're building something truly special—a decentralized network that makes AI computing accessible to everyone.</p>
+<p><strong>Your contributions, big and small, make a difference.</strong> Whether you're writing code, helping others, sharing ideas, or simply being a positive presence, you're helping us achieve our mission.</p>
+<p><em>Questions about these guidelines? Want to suggest improvements? Reach out to our community moderators or start a discussion in our <a href="https://discord.gg/ciro-network">Discord</a>.</em></p>
+<p><strong>Let's build the future of decentralized computing together!</strong> 🚀</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../contributing/running-a-node.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../contributing/running-a-node.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/math-config.js"></script>
+        <script src="../theme/ciro-theme.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE HTML>
+<html lang="en" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>👋 Welcome to Ciro - CIRO Network Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Complete documentation for the CIRO Network decentralized compute layer">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/ciro-theme.css">
+        <link rel="stylesheet" href="theme/custom.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">CIRO Network Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network/edit/main/docs/src/README.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-welcome-to-the-ciro-network-community"><a class="header" href="#-welcome-to-the-ciro-network-community">👋 Welcome to the Ciro Network Community!</a></h1>
+<p><strong>We’re so glad you found us.</strong> Whether you’re a developer, GPU provider, researcher, builder, or just curious about the future of decentralized AI, you belong here. Ciro is a place for everyone who believes in open, verifiable, and accessible compute—no matter your background or experience.</p>
+<p>Our community is global, inclusive, and always ready to help. We’re united by a shared vision: to make powerful, trustworthy AI and compute available to all, not just the privileged few. If you want to build, contribute, learn, or simply explore, you’re in the right place.</p>
+<ul>
+<li><strong>New to Web3 or AI?</strong> No problem—our guides and community are here for you.</li>
+<li><strong>Seasoned developer or GPU pro?</strong> Dive in and help shape the future.</li>
+<li><strong>Curious about decentralized infrastructure?</strong> You’re in the right place.</li>
+</ul>
+<p>Let’s build the future of verifiable compute—together.</p>
+<hr />
+<h1 id="welcome-to-ciro"><a class="header" href="#welcome-to-ciro">Welcome to Ciro</a></h1>
+<p><img src="./images/ciro-banner.svg" alt="Ciro Network Banner" /></p>
+<p><strong>TL;DR</strong>: Ciro Network is a decentralized compute layer for real-time AI and ZK workloads, built on Starknet and proven in industrial production environments. Think AWS compute meets DeFi economics, but with mathematical proofs and global reach.</p>
+<hr />
+<h2 id="-what-were-building"><a class="header" href="#-what-were-building">🧬 <strong>What We're Building</strong></a></h2>
+<p><strong>In one sentence</strong>: A verifiable compute protocol that transforms underutilized GPUs into a global, trustless supercomputer for AI workloads.</p>
+<p><strong>In one paragraph</strong>: Ciro Network orchestrates distributed GPU resources through cryptographic proofs, enabling enterprises to access verifiable compute that traditional cloud providers simply cannot offer. Built on Starknet with ZK-ML verification, every inference, training job, and proof generation is both economically efficient and cryptographically sound.</p>
+<p><strong>In one page</strong>: The future of AI compute is not centralized data centers—it's an intelligent mesh of distributed resources, coordinated by economic incentives and secured by zero-knowledge proofs. Ciro Network is that future, operational today. Born from real industrial necessity and battle-tested in production environments, Ciro is designed for engineers, researchers, and organizations who demand verifiable, censorship-resistant, and cost-efficient compute for real-world AI and ZK workloads.</p>
+<hr />
+<h2 id="-born-from-necessity"><a class="header" href="#-born-from-necessity">🔥 <strong>Born From Necessity</strong></a></h2>
+<p><img src="./images/D-INTREf5jrlgqePdbN9Q.png" alt="Industrial AI Origin" /></p>
+<p>Ciro wasn't born in a hackathon—it was born on the factory floor.</p>
+<p>When our computer vision systems for Latin American industrial plants hit <strong>$60,000/month AWS surges</strong>, we faced a choice: accept the economic brutality of centralized compute, or build something smarter. Our industrial vision systems were processing thousands of defect detection jobs daily, but centralized clouds were draining resources faster than we could scale.</p>
+<p>We chose to build.</p>
+<p>First for ourselves. Then for the world.</p>
+<p>The result? A protocol achieving <strong>15,000 transactions per second</strong> on Starknet testnet, with <strong>sub-200ms latency</strong> and production-ready architecture. Currently in final testing phase before mainnet deployment to real factories, production lines, and enterprise environments.</p>
+<hr />
+<h2 id="-why-this-matters"><a class="header" href="#-why-this-matters">⚡ <strong>Why This Matters</strong></a></h2>
+<h3 id="-scientific-sovereignty"><a class="header" href="#-scientific-sovereignty"><strong>🔬 Scientific Sovereignty</strong></a></h3>
+<p>AI shouldn't require permission from hyperscale clouds. Researchers, startups, and enterprises deserve compute sovereignty—the ability to run AI workloads without vendor lock-in, geographic restrictions, or opaque pricing. When compute infrastructure becomes a bottleneck to innovation, progress stagnates.</p>
+<h3 id="-economic-liberation"><a class="header" href="#-economic-liberation"><strong>🌍 Economic Liberation</strong></a></h3>
+<p>The current compute oligopoly wastes resources while inflating costs. Centralized providers charge premium rates while millions of GPUs sit idle globally. Ciro creates a more efficient market that redistributes value to GPU owners worldwide, enabling competitive pricing through genuine market dynamics rather than corporate markup.</p>
+<h3 id="-verifiable-truth"><a class="header" href="#-verifiable-truth"><strong>🛡️ Verifiable Truth</strong></a></h3>
+<p>In an era of AI hallucinations and deepfakes, Ciro provides mathematical proof that your AI computations are correct. Every inference carries a ZK-proof of validity—no trust required. When your model says a medical scan is clear or a financial transaction is valid, you need more than "trust us."</p>
+<h3 id="-unstoppable-innovation"><a class="header" href="#-unstoppable-innovation"><strong>🚀 Unstoppable Innovation</strong></a></h3>
+<p>Decentralized compute accelerates AI development by removing barriers to experimentation. When compute is abundant and affordable, innovation flourishes. When it's scarce and expensive, only the biggest players can participate.</p>
+<hr />
+<h2 id="-the-reality-check"><a class="header" href="#-the-reality-check">📊 <strong>The Reality Check</strong></a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Provider</th><th>Cost per H100-hour</th><th>Availability</th><th>Verification</th><th>Sovereignty</th></tr></thead><tbody>
+<tr><td><strong>AWS/Azure</strong></td><td>$4.10-6.98</td><td>Geographic limits</td><td>Trust-based</td><td>Corporate controlled</td></tr>
+<tr><td><strong>Render</strong></td><td>~$2.50 (OBH)</td><td>3D rendering focus</td><td>Watermarking</td><td>Partial governance</td></tr>
+<tr><td><strong>Akash</strong></td><td>~$1.15</td><td>General compute</td><td>Reputation</td><td>Cosmos governance</td></tr>
+<tr><td><strong>io.net/Spheron</strong></td><td>$1.87-2.40</td><td>ML optimization</td><td>Proof-of-work</td><td>Token governance</td></tr>
+<tr><td><strong>Ciro Network</strong></td><td>$1.40-2.20</td><td>Global mesh</td><td><strong>ZK-proven</strong></td><td>Community owned</td></tr>
+</tbody></table>
+</div>
+<p><em>Ciro's strategic advantage: While competitors compete on price or specialization, Ciro enables <strong>provably correct computation</strong>—unlocking new markets like DeFi AI and on-chain gaming that require cryptographic guarantees.</em></p>
+<h3 id="performance-metrics-that-matter"><a class="header" href="#performance-metrics-that-matter"><strong>Performance Metrics That Matter</strong></a></h3>
+<ul>
+<li><strong>15,000 transactions per second</strong> achieved in optimized testnet conditions (Mainnet: ~127 TPS sustained)</li>
+<li><strong>Sub-200ms latency</strong> demonstrated in distributed test environments</li>
+<li><strong>Production-ready architecture</strong> validated through comprehensive testing</li>
+<li><strong>Competitive pricing</strong> targeting $1.40-2.20/H100-hour vs. AWS $4.10+ and Azure $6.98+</li>
+</ul>
+<hr />
+<h2 id="-who-is-ciro-for"><a class="header" href="#-who-is-ciro-for">🤝 <strong>Who is Ciro For?</strong></a></h2>
+<h3 id="-starknet-dapp-developers"><a class="header" href="#-starknet-dapp-developers"><strong>🏗️ Starknet dApp Developers</strong></a></h3>
+<p>Who need affordable AI inference integrated directly into their smart contracts. Our JobManager contract handles job submission, escrow, and payment settlement on-chain, while the Paymaster enables gas-free transactions for end users. Perfect for DeFi protocols adding ML-based risk analysis, gaming dApps with AI NPCs, or any application requiring real-time intelligence.</p>
+<h3 id="-aiml-engineers--researchers"><a class="header" href="#-aiml-engineers--researchers"><strong>🔬 AI/ML Engineers &amp; Researchers</strong></a></h3>
+<p>Who need verifiable compute for diverse AI workloads without vendor lock-in. Our smart contracts support <strong>13 specialized job types</strong>: AI Inference, AI Training, Computer Vision, NLP, Audio Processing, Time Series Analysis, Multimodal AI, Reinforcement Learning, Specialized AI, Proof Generation, Proof Verification, Data Processing, and Custom models. Submit jobs with framework-specific dependencies (TensorFlow, PyTorch, ONNX, etc.) and hardware requirements via Cairo contracts with cryptographic execution guarantees.</p>
+<h3 id="-gpu-providers-individual--enterprise"><a class="header" href="#-gpu-providers-individual--enterprise"><strong>⚡ GPU Providers (Individual &amp; Enterprise)</strong></a></h3>
+<p>Who want to monetize idle hardware through our CDC Pool staking system. Register workers with <strong>8 hardware capability flags</strong>: CUDA, OpenCL, FP16, INT8, NVLink, InfiniBand, Tensor Cores, and Multi-GPU support. Our tiered system supports everyone from basic GPU owners ($100 minimum stake) to institutional data centers ($500K+ stakes). Capability-based job matching ensures optimal resource utilization, while smart contract-based slashing and reputation scoring protect network integrity.</p>
+<h3 id="-zk-infrastructure-providers"><a class="header" href="#-zk-infrastructure-providers"><strong>🏭 ZK Infrastructure Providers</strong></a></h3>
+<p>Who need high-performance proof generation for Starknet and other rollups. Our ProofVerifier contract specializes in recursive proofs, batch processing, and cross-chain bridge verification. Priority-based job allocation ensures critical blockchain infrastructure stays operational, with USD-denominated rewards for time-sensitive proof generation.</p>
+<h3 id="-web3-infrastructure-teams"><a class="header" href="#-web3-infrastructure-teams"><strong>🌐 Web3 Infrastructure Teams</strong></a></h3>
+<p>Who want to build on protocol-native, verifiable compute. Deploy applications that inherit the sovereignty and cryptographic guarantees of their compute layer. Our smart contracts provide escrow, dispute resolution, and automated payment distribution—eliminating the need to trust centralized compute providers.</p>
+<h3 id="-game-developers--creative-studios"><a class="header" href="#-game-developers--creative-studios"><strong>🎮 Game Developers &amp; Creative Studios</strong></a></h3>
+<p>Who need compute for AI-powered NPCs, procedural generation, and real-time rendering workloads. Our <strong>Custom</strong> and <strong>MultimodalAI</strong> job types support Unity/Unreal Engine integration, dynamic NPC behavior, intelligent game balancing, and adaptive content generation. Framework dependencies support popular game AI libraries with hardware matching for Multi-GPU and Tensor Core requirements. Gas-free transactions via Paymaster ensure seamless player experiences.</p>
+<h3 id="-digital-artists--content-creators"><a class="header" href="#-digital-artists--content-creators"><strong>🎨 Digital Artists &amp; Content Creators</strong></a></h3>
+<p>Who require GPU compute for <strong>artistic generation</strong>, <strong>video rendering</strong>, and <strong>audio composition</strong>. Our smart contracts comprehensively support:</p>
+<ul>
+<li><strong>Custom Job Types</strong> for specialized artistic AI models (Stable Diffusion, DALL-E derivatives, MidJourney-style workflows)</li>
+<li><strong>MultimodalAI</strong> capabilities for text-to-image, image-to-video, and cross-modal artistic generation</li>
+<li><strong>AudioProcessing</strong> jobs for AI music composition, voice synthesis, and audio enhancement</li>
+<li><strong>Video Rendering</strong> through custom model requirements supporting high-memory GPU configurations</li>
+<li><strong>Framework Dependencies</strong> for popular creative AI frameworks (ComfyUI, Automatic1111, RunPod workflows, FFmpeg processing)</li>
+<li><strong>Hardware Capability Matching</strong> with Tensor Cores, Multi-GPU setups, and specialized GPU memory requirements for 4K/8K content creation</li>
+</ul>
+<h3 id="-enterprise-operations"><a class="header" href="#-enterprise-operations"><strong>🏢 Enterprise Operations</strong></a></h3>
+<p>Who require auditable, cost-predictable compute for regulated workloads. Manufacturing quality control, financial risk analysis, medical imaging—domains where computational integrity is mandatory. Our Cairo contracts provide complete audit trails of job execution, payments, and verification proofs for compliance requirements.</p>
+<hr />
+<h2 id="-technical-elegance"><a class="header" href="#-technical-elegance">🎯 <strong>Technical Elegance</strong></a></h2>
+<p><img src="./images/5q1CEpAiyuKgeZ-XtXdY5.png" alt="Technical Innovation" /></p>
+<p>Ciro achieves this through three core innovations:</p>
+<h3 id="-zk-ml-verification"><a class="header" href="#-zk-ml-verification"><strong>🧠 ZK-ML Verification</strong></a></h3>
+<p>Every AI computation generates a STARK proof of correctness, verified on Starknet in ~2 seconds. Not just attestations or hash commitments—mathematical proof that your inference was computed correctly on the specified model with the given inputs.</p>
+<h3 id="-hybrid-orchestration"><a class="header" href="#-hybrid-orchestration"><strong>⚡ Hybrid Orchestration</strong></a></h3>
+<p>Smart routing between on-premises, edge, and network resources based on latency, cost, and security requirements. Your workload automatically finds the optimal compute environment without manual configuration.</p>
+<h3 id="-economic-design"><a class="header" href="#-economic-design"><strong>💎 Economic Design</strong></a></h3>
+<p>Token-curated registry of compute providers with slashing conditions for malicious behavior and rewards for performance. Economics aligned for reliability, not just lowest price.</p>
+<hr />
+<h2 id="-built-for-reality"><a class="header" href="#-built-for-reality">🛠️ <strong>Built for Reality</strong></a></h2>
+<p><img src="./images/r-tL5EJBu1BDmkpj7VVU1.png" alt="Real World Applications" /></p>
+<p>Unlike theoretical compute protocols, Ciro emerged from real-world usage:</p>
+<h3 id="-industrial-vision"><a class="header" href="#-industrial-vision"><strong>🏭 Industrial Vision</strong></a></h3>
+<p>Object detection on assembly lines processing <strong>thousands of items per hour</strong>. When a false negative costs $10K in defective products, verification isn't academic—it's economic survival.</p>
+<h3 id="-medical-ai"><a class="header" href="#-medical-ai"><strong>🏥 Medical AI</strong></a></h3>
+<p>HIPAA-compliant diagnostic imaging where patient safety demands both privacy and accuracy. Decentralized compute with cryptographic guarantees meets regulatory requirements that centralized clouds struggle with.</p>
+<h3 id="-financial-models"><a class="header" href="#-financial-models"><strong>💰 Financial Models</strong></a></h3>
+<p>Risk analysis for emerging markets where data sovereignty and computational auditability aren't optional features—they're legal requirements.</p>
+<h3 id="-research-computing"><a class="header" href="#-research-computing"><strong>🔬 Research Computing</strong></a></h3>
+<p>Training smaller models on federated data where compute costs can't exceed research grants, but results need to be reproducible and verifiable.</p>
+<p>Each use case taught us what actually matters: <strong>reliability</strong>, <strong>verifiability</strong>, and <strong>economic sustainability</strong>. Not just theoretical scalability or benchmark performance.</p>
+<hr />
+<h2 id="-the-network-effect"><a class="header" href="#-the-network-effect">🌐 <strong>The Network Effect</strong></a></h2>
+<p>Ciro's power grows with its network:</p>
+<h3 id="provider-diversity"><a class="header" href="#provider-diversity"><strong>Provider Diversity</strong></a></h3>
+<p>From gaming rigs in bedrooms to enterprise data centers, every GPU can contribute. Geographic and economic diversity creates resilience that no single cloud provider can match.</p>
+<h3 id="workload-intelligence"><a class="header" href="#workload-intelligence"><strong>Workload Intelligence</strong></a></h3>
+<p>The network learns optimal placement for different workload types. Computer vision jobs route to providers with appropriate memory bandwidth. Training jobs find the lowest-latency multi-GPU clusters.</p>
+<h3 id="economic-efficiency"><a class="header" href="#economic-efficiency"><strong>Economic Efficiency</strong></a></h3>
+<p>Market forces drive prices down while reliability requirements drive quality up. Providers compete on performance metrics, not marketing budgets.</p>
+<hr />
+<h2 id="-technical-architecture-deep-dive"><a class="header" href="#-technical-architecture-deep-dive">🚀 <strong>Technical Architecture Deep Dive</strong></a></h2>
+<p>For those who want to understand how the magic happens:</p>
+<h3 id="smart-contract-layer-cairo-on-starknet"><a class="header" href="#smart-contract-layer-cairo-on-starknet"><strong>Smart Contract Layer (Cairo on Starknet)</strong></a></h3>
+<ul>
+<li><strong>JobManager</strong>: Job submission, worker assignment, and payment escrow for AI/ML and ZK proof workloads</li>
+<li><strong>CDC_Pool</strong>: Worker registration, CIRO token staking (8 tiers: $100-$500K), and reputation-based job allocation</li>
+<li><strong>CIRO_Token</strong>: ERC20 with governance, progressive burn mechanisms (30%→80% fee burns), and security budget protection</li>
+<li><strong>Paymaster</strong>: Gas-free transactions for IoT devices and seamless dApp integration</li>
+</ul>
+<h3 id="orchestration-layer-rust"><a class="header" href="#orchestration-layer-rust"><strong>Orchestration Layer (Rust)</strong></a></h3>
+<ul>
+<li>Kafka-based job queuing supporting 13 AI job types (Computer Vision, NLP, Audio Processing, Time Series Analysis, Multimodal AI, Reinforcement Learning, etc.)</li>
+<li>Advanced worker capability matching: 8 hardware flags (CUDA, OpenCL, FP16, INT8, NVLink, InfiniBand, Tensor Cores, Multi-GPU)</li>
+<li>Framework dependency resolution (TensorFlow, PyTorch, ONNX, custom frameworks)</li>
+<li>P2P networking with libp2p for decentralized worker discovery and heartbeat systems</li>
+</ul>
+<h3 id="verification-layer-zk-stark"><a class="header" href="#verification-layer-zk-stark"><strong>Verification Layer (ZK-STARK)</strong></a></h3>
+<ul>
+<li>ProofVerifier contract supporting 5 proof types: Starknet Batch, Recursive Proof, zkML Inference, Cross-Chain Bridge, Application-Specific</li>
+<li>Integration with Giza/Orion for zkML inference verification with 4 priority levels (Standard, High, Critical, Emergency)</li>
+<li>Multi-party consensus validation and statistical sampling for different verification methods</li>
+<li>On-chain slashing for invalid proof submissions with cryptographic evidence handling</li>
+</ul>
+<h3 id="provider-layer-docker--gpu"><a class="header" href="#provider-layer-docker--gpu"><strong>Provider Layer (Docker + GPU)</strong></a></h3>
+<ul>
+<li>Rust-based worker nodes with CUDA/OpenCL capability detection</li>
+<li>Secure model deployment with hash-based verification</li>
+<li>Performance metrics tracking (completion rate, response time, quality scores)</li>
+<li>Tiered staking system aligning incentives with hardware investment</li>
+</ul>
+<hr />
+<h2 id="-whats-next"><a class="header" href="#-whats-next">🌟 <strong>What's Next?</strong></a></h2>
+<p><img src="./images/c3Mq7Y6MwHlDaPlvhDNZ_.png" alt="What&#39;s Next - Choose Your Path" /></p>
+<p>Ready to experience verifiable compute? Choose your path:</p>
+<p>→ <strong><a href="getting-started/README.html">🚀 Getting Started</a></strong> – Run your first job in 3 minutes<br />
+→ <strong><a href="tech/README.html">🔧 Tech Architecture</a></strong> – Deep dive into ZK-ML and orchestration<br />
+→ <strong><a href="tokenomics/README.html">💰 Tokenomics</a></strong> – Understand the economic design<br />
+→ <strong><a href="contributing/README.html">🤝 Contribute</a></strong> – Join the network as a provider or developer</p>
+<hr />
+<p><em>Ciro Network: Where mathematics meets market forces to democratize AI compute.</em></p>
+<p><strong>The future isn't centralized. It's verified.</strong></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+                            <a rel="next prefetch" href="vision.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+                    <a rel="next prefetch" href="vision.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="ace.js"></script>
+        <script src="mode-rust.js"></script>
+        <script src="editor.js"></script>
+        <script src="theme-dawn.js"></script>
+        <script src="theme-tomorrow_night.js"></script>
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/math-config.js"></script>
+        <script src="theme/ciro-theme.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

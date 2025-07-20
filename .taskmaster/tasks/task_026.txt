@@ -1,0 +1,289 @@
+# Task ID: 26
+# Title: CIRO Token Smart Contract Implementation
+# Status: pending
+# Dependencies: 2, 3, 4
+# Priority: high
+# Description: Develop the CIRO Token contract implementing the v3.0 hybrid tokenomics model with governance-controlled supply management, revenue-linked burn mechanisms, and institutional-grade features.
+# Details:
+1. Implement the CIRO Token contract with the following core features:
+   - ERC20 compliant token with Cairo 1.0 implementation
+   - Fixed initial supply of 1 billion tokens
+   - Progressive burn schedule (30%-80% of fees)
+   - Governance-controlled inflation adjustments
+   - Security budget protection mechanisms
+   - Whale-friendly progressive governance
+   - Integration with JobManager, CDC Pool, and Paymaster contracts
+
+2. Implement the following functions:
+   ```cairo
+   #[starknet::interface]
+   trait ICIROToken<TContractState> {
+       // Standard ERC20 functions
+       fn name(self: @TContractState) -> felt252;
+       fn symbol(self: @TContractState) -> felt252;
+       fn decimals(self: @TContractState) -> u8;
+       fn total_supply(self: @TContractState) -> u256;
+       fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
+       fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
+       fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
+       fn transfer_from(ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
+       fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
+       
+       // Tokenomics-specific functions
+       fn burn(ref self: TContractState, amount: u256);
+       fn burn_from(ref self: TContractState, account: ContractAddress, amount: u256);
+       fn set_burn_rate(ref self: TContractState, new_rate: u256);
+       fn get_burn_rate(self: @TContractState) -> u256;
+       fn mint(ref self: TContractState, recipient: ContractAddress, amount: u256);
+       fn set_minter(ref self: TContractState, minter: ContractAddress, is_minter: bool);
+       fn is_minter(self: @TContractState, account: ContractAddress) -> bool;
+       
+       // Governance functions
+       fn propose_inflation_adjustment(ref self: TContractState, amount: u256, reason: felt252) -> u256;
+       fn vote_on_proposal(ref self: TContractState, proposal_id: u256, support: bool);
+       fn execute_proposal(ref self: TContractState, proposal_id: u256);
+       fn get_proposal(self: @TContractState, proposal_id: u256) -> Proposal;
+       
+       // Integration functions
+       fn register_fee_collector(ref self: TContractState, collector: ContractAddress);
+       fn collect_fees(ref self: TContractState, amount: u256) -> u256;
+       fn get_security_budget(self: @TContractState) -> u256;
+   }
+   
+   #[derive(Drop, Serde, starknet::Store)]
+   struct Proposal {
+       id: u256,
+       proposer: ContractAddress,
+       amount: u256,
+       reason: felt252,
+       for_votes: u256,
+       against_votes: u256,
+       start_block: u64,
+       end_block: u64,
+       executed: bool,
+       canceled: bool
+   }
+   ```
+
+3. Implement burn mechanisms:
+   - Progressive burn rate from 30% to 80% of collected fees
+   - Automatic burn calculation based on network activity
+   - Governance-controlled burn rate adjustments
+   - Event emission for transparency
+
+4. Implement governance features:
+   - Weighted voting based on token holdings
+   - Progressive governance rights (higher weight for long-term holders)
+   - Proposal creation and voting mechanisms
+   - Time-locked execution of approved proposals
+   - Security measures against governance attacks
+
+5. Implement integration with existing contracts:
+   - JobManager contract integration for fee collection
+   - CDC Pool contract integration for staking rewards
+   - Paymaster contract integration for gas-free transactions
+
+6. Implement security features:
+   - Access control for sensitive functions
+   - Security budget protection mechanisms
+   - Rate limiting for inflation adjustments
+   - Emergency pause functionality
+   - Upgradability pattern for future improvements
+
+7. Create comprehensive events for all state changes:
+   ```cairo
+   #[event]
+   #[derive(Drop, starknet::Event)]
+   enum Event {
+       Transfer: Transfer,
+       Approval: Approval,
+       Burn: Burn,
+       Mint: Mint,
+       BurnRateChanged: BurnRateChanged,
+       ProposalCreated: ProposalCreated,
+       VoteCast: VoteCast,
+       ProposalExecuted: ProposalExecuted,
+       FeeCollected: FeeCollected,
+       MinterSet: MinterSet
+   }
+   ```
+
+8. Implement storage layout:
+   ```cairo
+   #[storage]
+   struct Storage {
+       name: felt252,
+       symbol: felt252,
+       decimals: u8,
+       total_supply: u256,
+       balances: LegacyMap<ContractAddress, u256>,
+       allowances: LegacyMap<(ContractAddress, ContractAddress), u256>,
+       burn_rate: u256,
+       minters: LegacyMap<ContractAddress, bool>,
+       proposals: LegacyMap<u256, Proposal>,
+       next_proposal_id: u256,
+       fee_collectors: LegacyMap<ContractAddress, bool>,
+       security_budget: u256,
+       governance_weights: LegacyMap<ContractAddress, u256>,
+       last_activity: LegacyMap<ContractAddress, u64>
+   }
+   ```
+
+9. Implement comprehensive testing suite with test cases for all functionality.
+
+# Test Strategy:
+1. Unit tests for all contract functions with 95%+ coverage:
+   - Test all ERC20 standard functions
+   - Test burn mechanisms with different rates
+   - Test governance proposal creation, voting, and execution
+   - Test integration with JobManager, CDC Pool, and Paymaster contracts
+   - Test security features and access control
+
+2. Test tokenomics model:
+   - Verify initial supply is exactly 1 billion tokens
+   - Test progressive burn rate calculations
+   - Verify burn mechanisms correctly reduce total supply
+   - Test governance-controlled inflation adjustments
+   - Verify security budget protection works as expected
+
+3. Test governance functionality:
+   - Test proposal creation with various parameters
+   - Test voting mechanisms with different token holdings
+   - Test proposal execution and time-locking
+   - Test progressive governance weight calculations
+   - Verify security measures against governance attacks
+
+4. Integration tests:
+   - Test integration with JobManager for fee collection
+   - Test integration with CDC Pool for staking rewards
+   - Test integration with Paymaster for gas-free transactions
+   - Verify correct event emissions for all state changes
+
+5. Security tests:
+   - Test access control for sensitive functions
+   - Verify security budget protection mechanisms
+   - Test rate limiting for inflation adjustments
+   - Test emergency pause functionality
+   - Verify upgradability pattern works correctly
+
+6. Deploy to Starknet testnet and conduct end-to-end tests:
+   - Test token transfers and approvals
+   - Test burn and mint functionality
+   - Test governance proposal flow
+   - Test integration with other contracts
+   - Measure gas costs and optimize if necessary
+
+7. Conduct formal verification of critical functions:
+   - Verify burn rate calculations
+   - Verify governance vote counting
+   - Verify security budget protection
+
+8. Perform security review focusing on:
+   - Access control vulnerabilities
+   - Arithmetic overflow/underflow
+   - Reentrancy attacks
+   - Front-running vulnerabilities
+   - Governance manipulation attacks
+
+# Subtasks:
+## 1. Implement Core ERC20 Token Functionality [done]
+### Dependencies: None
+### Description: Develop the foundational ERC20-compliant token contract with Cairo 1.0, implementing all standard token functions and storage layout.
+### Details:
+Implement the standard ERC20 functions (name, symbol, decimals, total_supply, balance_of, allowance, transfer, transfer_from, approve). Set up the initial supply of 1 billion tokens. Create the basic storage layout including balances, allowances, and token metadata. Ensure proper event emission for Transfer and Approval events. Implement access control mechanisms for sensitive functions. Follow Cairo 1.0 best practices for contract structure and optimization.
+
+## 2. Implement Tokenomics and Supply Management [done]
+### Dependencies: 26.1
+### Description: Develop the burn and mint mechanisms with progressive burn rates and governance-controlled inflation adjustments.
+### Details:
+Implement burn and burn_from functions with proper access controls. Create the progressive burn rate system (30%-80% of fees) with automatic calculation based on network activity. Implement mint functionality with proper access controls. Develop the minter role management system. Implement the burn rate adjustment mechanisms. Create proper event emission for Burn, Mint, and BurnRateChanged events. Ensure security measures for supply management functions.
+<info added on 2025-07-07T00:52:03.908Z>
+The tokenomics documentation has been updated to version 3.1 with significant changes to reflect realistic capital deployment patterns. These updates include:
+
+1. Expanded worker pool tiers from 4 to 8 with specific allocation priorities and performance bonus rates
+2. Updated large holder tiers with new thresholds (Whale: 5M+ CIRO + $2M+ USD, Institution: 25M+ CIRO + $10M+ USD, new HyperWhale tier: 100M+ CIRO + $50M+ USD)
+3. Increased governance pool thresholds (Minor: 50K, Major: 250K, Protocol Upgrades: 1M, Emergency: 2.5M, new Strategic Decisions tier: 5M)
+4. Added market analysis section with data from comparable DePIN protocols (RNDR, HNT, AKT)
+
+These documentation changes must be reflected in the smart contract implementation to ensure alignment between documentation and code. Update the token functionality to support the new tier structures, governance thresholds, and allocation mechanisms as specified in v3.1.
+</info added on 2025-07-07T00:52:03.908Z>
+
+## 3. Implement Governance System [done]
+### Dependencies: 26.1
+### Description: Develop the governance system with proposal creation, voting, and execution mechanisms, including weighted voting and progressive governance rights.
+### Details:
+Implement proposal creation functionality with proper validation. Develop voting mechanisms with weighted voting based on token holdings. Create progressive governance rights for long-term holders. Implement proposal execution with time-locked execution for approved proposals. Develop security measures against governance attacks. Create proper event emission for ProposalCreated, VoteCast, and ProposalExecuted events. Implement the Proposal struct and related storage.
+<info added on 2025-07-07T01:08:03.056Z>
+Successfully implemented comprehensive v3.1 governance system with enhanced proposal creation functionality including typed proposals (minor, major, protocol, emergency, strategic) with corresponding governance thresholds (50K-5M CIRO). Added proposal cooldown periods and user limits to prevent spam. Implemented progressive governance rights with time-based voting multipliers (1.2x for 1+ year, 1.5x for 2+ years) and automatic tracking of token acquisition for tier calculation. Developed advanced weighted voting system with quorum requirements (5% of circulating supply) and supermajority thresholds (67% for critical proposals). Implemented comprehensive security measures against governance attacks including emergency pause/resume functionality, cooldown periods, and participation requirements. Enhanced event emission with detailed governance events for proposals, voting, and execution. Added governance statistics and analytics functions for real-time participation tracking and proposal metrics. Ensured seamless integration with existing CIRO token functionality while maintaining legacy compatibility.
+</info added on 2025-07-07T01:08:03.056Z>
+
+## 4. Implement Contract Integrations [done]
+### Dependencies: 26.1, 26.2
+### Description: Develop integration points with JobManager, CDC Pool, and Paymaster contracts, including fee collection and security budget mechanisms.
+### Details:
+Implement fee collector registration and management. Develop fee collection mechanisms with proper burn calculations. Create security budget protection mechanisms. Implement integration with JobManager for fee collection. Develop CDC Pool integration for staking rewards. Create Paymaster integration for gas-free transactions. Implement proper event emission for integration-related events. Ensure proper access controls for integration functions.
+<info added on 2025-07-07T00:39:21.106Z>
+Successfully implemented the CIRO token economic model with fee structures and integrations. The implementation includes:
+
+1. Worker tier system with USD-denominated requirements:
+   - Basic Worker: $100 USD (1.2x allocation priority, 5% performance bonus)
+   - Premium Worker: $500 USD (1.5x allocation priority, 10% performance bonus)
+   - Enterprise Worker: $2,500 USD (2.0x allocation priority, 15% performance bonus)
+   - Infrastructure Worker: $10,000 USD (2.5x allocation priority, 25% performance bonus)
+
+2. Technical implementation details:
+   - Updated constants.cairo with correct USD amounts and bonus rates
+   - Created WorkerTier enum (Basic, Premium, Enterprise, Infrastructure)
+   - Implemented WorkerTierBenefits structure in CDC Pool interface
+   - Added get_worker_tier() and get_worker_tier_benefits() functions
+   - Updated Job Manager with tier-based allocation scoring
+   - Implemented tier-based performance bonuses in payment release logic
+   - Updated event structures to use WorkerTier instead of StakingTier
+
+3. Job system integration:
+   - Job allocation now uses tier-based priority scoring
+   - Payment calculation includes tier-based performance bonuses
+   - All contracts properly integrated with USD-denominated tier system
+   - Events emit correct tier information for transparency
+</info added on 2025-07-07T00:39:21.106Z>
+<info added on 2025-07-07T00:46:12.150Z>
+Successfully updated contract integrations to support realistic whale-level capital deployment patterns based on market analysis:
+
+## Extended Worker Tier Structure (v3.1)
+- Basic Worker: $100 (1.0x allocation, 5% bonus)
+- Premium Worker: $500 (1.2x allocation, 10% bonus)
+- Enterprise Worker: $2,500 (1.5x allocation, 15% bonus)
+- Infrastructure Worker: $10,000 (2.0x allocation, 25% bonus)
+- Fleet Worker: $50,000 (2.5x allocation, 30% bonus)
+- Datacenter Worker: $100,000 (3.0x allocation, 35% bonus)
+- Hyperscale Worker: $250,000 (4.0x allocation, 40% bonus)
+- Institutional Worker: $500,000 (5.0x allocation, 50% bonus)
+
+## Large Holder Tiers
+- Whale Tier: 5M+ CIRO (~0.5% supply) + $2M+ USD floor
+- Institution Tier: 25M+ CIRO (~2.5% supply) + $10M+ USD floor
+- HyperWhale Tier: 100M+ CIRO (~10% supply) + $50M+ USD floor
+
+## Updated Governance Proposal Thresholds
+- Minor Changes: 50K CIRO
+- Major Changes: 250K CIRO
+- Protocol Upgrades: 1M CIRO
+- Emergency Actions: 5M CIRO
+
+## Technical Implementation
+- Implemented all 8 worker tiers with proper benefits mapping
+- Added dual metric holder tiers with token and USD floor requirements
+- Created automatic tier evaluation based on current stake value
+- Updated job allocation scoring algorithm to account for new tiers
+- Integrated price oracle for USD value calculations
+- Added tier upgrade events and notifications
+- Updated all contract integration points including JobManager and CDC Pool
+- Modified performance bonus calculation for all tiers
+</info added on 2025-07-07T00:46:12.150Z>
+
+## 5. Implement Security Features and Finalize Testing [done]
+### Dependencies: 26.1, 26.2, 26.3, 26.4
+### Description: Implement advanced security features, conduct comprehensive testing, and prepare for deployment.
+### Details:
+Implement emergency pause functionality. Develop rate limiting for inflation adjustments. Create upgradability patterns for future improvements. Implement comprehensive event emission for all state changes. Conduct security audit of the entire contract. Develop comprehensive test suite covering all functionality. Prepare deployment scripts and documentation. Implement gas optimization techniques. Create final documentation for contract interfaces and usage.
+

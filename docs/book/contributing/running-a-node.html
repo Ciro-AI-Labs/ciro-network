@@ -1,0 +1,650 @@
+<!DOCTYPE HTML>
+<html lang="en" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🔌 Running a Worker Node - CIRO Network Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Complete documentation for the CIRO Network decentralized compute layer">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/ciro-theme.css">
+        <link rel="stylesheet" href="../theme/custom.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">CIRO Network Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network/edit/main/docs/src/contributing/running-a-node.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="running-a-worker-node"><a class="header" href="#running-a-worker-node">Running a Worker Node</a></h1>
+<p>Welcome to the Ciro Network! 🌟</p>
+<p>Running a worker node is one of the most impactful ways to contribute to our decentralized computing network. Whether you're a GPU owner looking to earn rewards, a developer wanting to test the network, or a community member helping to build the future of AI computing, this guide will help you get started.</p>
+<h2 id="-why-run-a-worker-node"><a class="header" href="#-why-run-a-worker-node">🤝 Why Run a Worker Node?</a></h2>
+<h3 id="for-gpu-owners"><a class="header" href="#for-gpu-owners"><strong>For GPU Owners</strong></a></h3>
+<ul>
+<li><strong>Earn CIRO tokens</strong> by providing compute power</li>
+<li><strong>Monetize your hardware</strong> when you're not using it</li>
+<li><strong>Support AI research</strong> and development</li>
+<li><strong>Join a global network</strong> of compute providers</li>
+</ul>
+<h3 id="for-developers"><a class="header" href="#for-developers"><strong>For Developers</strong></a></h3>
+<ul>
+<li><strong>Test the network</strong> and understand how it works</li>
+<li><strong>Contribute to development</strong> by running test nodes</li>
+<li><strong>Debug issues</strong> and improve the system</li>
+<li><strong>Build applications</strong> that use the network</li>
+</ul>
+<h3 id="for-community-members"><a class="header" href="#for-community-members"><strong>For Community Members</strong></a></h3>
+<ul>
+<li><strong>Learn about decentralized computing</strong></li>
+<li><strong>Support the project</strong> by providing infrastructure</li>
+<li><strong>Help test new features</strong> and improvements</li>
+<li><strong>Contribute to network health</strong> and reliability</li>
+</ul>
+<h2 id="-hardware-requirements"><a class="header" href="#-hardware-requirements">🖥️ Hardware Requirements</a></h2>
+<h3 id="minimum-requirements"><a class="header" href="#minimum-requirements"><strong>Minimum Requirements</strong></a></h3>
+<ul>
+<li><strong>CPU</strong>: 4+ cores (Intel i5/AMD Ryzen 5 or better)</li>
+<li><strong>RAM</strong>: 8GB DDR4</li>
+<li><strong>Storage</strong>: 50GB SSD</li>
+<li><strong>Network</strong>: 10 Mbps upload/download</li>
+<li><strong>OS</strong>: Linux (Ubuntu 20.04+), Windows 10+, or macOS 10.15+</li>
+</ul>
+<h3 id="recommended-for-ai-workloads"><a class="header" href="#recommended-for-ai-workloads"><strong>Recommended for AI Workloads</strong></a></h3>
+<ul>
+<li><strong>GPU</strong>: NVIDIA RTX 3060 or better (8GB+ VRAM)</li>
+<li><strong>CPU</strong>: 8+ cores (Intel i7/AMD Ryzen 7 or better)</li>
+<li><strong>RAM</strong>: 16GB+ DDR4</li>
+<li><strong>Storage</strong>: 100GB+ NVMe SSD</li>
+<li><strong>Network</strong>: 100 Mbps upload/download</li>
+</ul>
+<h3 id="enterprisedata-center"><a class="header" href="#enterprisedata-center"><strong>Enterprise/Data Center</strong></a></h3>
+<ul>
+<li><strong>GPU</strong>: Multiple NVIDIA A100, H100, or RTX 4090</li>
+<li><strong>CPU</strong>: 16+ cores with high clock speeds</li>
+<li><strong>RAM</strong>: 64GB+ ECC DDR4/DDR5</li>
+<li><strong>Storage</strong>: 1TB+ NVMe SSD with high IOPS</li>
+<li><strong>Network</strong>: 1 Gbps+ with low latency</li>
+<li><strong>Cooling</strong>: Proper thermal management for sustained GPU workloads</li>
+</ul>
+<h2 id="-getting-started"><a class="header" href="#-getting-started">🚀 Getting Started</a></h2>
+<h3 id="option-1-desktop-application-recommended"><a class="header" href="#option-1-desktop-application-recommended"><strong>Option 1: Desktop Application (Recommended)</strong></a></h3>
+<p>The easiest way to run a worker node is using our cross-platform desktop application:</p>
+<ol>
+<li>
+<p><strong>Download the App</strong></p>
+<ul>
+<li>Visit <a href="https://ciro.network/download">ciro.network/download</a></li>
+<li>Download for your operating system (Windows, macOS, Linux)</li>
+</ul>
+</li>
+<li>
+<p><strong>Install and Setup</strong></p>
+<pre><code class="language-bash"># Extract and run the installer
+# Follow the guided setup process
+# Connect your wallet (Starknet)
+# Configure your hardware settings
+</code></pre>
+</li>
+<li>
+<p><strong>Start Contributing</strong></p>
+<ul>
+<li>The app automatically detects your GPU</li>
+<li>Configure your preferences and limits</li>
+<li>Start earning CIRO tokens immediately</li>
+</ul>
+</li>
+</ol>
+<h3 id="option-2-command-line-advanced"><a class="header" href="#option-2-command-line-advanced"><strong>Option 2: Command Line (Advanced)</strong></a></h3>
+<p>For developers and advanced users who want more control:</p>
+<h4 id="prerequisites"><a class="header" href="#prerequisites"><strong>Prerequisites</strong></a></h4>
+<pre><code class="language-bash"># Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+
+# Install system dependencies (Ubuntu/Debian)
+sudo apt update
+sudo apt install -y build-essential pkg-config libssl-dev
+
+# Install Docker (for containerized workloads)
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+</code></pre>
+<h4 id="build-and-run"><a class="header" href="#build-and-run"><strong>Build and Run</strong></a></h4>
+<pre><code class="language-bash"># Clone the repository
+git clone https://github.com/ciro-network/ciro-network.git
+cd ciro-network/rust-node
+
+# Build the worker node
+cargo build --release
+
+# Create configuration file
+cp environment.example .env
+# Edit .env with your settings
+
+# Run the worker node
+cargo run --bin ciro-worker
+</code></pre>
+<h2 id="-configuration"><a class="header" href="#-configuration">⚙️ Configuration</a></h2>
+<h3 id="environment-variables"><a class="header" href="#environment-variables"><strong>Environment Variables</strong></a></h3>
+<p>Create a <code>.env</code> file in your project directory:</p>
+<pre><code class="language-bash"># ===== Worker Node Configuration =====
+WORKER_ID=worker-001
+WORKER_NAME=My CIRO Worker
+WORKER_GPU_COUNT=1
+WORKER_GPU_MEMORY=8192  # 8GB in MB
+WORKER_MAX_CONCURRENT_JOBS=3
+WORKER_STAKE_AMOUNT=100000000000000000000  # 100 CIRO tokens
+
+# ===== Blockchain Configuration =====
+STARKNET_RPC_URL=https://alpha-sepolia.starknet.io
+STARKNET_NETWORK=sepolia-testnet
+STARKNET_ACCOUNT_ADDRESS=0x123...
+STARKNET_PRIVATE_KEY=0x456...
+
+# ===== P2P Network Configuration =====
+P2P_LISTEN_ADDRESS=/ip4/0.0.0.0/tcp/4001
+P2P_EXTERNAL_ADDRESS=/ip4/your-public-ip/tcp/4001
+
+# ===== AI/ML Configuration =====
+OLLAMA_HOST=http://localhost:11434
+HUGGINGFACE_TOKEN=hf_your_token_here
+COMPUTE_TIMEOUT=300
+MAX_MEMORY_GB=8
+MAX_GPU_MEMORY_GB=16
+
+# ===== Monitoring Configuration =====
+RUST_LOG=info
+</code></pre>
+<h3 id="hardware-configuration"><a class="header" href="#hardware-configuration"><strong>Hardware Configuration</strong></a></h3>
+<h4 id="gpu-settings"><a class="header" href="#gpu-settings"><strong>GPU Settings</strong></a></h4>
+<pre><code class="language-bash"># Check your GPU capabilities
+nvidia-smi  # For NVIDIA GPUs
+rocm-smi   # For AMD GPUs
+
+# Configure GPU memory limits
+export CUDA_VISIBLE_DEVICES=0  # Use first GPU
+export GPU_MEMORY_LIMIT=8192   # 8GB limit
+</code></pre>
+<h4 id="system-optimization"><a class="header" href="#system-optimization"><strong>System Optimization</strong></a></h4>
+<pre><code class="language-bash"># Enable performance mode (Ubuntu)
+sudo cpupower frequency-set -g performance
+
+# Optimize for GPU workloads
+echo 'performance' | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+
+# Increase file descriptor limits
+echo '* soft nofile 65536' | sudo tee -a /etc/security/limits.conf
+echo '* hard nofile 65536' | sudo tee -a /etc/security/limits.conf
+</code></pre>
+<h2 id="-advanced-setup"><a class="header" href="#-advanced-setup">🔧 Advanced Setup</a></h2>
+<h3 id="docker-deployment"><a class="header" href="#docker-deployment"><strong>Docker Deployment</strong></a></h3>
+<p>For containerized deployment:</p>
+<pre><code class="language-bash"># Build the Docker image
+docker build -t ciro-worker .
+
+# Run with environment variables
+docker run -d \
+  --name ciro-worker \
+  --gpus all \
+  -p 4001:4001 \
+  -v /var/lib/ciro:/data \
+  --env-file .env \
+  ciro-worker
+</code></pre>
+<h3 id="systemd-service-linux"><a class="header" href="#systemd-service-linux"><strong>Systemd Service (Linux)</strong></a></h3>
+<p>Create a systemd service for automatic startup:</p>
+<pre><code class="language-bash"># Create service file
+sudo tee /etc/systemd/system/ciro-worker.service &lt;&lt; EOF
+[Unit]
+Description=CIRO Network Worker Node
+After=network.target
+
+[Service]
+Type=simple
+User=ciro
+WorkingDirectory=/opt/ciro-worker
+ExecStart=/opt/ciro-worker/ciro-worker
+Restart=always
+RestartSec=10
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable and start the service
+sudo systemctl enable ciro-worker
+sudo systemctl start ciro-worker
+</code></pre>
+<h3 id="monitoring-with-prometheus"><a class="header" href="#monitoring-with-prometheus"><strong>Monitoring with Prometheus</strong></a></h3>
+<p>Set up monitoring for your worker node:</p>
+<pre><code class="language-yaml"># prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'ciro-worker'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+</code></pre>
+<h2 id="-monitoring-your-node"><a class="header" href="#-monitoring-your-node">📊 Monitoring Your Node</a></h2>
+<h3 id="health-checks"><a class="header" href="#health-checks"><strong>Health Checks</strong></a></h3>
+<p>Monitor your node's health:</p>
+<pre><code class="language-bash"># Check node status
+curl http://localhost:8080/health
+
+# View worker statistics
+curl http://localhost:8080/workers/stats
+
+# Check job completion rates
+curl http://localhost:8080/jobs/stats
+</code></pre>
+<h3 id="performance-metrics"><a class="header" href="#performance-metrics"><strong>Performance Metrics</strong></a></h3>
+<p>Track key performance indicators:</p>
+<ul>
+<li><strong>GPU Utilization</strong>: Monitor GPU usage and temperature</li>
+<li><strong>Job Completion Rate</strong>: Track successful vs failed jobs</li>
+<li><strong>Earnings</strong>: Monitor CIRO token rewards</li>
+<li><strong>Network Connectivity</strong>: Check P2P connection status</li>
+<li><strong>System Resources</strong>: Monitor CPU, memory, and disk usage</li>
+</ul>
+<h3 id="logs-and-debugging"><a class="header" href="#logs-and-debugging"><strong>Logs and Debugging</strong></a></h3>
+<p>Enable detailed logging:</p>
+<pre><code class="language-bash"># Set log level
+export RUST_LOG=debug
+
+# View real-time logs
+tail -f /var/log/ciro-worker.log
+
+# Check for errors
+grep ERROR /var/log/ciro-worker.log
+</code></pre>
+<h2 id="-troubleshooting"><a class="header" href="#-troubleshooting">🛠️ Troubleshooting</a></h2>
+<h3 id="common-issues"><a class="header" href="#common-issues"><strong>Common Issues</strong></a></h3>
+<h4 id="1-gpu-not-detected"><a class="header" href="#1-gpu-not-detected"><strong>1. GPU Not Detected</strong></a></h4>
+<pre><code class="language-bash"># Check GPU drivers
+nvidia-smi  # Should show your GPU
+
+# Install NVIDIA drivers if needed
+sudo apt install nvidia-driver-535
+
+# Verify CUDA installation
+nvcc --version
+</code></pre>
+<h4 id="2-network-connection-issues"><a class="header" href="#2-network-connection-issues"><strong>2. Network Connection Issues</strong></a></h4>
+<pre><code class="language-bash"># Check firewall settings
+sudo ufw status
+
+# Open required ports
+sudo ufw allow 4001/tcp  # P2P networking
+sudo ufw allow 8080/tcp  # API endpoint
+
+# Test connectivity
+curl -I https://alpha-sepolia.starknet.io
+</code></pre>
+<h4 id="3-blockchain-connection-problems"><a class="header" href="#3-blockchain-connection-problems"><strong>3. Blockchain Connection Problems</strong></a></h4>
+<pre><code class="language-bash"># Verify Starknet configuration
+echo $STARKNET_RPC_URL
+echo $STARKNET_ACCOUNT_ADDRESS
+
+# Check account balance
+curl -X POST $STARKNET_RPC_URL \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"starknet_getBalance","params":{"block_id":"latest","contract_address":"'$STARKNET_ACCOUNT_ADDRESS'"},"id":1}'
+</code></pre>
+<h4 id="4-performance-issues"><a class="header" href="#4-performance-issues"><strong>4. Performance Issues</strong></a></h4>
+<pre><code class="language-bash"># Monitor system resources
+htop
+nvidia-smi -l 1
+
+# Check for memory leaks
+valgrind --tool=memcheck ./ciro-worker
+
+# Optimize for your hardware
+# Adjust WORKER_MAX_CONCURRENT_JOBS based on your system
+</code></pre>
+<h3 id="getting-help"><a class="header" href="#getting-help"><strong>Getting Help</strong></a></h3>
+<p>If you encounter issues:</p>
+<ol>
+<li><strong>Check the logs</strong>: Look for error messages in the logs</li>
+<li><strong>Search existing issues</strong>: Check our <a href="https://github.com/ciro-network/ciro-network/issues">GitHub issues</a></li>
+<li><strong>Join our Discord</strong>: Get help from the community</li>
+<li><strong>Create a bug report</strong>: Use our <a href="/contributing/bugs/">bug report template</a></li>
+</ol>
+<h2 id="-earning-and-rewards"><a class="header" href="#-earning-and-rewards">💰 Earning and Rewards</a></h2>
+<h3 id="how-rewards-work"><a class="header" href="#how-rewards-work"><strong>How Rewards Work</strong></a></h3>
+<ul>
+<li><strong>Job Completion</strong>: Earn CIRO tokens for each completed job</li>
+<li><strong>Quality Bonuses</strong>: Higher rewards for high-quality results</li>
+<li><strong>Reliability Bonuses</strong>: Consistent workers earn more</li>
+<li><strong>Staking Rewards</strong>: Stake CIRO tokens to earn additional rewards</li>
+</ul>
+<h3 id="optimizing-earnings"><a class="header" href="#optimizing-earnings"><strong>Optimizing Earnings</strong></a></h3>
+<ul>
+<li><strong>Maintain High Uptime</strong>: Keep your node running consistently</li>
+<li><strong>Provide Quality Results</strong>: Ensure accurate and timely job completion</li>
+<li><strong>Stake CIRO Tokens</strong>: Increase your earning potential</li>
+<li><strong>Monitor Performance</strong>: Optimize your hardware configuration</li>
+</ul>
+<h3 id="withdrawing-rewards"><a class="header" href="#withdrawing-rewards"><strong>Withdrawing Rewards</strong></a></h3>
+<pre><code class="language-bash"># Check your balance
+curl http://localhost:8080/wallet/balance
+
+# Withdraw to your wallet
+curl -X POST http://localhost:8080/wallet/withdraw \
+  -H "Content-Type: application/json" \
+  -d '{"amount": "100000000000000000000"}'
+</code></pre>
+<h2 id="-security-best-practices"><a class="header" href="#-security-best-practices">🔒 Security Best Practices</a></h2>
+<h3 id="wallet-security"><a class="header" href="#wallet-security"><strong>Wallet Security</strong></a></h3>
+<ul>
+<li><strong>Use a dedicated wallet</strong> for your worker node</li>
+<li><strong>Keep private keys secure</strong> and never share them</li>
+<li><strong>Use hardware wallets</strong> for large amounts</li>
+<li><strong>Regular backups</strong> of your wallet configuration</li>
+</ul>
+<h3 id="system-security"><a class="header" href="#system-security"><strong>System Security</strong></a></h3>
+<ul>
+<li><strong>Keep software updated</strong> with the latest security patches</li>
+<li><strong>Use strong passwords</strong> and enable 2FA where possible</li>
+<li><strong>Monitor for suspicious activity</strong> in your logs</li>
+<li><strong>Isolate your worker node</strong> on a separate network if possible</li>
+</ul>
+<h3 id="network-security"><a class="header" href="#network-security"><strong>Network Security</strong></a></h3>
+<ul>
+<li><strong>Configure firewalls</strong> to only allow necessary traffic</li>
+<li><strong>Use VPN</strong> for additional security if needed</li>
+<li><strong>Monitor network traffic</strong> for unusual patterns</li>
+<li><strong>Regular security audits</strong> of your setup</li>
+</ul>
+<h2 id="-scaling-your-operation"><a class="header" href="#-scaling-your-operation">🚀 Scaling Your Operation</a></h2>
+<h3 id="multiple-nodes"><a class="header" href="#multiple-nodes"><strong>Multiple Nodes</strong></a></h3>
+<p>Run multiple worker nodes for increased earnings:</p>
+<pre><code class="language-bash"># Create separate configurations for each node
+cp .env .env.worker-1
+cp .env .env.worker-2
+
+# Edit each configuration with unique settings
+# WORKER_ID=worker-001
+# WORKER_ID=worker-002
+
+# Run multiple instances
+cargo run --bin ciro-worker -- --config .env.worker-1 &amp;
+cargo run --bin ciro-worker -- --config .env.worker-2 &amp;
+</code></pre>
+<h3 id="load-balancing"><a class="header" href="#load-balancing"><strong>Load Balancing</strong></a></h3>
+<p>For high-performance setups:</p>
+<pre><code class="language-bash"># Use a load balancer for multiple GPUs
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+
+# Configure job distribution
+export WORKER_MAX_CONCURRENT_JOBS=12  # 3 jobs per GPU
+</code></pre>
+<h3 id="data-center-deployment"><a class="header" href="#data-center-deployment"><strong>Data Center Deployment</strong></a></h3>
+<p>For enterprise-scale operations:</p>
+<ul>
+<li><strong>Use container orchestration</strong> (Kubernetes, Docker Swarm)</li>
+<li><strong>Implement monitoring</strong> (Prometheus, Grafana)</li>
+<li><strong>Set up alerting</strong> for system issues</li>
+<li><strong>Use dedicated hardware</strong> for optimal performance</li>
+</ul>
+<h2 id="-next-steps"><a class="header" href="#-next-steps">📚 Next Steps</a></h2>
+<p>Ready to dive deeper? Check out these resources:</p>
+<ul>
+<li><strong><a href="/tech/overview/">Technical Overview</a></strong> - Understand the network architecture</li>
+<li><strong><a href="/tech/contracts/">Smart Contracts</a></strong> - Learn about the blockchain integration</li>
+<li><strong><a href="/tokenomics/">Tokenomics</a></strong> - Understand the economic model</li>
+<li><strong><a href="/contributing/guide/">Contributing Guide</a></strong> - Other ways to contribute</li>
+<li><strong><a href="/contributing/community/">Community Guidelines</a></strong> - Join our community</li>
+</ul>
+<hr />
+<p><strong>Thank you for helping build the future of decentralized computing!</strong> 🌟</p>
+<p>Your worker node contributes to making AI computing accessible to everyone. Every job you complete helps researchers, developers, and organizations around the world.</p>
+<p><em>Questions? Need help? Join our <a href="https://discord.gg/ciro-network">Discord</a> or check our <a href="/docs/">documentation</a>.</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../contributing/guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../contributing/community.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../contributing/guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../contributing/community.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/math-config.js"></script>
+        <script src="../theme/ciro-theme.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

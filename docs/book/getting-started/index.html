@@ -1,0 +1,975 @@
+<!DOCTYPE HTML>
+<html lang="en" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🚀 Getting Started - CIRO Network Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Complete documentation for the CIRO Network decentralized compute layer">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/ciro-theme.css">
+        <link rel="stylesheet" href="../theme/custom.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">CIRO Network Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network/edit/main/docs/src/getting-started/README.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-welcome-to-ciro-network"><a class="header" href="#-welcome-to-ciro-network">👋 Welcome to Ciro Network!</a></h1>
+<p><strong>We’re so glad you’re here.</strong> Whether you’re a developer, GPU provider, researcher, or just curious about the future of decentralized AI, you belong in the Ciro community.</p>
+<hr />
+<h2 id="-our-story-built-for-real-world-needs"><a class="header" href="#-our-story-built-for-real-world-needs">🌱 Our Story: Built for Real-World Needs</a></h2>
+<p>Ciro Network was born on the factory floor—not in a hackathon or a hype cycle. Our team at <strong>Ciro AI Labs</strong> built real-time vision models and ETL pipelines for industrial plants and operations teams across Latin America. We saw firsthand how unpredictable cloud costs and limited access to high-end GPUs could hold back innovation and safety in critical environments.</p>
+<blockquote>
+<p>Not every plant can afford H100s or access AWS. Not every team has the luxury of elastic cloud budgets. And during compute surges, costs become unpredictable and unsustainable.</p>
+</blockquote>
+<p>So we built Ciro Network—first, for ourselves. We needed a way to:</p>
+<ul>
+<li>Offload inference and training jobs from local edge servers</li>
+<li>Balance GPU workloads across regions and machines</li>
+<li>Cap our AWS/Azure spend while maintaining performance</li>
+</ul>
+<p>What started as an internal optimization layer became something much bigger: a decentralized compute infrastructure with GPU orchestration, on-chain settlement, ZK-ML verification, and a full tokenomics engine for staking, slashing, and rewards.</p>
+<p>Now, we’re opening it to the world—so others can do what we did: <strong>Run high-performance AI workloads without Big Cloud dependencies.</strong></p>
+<p>Ciro Network is built <strong>by practitioners, for practitioners</strong>—an infrastructure layer born from real needs, not hype.</p>
+<hr />
+<h2 id="-youre-invited"><a class="header" href="#-youre-invited">🤗 You’re Invited</a></h2>
+<p>Ciro is for everyone who believes in open, verifiable, and accessible AI. Whether you want to build, contribute, learn, or just explore, you’re welcome here. Our community is global, inclusive, and always ready to help.</p>
+<ul>
+<li><strong>New to Web3 or AI?</strong> No problem—our guides and community are here for you.</li>
+<li><strong>Seasoned developer or GPU pro?</strong> Dive in and help shape the future.</li>
+<li><strong>Curious about decentralized infrastructure?</strong> You’re in the right place.</li>
+</ul>
+<hr />
+<h1 id="-getting-started-with-ciro-network"><a class="header" href="#-getting-started-with-ciro-network">🚀 Getting Started with Ciro Network</a></h1>
+<p><img src="../images/vdnKIdxRs0qtBRSfk6lne.png" alt="Getting Started Hero" /></p>
+<p><strong>TL;DR</strong>: Start building verifiable AI applications on Ciro Network in under 10 minutes with our SDK, templates, and comprehensive testnet environment.</p>
+<h2 id="-choose-your-path"><a class="header" href="#-choose-your-path">🎯 Choose Your Path</a></h2>
+<p><img src="../images/MaYIO8ncsSZ7LNi6RlpCT.png" alt="Choose Your Development Path" /></p>
+<p>Ciro Network serves three primary audiences, each with tailored onboarding paths:</p>
+<hr />
+<h2 id="-multichain-infrastructure"><a class="header" href="#-multichain-infrastructure">🌐 <strong>Multichain Infrastructure</strong></a></h2>
+<p>Ciro Network is built for the <strong>multichain future</strong>—while our core compute coordination runs on Starknet for maximum performance and verifiability, we support cross-chain settlements and staking across multiple ecosystems.</p>
+<h3 id="why-multichain-matters-for-ai-compute"><a class="header" href="#why-multichain-matters-for-ai-compute"><strong>Why Multichain Matters for AI Compute</strong></a></h3>
+<ul>
+<li><strong>Flexibility</strong>: Choose the settlement chain that fits your use case and budget</li>
+<li><strong>Accessibility</strong>: Stake and earn on the network that aligns with your existing holdings</li>
+<li><strong>Scalability</strong>: Distribute demand across multiple chains to reduce congestion</li>
+<li><strong>Enterprise Ready</strong>: Settle high-value jobs on Ethereum mainnet for maximum security</li>
+</ul>
+<h3 id="supported-networks"><a class="header" href="#supported-networks"><strong>Supported Networks</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Network</th><th>Purpose</th><th>Status</th><th>Best For</th></tr></thead><tbody>
+<tr><td><strong>🟣 Starknet</strong></td><td>Core coordination, job management</td><td>✅ <strong>Live</strong></td><td>AI developers, zkML applications</td></tr>
+<tr><td><strong>🔵 Ethereum</strong></td><td>Institutional staking, high-value settlements</td><td>🚧 <strong>Q2 2025</strong></td><td>Enterprise users, large settlements</td></tr>
+<tr><td><strong>🟠 Polygon</strong></td><td>Retail staking, frequent settlements</td><td>🚧 <strong>Q2 2025</strong></td><td>DApps, gaming, high-frequency use</td></tr>
+<tr><td><strong>🔴 Arbitrum</strong></td><td>DeFi integrations, bridge settlements</td><td>🚧 <strong>Q3 2025</strong></td><td>DeFi protocols, yield farming</td></tr>
+<tr><td><strong>🟡 Base</strong></td><td>Consumer app settlements</td><td>🔄 <strong>Planned</strong></td><td>Consumer applications, social</td></tr>
+</tbody></table>
+</div>
+<blockquote>
+<p>💡 <strong>How it works</strong>: Submit AI jobs on Starknet for fastest execution and verifiable results, then settle payments on your preferred chain using our trustless bridge infrastructure.</p>
+</blockquote>
+<hr />
+<h3 id="-aiml-developers"><a class="header" href="#-aiml-developers">🧠 <strong>AI/ML Developers</strong></a></h3>
+<p>Build verifiable AI applications with zkML proofs</p>
+<ul>
+<li><strong>Goal</strong>: Deploy AI models with cryptographic verification</li>
+<li><strong>Time</strong>: 15 minutes to first verifiable inference</li>
+<li><strong>Prerequisites</strong>: Python/Node.js, basic ML experience</li>
+</ul>
+<h3 id="-gpu-providers"><a class="header" href="#-gpu-providers">⚡ <strong>GPU Providers</strong></a></h3>
+<p>Contribute compute resources and earn $CIRO tokens</p>
+<ul>
+<li><strong>Goal</strong>: Start earning from your GPU hardware</li>
+<li><strong>Time</strong>: 30 minutes to join the network</li>
+<li><strong>Prerequisites</strong>: Modern GPU (RTX 3080+ or equivalent)</li>
+</ul>
+<h3 id="-starknet-developers"><a class="header" href="#-starknet-developers">🔗 <strong>Starknet Developers</strong></a></h3>
+<p>Integrate AI oracles and verification into Cairo smart contracts</p>
+<ul>
+<li><strong>Goal</strong>: Use AI results in on-chain applications</li>
+<li><strong>Time</strong>: 20 minutes to first smart contract integration</li>
+<li><strong>Prerequisites</strong>: Cairo/Starknet development experience</li>
+</ul>
+<hr />
+<h2 id="-path-1-aiml-developer-quick-start"><a class="header" href="#-path-1-aiml-developer-quick-start">🧠 Path 1: AI/ML Developer Quick Start</a></h2>
+<p>Transform your AI models into verifiable, decentralized applications in just a few steps. No complex setup required—just install, configure, and deploy.</p>
+<hr />
+<h3 id="-step-1-install-the-ciro-sdk"><a class="header" href="#-step-1-install-the-ciro-sdk">🔧 <strong>Step 1: Install the Ciro SDK</strong></a></h3>
+<p>Choose your preferred language and get started immediately:</p>
+<p><strong>For JavaScript/TypeScript developers:</strong></p>
+<pre><code class="language-bash">npm install @ciro-network/sdk
+</code></pre>
+<p><strong>For Python developers:</strong></p>
+<pre><code class="language-bash">pip install ciro-sdk
+</code></pre>
+<p><strong>Create your first project:</strong></p>
+<pre><code class="language-bash">npx create-ciro-app my-ai-app
+cd my-ai-app
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Installed the Ciro SDK and created a new project with all the necessary boilerplate code.</p>
+</blockquote>
+<hr />
+<h3 id="-step-2-configure-your-environment"><a class="header" href="#-step-2-configure-your-environment">⚙️ <strong>Step 2: Configure Your Environment</strong></a></h3>
+<p>Create a simple configuration file to connect to the Ciro testnet:</p>
+<p><strong>Create <code>ciro.config.js</code>:</strong></p>
+<pre><code class="language-javascript">export default {
+  network: "testnet",
+  apiKey: process.env.CIRO_API_KEY,
+  verificationLevel: "zkml",
+  defaultTimeout: 30000
+}
+</code></pre>
+<p><strong>Get your API key:</strong></p>
+<ol>
+<li>Visit <a href="https://faucet.testnet.ciro.network">faucet.testnet.ciro.network</a></li>
+<li>Connect your wallet</li>
+<li>Get free testnet tokens + API key</li>
+</ol>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Connected your app to Ciro's testnet where you can experiment safely.</p>
+</blockquote>
+<hr />
+<h3 id="-step-3-deploy-your-first-ai-model"><a class="header" href="#-step-3-deploy-your-first-ai-model">🚀 <strong>Step 3: Deploy Your First AI Model</strong></a></h3>
+<p>Let's deploy a simple image classifier that generates cryptographic proofs:</p>
+<p><strong>Create <code>deploy-model.py</code>:</strong></p>
+<pre><code class="language-python">from ciro_sdk import CiroClient, ModelConfig
+
+# Connect to Ciro Network
+client = CiroClient(network="testnet")
+
+# Configure your model
+model_config = ModelConfig(
+    framework="pytorch",
+    model_path="./models/resnet50.pth",
+    input_shape=(3, 224, 224),
+    verification="zkml"
+)
+
+# Deploy to the network
+deployment = client.deploy_model(model_config)
+print(f"🎉 Model deployed successfully!")
+print(f"📋 Model ID: {deployment.model_id}")
+print(f"🔗 View in explorer: https://explorer.testnet.ciro.network/models/{deployment.model_id}")
+</code></pre>
+<p><strong>Run the deployment:</strong></p>
+<pre><code class="language-bash">python deploy-model.py
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Uploaded your AI model to Ciro's decentralized network where it can be used by anyone with verifiable results.</p>
+</blockquote>
+<hr />
+<h3 id="-step-4-run-verifiable-inference"><a class="header" href="#-step-4-run-verifiable-inference">🎯 <strong>Step 4: Run Verifiable Inference</strong></a></h3>
+<p>Now let's use your deployed model to make predictions with cryptographic proofs:</p>
+<p><strong>Create <code>run-inference.py</code>:</strong></p>
+<pre><code class="language-python"># Load your image
+import torch
+from PIL import Image
+
+image = Image.open("test-image.jpg")
+image_tensor = transform(image)
+
+# Run inference with proof generation
+result = client.infer(
+    model_id="your_model_id_here",
+    input_data=image_tensor,
+    generate_proof=True
+)
+
+# See your results
+print(f"🎯 Prediction: {result.output}")
+print(f"📊 Confidence: {result.confidence}%")
+print(f"🔐 ZK Proof: Generated ✅")
+
+# Verify the proof (optional but cool!)
+is_valid = client.verify_proof(
+    result.proof, 
+    result.output, 
+    "your_model_id_here"
+)
+print(f"✅ Proof verification: {'VALID' if is_valid else 'INVALID'}")
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Made an AI prediction that anyone can verify is correct without seeing your model or data.</p>
+</blockquote>
+<hr />
+<h3 id="-what-to-expect-performance-metrics"><a class="header" href="#-what-to-expect-performance-metrics">📈 <strong>What to Expect: Performance Metrics</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Model Type</th><th>Latency</th><th>Proof Overhead</th><th>Use Cases</th></tr></thead><tbody>
+<tr><td><strong>Simple Models</strong> (LogReg, SVM)</td><td>150-300ms</td><td>+50ms</td><td>Real-time classification</td></tr>
+<tr><td><strong>Image Models</strong> (ResNet, EfficientNet)</td><td>300-800ms</td><td>+100ms</td><td>Computer vision</td></tr>
+<tr><td><strong>Transformers</strong> (BERT, GPT)</td><td>1-5 seconds</td><td>+200ms</td><td>NLP applications</td></tr>
+</tbody></table>
+</div>
+<p><strong>Network Reliability:</strong> 99.7% consensus accuracy on testnet</p>
+<hr />
+<h2 id="-path-2-gpu-provider-quick-start"><a class="header" href="#-path-2-gpu-provider-quick-start">⚡ Path 2: GPU Provider Quick Start</a></h2>
+<p>Turn your idle GPU into a money-making machine by providing compute power to AI developers. Join thousands of providers earning $CIRO tokens across multiple chains.</p>
+<hr />
+<h3 id="-step-1-check-your-hardware"><a class="header" href="#-step-1-check-your-hardware">🖥️ <strong>Step 1: Check Your Hardware</strong></a></h3>
+<p><strong>Minimum Requirements (Entry Level):</strong></p>
+<ul>
+<li><strong>GPU</strong>: NVIDIA RTX 3080 / AMD RX 6800 XT</li>
+<li><strong>VRAM</strong>: 10GB+</li>
+<li><strong>RAM</strong>: 16GB system memory</li>
+<li><strong>Storage</strong>: 100GB free SSD space</li>
+<li><strong>Internet</strong>: 100 Mbps up/down, &lt;50ms latency</li>
+</ul>
+<p><strong>Recommended for Higher Earnings:</strong></p>
+<ul>
+<li><strong>Enterprise GPUs</strong>: H100, A100, V100 series</li>
+<li><strong>Multiple GPUs</strong>: 2-8 GPU setups earn tier bonuses</li>
+<li><strong>Fast Internet</strong>: 1Gbps+ for premium workloads</li>
+</ul>
+<blockquote>
+<p>💡 <strong>Earning Potential:</strong> RTX 3080 = $0.40-0.80/hour | H100 = $2.20-4.50/hour</p>
+</blockquote>
+<hr />
+<h3 id="-step-2-install-ciro-worker"><a class="header" href="#-step-2-install-ciro-worker">📦 <strong>Step 2: Install Ciro Worker</strong></a></h3>
+<p><strong>Quick Installation (Recommended):</strong></p>
+<pre><code class="language-bash">curl -fsSL https://install.ciro.network | sh
+</code></pre>
+<p><strong>Or build from source:</strong></p>
+<pre><code class="language-bash">git clone https://github.com/ciro-network/ciro-worker
+cd ciro-worker
+cargo build --release
+</code></pre>
+<p><strong>Verify installation:</strong></p>
+<pre><code class="language-bash">ciro-worker --version
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Installed the Ciro worker software that will manage your GPU and connect to the network.</p>
+</blockquote>
+<hr />
+<h3 id="-step-3-configure-your-worker"><a class="header" href="#-step-3-configure-your-worker">⚙️ <strong>Step 3: Configure Your Worker</strong></a></h3>
+<p><strong>Create your configuration file:</strong></p>
+<p><strong>Create <code>config/worker.toml</code>:</strong></p>
+<pre><code class="language-toml">[network]
+starknet_rpc = "https://starknet-mainnet.public.blastapi.io"
+coordinator_endpoint = "ws://coordinator.testnet.ciro.network"
+
+[hardware]
+gpu_ids = [0, 1]          # Which GPUs to use
+max_jobs_concurrent = 4   # How many jobs at once
+enable_zkml = true        # Higher rewards for zkML jobs
+
+[economic]
+min_stake = 1000          # CIRO tokens to stake
+commission_rate = 0.05    # 5% network fee
+auto_restake = true       # Compound your earnings
+</code></pre>
+<p><strong>Test your hardware:</strong></p>
+<pre><code class="language-bash">ciro-worker check-hardware
+</code></pre>
+<p>This will show you:</p>
+<ul>
+<li>✅ Compatible GPUs detected</li>
+<li>✅ Performance tier assignment</li>
+<li>✅ Estimated earning potential</li>
+</ul>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Configured your worker to use your GPUs optimally and checked compatibility.</p>
+</blockquote>
+<hr />
+<h3 id="-step-4-get-ciro-tokens--stake"><a class="header" href="#-step-4-get-ciro-tokens--stake">🪙 <strong>Step 4: Get CIRO Tokens &amp; Stake</strong></a></h3>
+<p><strong>Get testnet tokens:</strong></p>
+<ol>
+<li>Visit <a href="https://faucet.testnet.ciro.network">faucet.testnet.ciro.network</a></li>
+<li>Connect your Starknet wallet</li>
+<li>Request 2000 testnet CIRO tokens</li>
+</ol>
+<p><strong>Choose your staking chain:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Chain</th><th>Min Stake</th><th>APY Range</th><th>Best For</th></tr></thead><tbody>
+<tr><td><strong>Starknet</strong></td><td>1K CIRO</td><td>12-18%</td><td>Native rewards, governance</td></tr>
+<tr><td><strong>Ethereum</strong></td><td>10K CIRO</td><td>8-12%</td><td>Institutional security</td></tr>
+<tr><td><strong>Polygon</strong></td><td>500 CIRO</td><td>10-15%</td><td>Low fees, retail-friendly</td></tr>
+</tbody></table>
+</div>
+<p><strong>Stake your tokens:</strong></p>
+<pre><code class="language-bash"># Stake on Starknet (default, highest rewards)
+ciro-worker stake --amount 1000 --duration 90d --chain starknet
+
+# Or stake on Ethereum for institutional security
+ciro-worker stake --amount 10000 --duration 90d --chain ethereum
+
+# Or stake on Polygon for lower minimum
+ciro-worker stake --amount 500 --duration 90d --chain polygon
+</code></pre>
+<p><strong>Check your multi-chain stake:</strong></p>
+<pre><code class="language-bash">ciro-worker status --all-chains
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Staked tokens as collateral across your preferred chain(s), making you eligible for high-value jobs and protecting the network.</p>
+</blockquote>
+<hr />
+<h3 id="-step-5-start-earning"><a class="header" href="#-step-5-start-earning">🚀 <strong>Step 5: Start Earning</strong></a></h3>
+<p><strong>Start your worker:</strong></p>
+<pre><code class="language-bash">ciro-worker start --daemon
+</code></pre>
+<p><strong>Monitor your earnings:</strong></p>
+<pre><code class="language-bash"># View real-time stats
+ciro-worker dashboard
+
+# Check earnings history  
+ciro-worker earnings --last-week
+</code></pre>
+<p><strong>What you'll see:</strong></p>
+<pre><code class="language-text">🔥 Ciro Worker Dashboard
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Status: 🟢 ONLINE        Jobs Completed: 47
+Uptime: 23h 45m          Earnings Today: 12.4 CIRO
+GPU Temp: 67°C           Total Staked: 1000 CIRO
+
+Recent Jobs:
+  ✅ Image Classification    +0.8 CIRO    3 min ago
+  ✅ Text Generation        +2.1 CIRO    7 min ago  
+  ✅ zkML Proof Generation  +3.5 CIRO    12 min ago
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Started earning CIRO tokens by providing compute power to AI developers worldwide!</p>
+</blockquote>
+<hr />
+<h3 id="-earning-expectations"><a class="header" href="#-earning-expectations">💰 <strong>Earning Expectations</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>GPU Tier</th><th>Hourly Rate</th><th>Monthly (24/7)</th><th>Annual (24/7)</th></tr></thead><tbody>
+<tr><td><strong>RTX 3080</strong></td><td>$0.40-0.80</td><td>$288-576</td><td>$3,456-6,912</td></tr>
+<tr><td><strong>RTX 4090</strong></td><td>$0.80-1.60</td><td>$576-1,152</td><td>$6,912-13,824</td></tr>
+<tr><td><strong>A100</strong></td><td>$1.50-3.00</td><td>$1,080-2,160</td><td>$12,960-25,920</td></tr>
+<tr><td><strong>H100</strong></td><td>$2.20-4.50</td><td>$1,584-3,240</td><td>$19,008-38,880</td></tr>
+</tbody></table>
+</div>
+<p><strong>Bonus Multipliers:</strong></p>
+<ul>
+<li>🔐 <strong>zkML Jobs</strong>: +50% premium</li>
+<li>🏆 <strong>High Uptime</strong>: +25% (&gt;99% uptime)</li>
+<li>🔥 <strong>Multi-GPU</strong>: +10% per additional GPU</li>
+<li>⚡ <strong>Fast Response</strong>: +15% (sub-200ms)</li>
+</ul>
+<p><strong>Network Fees:</strong></p>
+<ul>
+<li>5-10% commission to coordinator</li>
+<li>Gas fees covered by requesters</li>
+</ul>
+<hr />
+<h2 id="-path-3-starknet-developer-integration"><a class="header" href="#-path-3-starknet-developer-integration">🔗 Path 3: Starknet Developer Integration</a></h2>
+<p>Build AI-powered smart contracts with verifiable results. Perfect for DeFi protocols, DAOs, and any dApp that needs trustless AI oracles.</p>
+<hr />
+<h3 id="-step-1-set-up-your-development-environment"><a class="header" href="#-step-1-set-up-your-development-environment">🛠️ <strong>Step 1: Set Up Your Development Environment</strong></a></h3>
+<p><strong>Install required tools:</strong></p>
+<pre><code class="language-bash"># Install Scarb (Cairo package manager)
+curl --proto '=https' --tlsv1.2 -sSf https://docs.swmansion.com/scarb/install.sh | sh
+
+# Install Starknet Foundry
+curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | sh
+</code></pre>
+<p><strong>Create your project:</strong></p>
+<pre><code class="language-bash">scarb new ai-oracle-project
+cd ai-oracle-project
+</code></pre>
+<p><strong>Add Ciro dependency to <code>Scarb.toml</code>:</strong></p>
+<pre><code class="language-toml">[dependencies]
+starknet = "&gt;=2.6.3"
+ciro_interfaces = { git = "https://github.com/ciro-network/cairo-contracts" }
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Set up a Cairo development environment with Ciro's smart contract interfaces.</p>
+</blockquote>
+<hr />
+<h3 id="-step-2-create-your-ai-oracle-contract"><a class="header" href="#-step-2-create-your-ai-oracle-contract">📝 <strong>Step 2: Create Your AI Oracle Contract</strong></a></h3>
+<p>Let's build a simple but powerful AI oracle that can verify predictions on-chain:</p>
+<p><strong>Create <code>src/ai_oracle.cairo</code>:</strong></p>
+<pre><code class="language-cairo">#[starknet::contract]
+mod AIOracle {
+    use starknet::ContractAddress;
+    use ciro_interfaces::IProofVerifier;
+    
+    #[storage]
+    struct Storage {
+        proof_verifier: ContractAddress,
+        authorized_models: LegacyMap&lt;felt252, bool&gt;,
+        owner: ContractAddress,
+    }
+    
+    #[constructor]
+    fn constructor(
+        ref self: ContractState,
+        proof_verifier: ContractAddress,
+        owner: ContractAddress
+    ) {
+        self.proof_verifier.write(proof_verifier);
+        self.owner.write(owner);
+    }
+    
+    #[external(v0)]
+    fn verify_ai_prediction(
+        ref self: ContractState,
+        model_id: felt252,
+        input_hash: felt252,
+        prediction: felt252,
+        proof: Array&lt;felt252&gt;
+    ) -&gt; bool {
+        // Verify the zkML proof on-chain
+        let verifier = IProofVerifierDispatcher { 
+            contract_address: self.proof_verifier.read() 
+        };
+        
+        verifier.verify_inference_proof(
+            model_id, 
+            input_hash, 
+            prediction, 
+            proof
+        )
+    }
+    
+    #[external(v0)]
+    fn authorize_model(ref self: ContractState, model_id: felt252) {
+        assert(get_caller_address() == self.owner.read(), 'Only owner');
+        self.authorized_models.write(model_id, true);
+    }
+}
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Created a smart contract that can verify AI predictions using zero-knowledge proofs.</p>
+</blockquote>
+<hr />
+<h3 id="-step-3-deploy-your-contract"><a class="header" href="#-step-3-deploy-your-contract">🚀 <strong>Step 3: Deploy Your Contract</strong></a></h3>
+<p><strong>Configure your deployment in <code>.env</code>:</strong></p>
+<pre><code class="language-bash">STARKNET_RPC=https://starknet-sepolia.public.blastapi.io
+ACCOUNT_ADDRESS=0x1234...  # Your account address
+PRIVATE_KEY=0x5678...      # Your private key
+PROOF_VERIFIER=0xabcd...   # Ciro's proof verifier address
+</code></pre>
+<p><strong>Deploy your contract:</strong></p>
+<pre><code class="language-bash"># Compile your contract
+scarb build
+
+# Deploy to Starknet testnet
+starknet deploy \
+  --class-hash $(scarb build --target scarb_build | grep -o '0x[a-fA-F0-9]*') \
+  --constructor-calldata $PROOF_VERIFIER $ACCOUNT_ADDRESS \
+  --network testnet
+</code></pre>
+<p><strong>Save your contract address:</strong></p>
+<pre><code class="language-bash">export AI_ORACLE_ADDRESS=0x789a...  # Your deployed contract address
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Deployed your AI oracle contract to Starknet testnet where it can verify AI predictions.</p>
+</blockquote>
+<hr />
+<h3 id="-step-4-build-real-world-applications"><a class="header" href="#-step-4-build-real-world-applications">🎯 <strong>Step 4: Build Real-World Applications</strong></a></h3>
+<p>Now let's see some practical examples of what you can build:</p>
+<p><strong>Example 1: DeFi Risk Assessment</strong></p>
+<pre><code class="language-cairo">#[external(v0)]
+fn assess_loan_risk(
+    ref self: ContractState,
+    borrower_data_hash: felt252,
+    ai_proof: Array&lt;felt252&gt;
+) -&gt; u8 {
+    // Verify AI computed the risk score correctly
+    let is_valid = self.verify_ai_prediction(
+        RISK_MODEL_ID,      // Pre-trained risk model
+        borrower_data_hash, // Hash of borrower's data
+        risk_score,         // AI's prediction (1-100)
+        ai_proof           // Zero-knowledge proof
+    );
+    
+    assert(is_valid, 'Invalid AI proof');
+    risk_score
+}
+</code></pre>
+<p><strong>Example 2: DAO Governance with AI Insights</strong></p>
+<pre><code class="language-cairo">#[external(v0)]
+fn create_proposal_with_analysis(
+    ref self: ContractState,
+    proposal_data: felt252,
+    impact_analysis: felt252,
+    ai_proof: Array&lt;felt252&gt;
+) -&gt; felt252 {
+    // Verify AI analysis is correct
+    let analysis_valid = self.verify_ai_prediction(
+        GOVERNANCE_MODEL_ID,
+        proposal_data,
+        impact_analysis,
+        ai_proof
+    );
+    
+    assert(analysis_valid, 'Invalid impact analysis');
+    
+    // Create proposal with verified AI insights
+    // ... rest of proposal logic
+}
+</code></pre>
+<p><strong>Example 3: Cross-Chain AI Oracle Bridge</strong></p>
+<pre><code class="language-cairo">#[external(v0)]
+fn bridge_ai_result_to_ethereum(
+    ref self: ContractState,
+    job_id: felt252,
+    result: felt252,
+    proof: Array&lt;felt252&gt;,
+    ethereum_recipient: felt252
+) {
+    // Verify the AI computation on Starknet
+    let is_valid = self.verify_ai_prediction(
+        BRIDGE_MODEL_ID,
+        job_id,
+        result,
+        proof
+    );
+    
+    assert(is_valid, 'Invalid AI proof for bridging');
+    
+    // Bridge verified result to Ethereum
+    let bridge_dispatcher = IBridgeDispatcher { 
+        contract_address: self.cross_chain_bridge.read() 
+    };
+    
+    bridge_dispatcher.send_verified_result(
+        ethereum_recipient,
+        result,
+        proof
+    );
+}
+</code></pre>
+<blockquote>
+<p>💡 <strong>Cross-Chain Benefits</strong>: Submit AI jobs on Starknet for fastest execution, then bridge verified results to Ethereum, Polygon, or other chains for final settlement.</p>
+</blockquote>
+<p><strong>Example 4: Dynamic NFT with AI</strong></p>
+<pre><code class="language-cairo">#[external(v0)]
+fn evolve_nft(
+    ref self: ContractState,
+    token_id: u256,
+    new_traits: felt252,
+    ai_proof: Array&lt;felt252&gt;
+) {
+    // Verify AI generated valid traits
+    let traits_valid = self.verify_ai_prediction(
+        NFT_EVOLUTION_MODEL,
+        token_id.try_into().unwrap(),
+        new_traits,
+        ai_proof
+    );
+    
+    assert(traits_valid, 'Invalid trait generation');
+    
+    // Update NFT with AI-generated traits
+    // ... NFT update logic
+}
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Learned how to integrate AI predictions into real smart contract applications.</p>
+</blockquote>
+<hr />
+<h3 id="-step-5-test-your-integration"><a class="header" href="#-step-5-test-your-integration">🧪 <strong>Step 5: Test Your Integration</strong></a></h3>
+<p><strong>Create tests in <code>tests/test_ai_oracle.cairo</code>:</strong></p>
+<pre><code class="language-cairo">use super::ai_oracle::AIOracle;
+
+#[test]
+fn test_valid_ai_proof() {
+    let contract = deploy_contract();
+    
+    // Test with valid AI proof
+    let result = contract.verify_ai_prediction(
+        model_id: 'test_model',
+        input_hash: 0x123,
+        prediction: 0x456,
+        proof: array![0x789, 0xabc]
+    );
+    
+    assert(result == true, 'Should verify valid proof');
+}
+</code></pre>
+<p><strong>Run your tests:</strong></p>
+<pre><code class="language-bash">scarb test
+</code></pre>
+<blockquote>
+<p>✅ <strong>What you just did:</strong> Created tests to ensure your AI oracle works correctly before deploying to mainnet.</p>
+</blockquote>
+<hr />
+<h3 id="-integration-benefits"><a class="header" href="#-integration-benefits">📊 <strong>Integration Benefits</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Feature</th><th>Traditional Oracles</th><th>Ciro AI Oracles</th></tr></thead><tbody>
+<tr><td><strong>Trust Model</strong></td><td>Centralized</td><td>Cryptographically verified</td></tr>
+<tr><td><strong>Data Types</strong></td><td>Simple price feeds</td><td>Complex AI predictions</td></tr>
+<tr><td><strong>Verification</strong></td><td>Social consensus</td><td>Zero-knowledge proofs</td></tr>
+<tr><td><strong>Latency</strong></td><td>10-60 seconds</td><td>200ms-5 seconds</td></tr>
+<tr><td><strong>Cost</strong></td><td>$0.10-1.00 per call</td><td>$0.05-0.50 per call</td></tr>
+</tbody></table>
+</div>
+<p><strong>Perfect for:</strong></p>
+<ul>
+<li>🏦 <strong>DeFi</strong>: Credit scoring, risk assessment, yield optimization</li>
+<li>🗳️ <strong>DAOs</strong>: Proposal analysis, community sentiment</li>
+<li>🎮 <strong>Gaming</strong>: Dynamic content, procedural generation</li>
+<li>🏥 <strong>Insurance</strong>: Claims processing, risk modeling</li>
+</ul>
+<hr />
+<h2 id="-development-resources"><a class="header" href="#-development-resources">🛠️ Development Resources</a></h2>
+<h3 id="sdks--tools"><a class="header" href="#sdks--tools"><strong>SDKs &amp; Tools</strong></a></h3>
+<ul>
+<li><strong>JavaScript/TypeScript</strong>: <code>@ciro-network/sdk</code></li>
+<li><strong>Python</strong>: <code>ciro-sdk</code></li>
+<li><strong>Cairo</strong>: <code>ciro-starknet</code> integration library</li>
+<li><strong>CLI Tools</strong>: <code>ciro-cli</code> for deployment and management</li>
+</ul>
+<h3 id="templates--examples"><a class="header" href="#templates--examples"><strong>Templates &amp; Examples</strong></a></h3>
+<pre><code class="language-bash"># Clone example projects
+git clone https://github.com/ciro-network/examples
+</code></pre>
+<p><strong>Available templates:</strong></p>
+<pre><code class="language-text">examples/
+├── image-classification/    # Computer vision with zkML
+├── text-analysis/          # NLP sentiment analysis  
+├── defi-oracle/           # On-chain AI integration
+├── federated-learning/    # Distributed training
+└── nft-generation/        # Creative AI applications
+</code></pre>
+<h3 id="testnet-faucets"><a class="header" href="#testnet-faucets"><strong>Testnet Faucets</strong></a></h3>
+<ul>
+<li><strong>CIRO Tokens</strong>: <a href="https://faucet.testnet.ciro.network">faucet.testnet.ciro.network</a></li>
+<li><strong>Test ETH (Starknet)</strong>: <a href="https://starknet-faucet.vercel.app">starknet-faucet.vercel.app</a></li>
+</ul>
+<h3 id="monitoring--analytics"><a class="header" href="#monitoring--analytics"><strong>Monitoring &amp; Analytics</strong></a></h3>
+<ul>
+<li><strong>Network Explorer</strong>: <a href="https://explorer.testnet.ciro.network">explorer.testnet.ciro.network</a></li>
+<li><strong>Real-time Metrics</strong>: <a href="https://status.ciro.network">status.ciro.network</a></li>
+<li><strong>Job History</strong>: Track your model performance and earnings</li>
+</ul>
+<hr />
+<h2 id="-network-status--performance"><a class="header" href="#-network-status--performance">📊 Network Status &amp; Performance</a></h2>
+<p><img src="../images/r-tL5EJBu1BDmkpj7VVU1.png" alt="Network Performance Dashboard" /></p>
+<h3 id="current-testnet-metrics"><a class="header" href="#current-testnet-metrics"><strong>Current Testnet Metrics</strong></a></h3>
+<pre><code class="language-text">Network Performance (Real-time):
+  Active Workers    ████████████████ 127 nodes
+  Jobs/Hour        ████████████████ 2,847 completed
+  Avg Latency      ████████████████ 187ms
+  Consensus Accuracy ████████████████ 99.7%
+  zkML Success Rate  ████████████████ 98.1%
+</code></pre>
+<h3 id="geographic-distribution"><a class="header" href="#geographic-distribution"><strong>Geographic Distribution</strong></a></h3>
+<ul>
+<li><strong>North America</strong>: 45% of compute capacity</li>
+<li><strong>Europe</strong>: 32% of compute capacity</li>
+<li><strong>Asia Pacific</strong>: 18% of compute capacity</li>
+<li><strong>Other Regions</strong>: 5% of compute capacity</li>
+</ul>
+<hr />
+<h2 id="-important-considerations"><a class="header" href="#-important-considerations">🚨 Important Considerations</a></h2>
+<h3 id="testnet-vs-mainnet"><a class="header" href="#testnet-vs-mainnet"><strong>Testnet vs Mainnet</strong></a></h3>
+<ul>
+<li><strong>Current Status</strong>: Testnet phase with experimental features</li>
+<li><strong>Mainnet Launch</strong>: Planned Q3 2025</li>
+<li><strong>Data Persistence</strong>: Testnet may reset periodically</li>
+<li><strong>Token Value</strong>: Testnet CIRO has no monetary value</li>
+</ul>
+<h3 id="security-recommendations"><a class="header" href="#security-recommendations"><strong>Security Recommendations</strong></a></h3>
+<ul>
+<li><strong>Private Keys</strong>: Never share your worker or developer private keys</li>
+<li><strong>API Keys</strong>: Rotate API keys regularly</li>
+<li><strong>Staking</strong>: Only stake amounts you can afford to lose in testnet</li>
+<li><strong>Smart Contracts</strong>: Audit your contracts before mainnet deployment</li>
+</ul>
+<h3 id="rate-limits"><a class="header" href="#rate-limits"><strong>Rate Limits</strong></a></h3>
+<ul>
+<li><strong>Free Tier</strong>: 100 inference requests/day</li>
+<li><strong>Developer Tier</strong>: 10,000 requests/day ($50/month worth of testnet credits)</li>
+<li><strong>Enterprise</strong>: Unlimited (contact for custom arrangements)</li>
+</ul>
+<hr />
+<h2 id="-support--community"><a class="header" href="#-support--community">🆘 Support &amp; Community</a></h2>
+<h3 id="documentation"><a class="header" href="#documentation"><strong>Documentation</strong></a></h3>
+<ul>
+<li><strong>API Reference</strong>: <a href="https://docs.ciro.network/api">docs.ciro.network/api</a></li>
+<li><strong>Cairo Integration</strong>: <a href="https://docs.ciro.network/cairo">docs.ciro.network/cairo</a></li>
+<li><strong>zkML Guide</strong>: <a href="https://docs.ciro.network/zkml">docs.ciro.network/zkml</a></li>
+</ul>
+<h3 id="community-channels"><a class="header" href="#community-channels"><strong>Community Channels</strong></a></h3>
+<ul>
+<li><strong>Discord</strong>: <a href="https://discord.gg/ciro-network">discord.gg/ciro-network</a> - Real-time developer support</li>
+<li><strong>GitHub</strong>: <a href="https://github.com/ciro-network">github.com/ciro-network</a> - Code, issues, contributions</li>
+<li><strong>Forum</strong>: <a href="https://forum.ciro.network">forum.ciro.network</a> - Technical discussions</li>
+<li><strong>Twitter</strong>: <a href="https://twitter.com/CiroNetwork">@CiroNetwork</a> - Updates and announcements</li>
+</ul>
+<h3 id="developer-office-hours"><a class="header" href="#developer-office-hours"><strong>Developer Office Hours</strong></a></h3>
+<ul>
+<li><strong>Weekly</strong>: Thursdays 3 PM UTC</li>
+<li><strong>Format</strong>: Live Q&amp;A with core engineers</li>
+<li><strong>Topics</strong>: Architecture, optimization, troubleshooting</li>
+</ul>
+<hr />
+<h2 id="-whats-next"><a class="header" href="#-whats-next">🚀 What's Next?</a></h2>
+<p><img src="../images/E5YtrnbXiOJOpldXUX9FO.png" alt="Your Journey Forward" /></p>
+<h3 id="for-aiml-developers"><a class="header" href="#for-aiml-developers"><strong>For AI/ML Developers</strong></a></h3>
+<ol>
+<li><strong>Explore Advanced Models</strong>: Try deploying transformer models and custom architectures</li>
+<li><strong>Optimize Performance</strong>: Learn about model optimization for distributed execution</li>
+<li><strong>Build Applications</strong>: Create end-to-end dApps using verifiable AI</li>
+<li><strong>Join Beta Programs</strong>: Apply for early access to new features</li>
+</ol>
+<h3 id="for-gpu-providers"><a class="header" href="#for-gpu-providers"><strong>For GPU Providers</strong></a></h3>
+<ol>
+<li><strong>Scale Your Operation</strong>: Add more GPUs and optimize your setup</li>
+<li><strong>Participate in Governance</strong>: Vote on network parameters and upgrades</li>
+<li><strong>Join Provider DAOs</strong>: Collaborate with other providers for better efficiency</li>
+<li><strong>Enterprise Partnerships</strong>: Connect with large-scale projects needing dedicated compute</li>
+</ol>
+<h3 id="for-starknet-developers"><a class="header" href="#for-starknet-developers"><strong>For Starknet Developers</strong></a></h3>
+<ol>
+<li><strong>Advanced Integrations</strong>: Build complex AI-powered protocols</li>
+<li><strong>Gas Optimization</strong>: Learn efficient proof verification patterns</li>
+<li><strong>Cross-Chain AI</strong>: Explore multi-chain AI oracle architectures</li>
+<li><strong>Launch Mainnet</strong>: Prepare for production deployment</li>
+</ol>
+<h3 id="the-multichain-advantage"><a class="header" href="#the-multichain-advantage"><strong>The Multichain Advantage</strong></a></h3>
+<p>Ciro Network isn't just another blockchain project—it's infrastructure for the <strong>multichain future</strong>:</p>
+<ul>
+<li><strong>🚀 Fastest Execution</strong>: Submit jobs on Starknet for optimal performance</li>
+<li><strong>🔗 Flexible Settlement</strong>: Bridge results to Ethereum, Polygon, Arbitrum, or Base</li>
+<li><strong>💰 Smart Economics</strong>: Choose your staking chain based on risk tolerance and rewards</li>
+<li><strong>🌍 Global Access</strong>: Build once, deploy everywhere across the crypto ecosystem</li>
+</ul>
+<p><strong>Ready to build the future of verifiable AI?</strong> <a href="#-choose-your-path">Choose your path above</a> and start your multichain journey with Ciro Network today.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../getting-started/for-developers.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../getting-started/for-developers.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/math-config.js"></script>
+        <script src="../theme/ciro-theme.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

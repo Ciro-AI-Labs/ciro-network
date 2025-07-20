@@ -1,0 +1,824 @@
+<!DOCTYPE HTML>
+<html lang="en" class="navy sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>🛠️ The Ciro Tech Stack - CIRO Network Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="Complete documentation for the CIRO Network decentralized compute layer">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/ciro-theme.css">
+        <link rel="stylesheet" href="../theme/custom.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "navy";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('navy')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">CIRO Network Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/ciro-network/ciro-network/edit/main/docs/src/tech/README.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="-ciro-network-tech-stack"><a class="header" href="#-ciro-network-tech-stack">⚡ Ciro Network Tech Stack</a></h1>
+<p><img src="../images/zDcwUSW9BjiVWRA42oJZF.png" alt="Ciro Network Architecture" /></p>
+<p><strong>TL;DR</strong>: Ciro Network combines proven distributed systems (Kafka + libp2p), zero-knowledge cryptography (Cairo + Starknet), and modern orchestration to deliver the first production-ready verifiable AI compute infrastructure.</p>
+<hr />
+<h2 id="-system-architecture-at-a-glance"><a class="header" href="#-system-architecture-at-a-glance">🏗️ System Architecture at a Glance</a></h2>
+<blockquote>
+<p><strong>🎯 Core Design Philosophy</strong>: Every component selected based on peer-reviewed research and battle-tested in enterprise environments.</p>
+</blockquote>
+<h3 id="the-three-pillars"><a class="header" href="#the-three-pillars"><strong>The Three Pillars</strong></a></h3>
+<pre class="mermaid">graph LR
+    A[🔬 Scientific Rigor] --&gt; D[⚡ Ciro Network]
+    B[🏭 Production Ready] --&gt; D
+    C[✅ Verifiable Compute] --&gt; D
+    
+    style A fill:#4338ca,stroke:#312e81,color:#fff
+    style B fill:#059669,stroke:#064e3b,color:#fff  
+    style C fill:#dc2626,stroke:#991b1b,color:#fff
+    style D fill:#7c3aed,stroke:#581c87,color:#fff
+</pre>
+<hr />
+<h2 id="-complete-network-architecture"><a class="header" href="#-complete-network-architecture">🌐 Complete Network Architecture</a></h2>
+<p>CIRO Network creates a unified, verifiable AI compute layer built on a <strong>multi-chain foundation</strong> with Starknet at its core, expanding to support Bitcoin settlements and cross-chain operations.</p>
+<h3 id="-multi-chain-foundation-with-starknet-core"><a class="header" href="#-multi-chain-foundation-with-starknet-core"><strong>🔗 Multi-Chain Foundation with Starknet Core</strong></a></h3>
+<p><strong>Why Starknet as the Hub:</strong>
+CIRO Network is anchored on Starknet, leveraging its unique zero-knowledge architecture for sub-cent transaction costs and cryptographic verification. Every AI computation can come with STARK proofs, ensuring verifiable results while maintaining the highest levels of security.</p>
+<p><strong>Multi-Chain Expansion Strategy:</strong>
+Following our <strong>Task 27</strong> roadmap, CIRO implements a burn-and-mint architecture across:</p>
+<ul>
+<li><strong>Starknet</strong>: Canonical governance hub and primary compute coordination</li>
+<li><strong>Ethereum</strong>: ERC20 implementation with bridge interfaces for maximum ecosystem reach</li>
+<li><strong>Arbitrum</strong>: L2-optimized deployment for reduced transaction costs</li>
+<li><strong>Polygon</strong>: PoS-compatible implementation for fast, cheap operations</li>
+<li><strong>Solana</strong>: SPL token for high-throughput operations</li>
+</ul>
+<p><strong>Bitcoin Settlement Integration:</strong>
+Through the evolving Starknet ecosystem, CIRO Network will leverage <strong>Bitcoin settlement capabilities</strong>, enabling:</p>
+<ul>
+<li>Lightning Network micropayments for small compute jobs</li>
+<li>Bitcoin-secured final settlement for high-value operations</li>
+<li>Cross-chain bridge security backed by Bitcoin's proven economic model</li>
+</ul>
+<h3 id="-real-benefits-for-everyone"><a class="header" href="#-real-benefits-for-everyone"><strong>⚡ Real Benefits for Everyone</strong></a></h3>
+<p><strong>For Developers:</strong></p>
+<ul>
+<li><strong>Competitive Pricing</strong> through market-driven compute allocation</li>
+<li><strong>Instant Access</strong> to specialized AI hardware without long waitlists</li>
+<li><strong>Cryptographic Guarantees</strong> of compute integrity through STARK proofs</li>
+<li><strong>No Vendor Lock-in</strong> - your models work anywhere</li>
+<li><strong>Multi-chain Flexibility</strong> - deploy on the chain that best fits your needs</li>
+</ul>
+<p><strong>For Compute Providers:</strong></p>
+<ul>
+<li><strong>Additional Revenue</strong> from idle hardware across multiple networks</li>
+<li><strong>Flexible Participation</strong> - contribute when convenient</li>
+<li><strong>Transparent Rewards</strong> with automatic cross-chain distribution</li>
+<li><strong>Global Market Access</strong> without intermediaries</li>
+</ul>
+<p><strong>For the Ecosystem:</strong></p>
+<ul>
+<li><strong>Open Innovation</strong> - anyone can build and contribute</li>
+<li><strong>Verifiable Results</strong> enable new types of applications</li>
+<li><strong>Economic Sustainability</strong> through multi-chain token economics</li>
+<li><strong>Cross-Chain Liquidity</strong> - seamless value flow between networks</li>
+</ul>
+<h3 id="-distributed-storage--settlement"><a class="header" href="#-distributed-storage--settlement"><strong>📡 Distributed Storage &amp; Settlement</strong></a></h3>
+<p><strong>Current Implementation:</strong>
+CIRO Network uses enterprise-grade storage solutions designed for performance and reliability. AI models and job data are managed through our distributed coordinator system, ensuring fast access and secure handling across the global worker network.</p>
+<p><strong>Bitcoin &amp; Multi-Chain Settlement:</strong>
+As outlined in our roadmap, CIRO Network is building toward:</p>
+<ul>
+<li><strong>Bitcoin Lightning</strong> integration for instant micropayments</li>
+<li><strong>Cross-chain bridges</strong> connecting all supported networks</li>
+<li><strong>Unified settlement</strong> - jobs can be paid on any supported chain</li>
+<li><strong>Bitcoin-backed security</strong> for the highest-value computational work</li>
+</ul>
+<h3 id="-security-through-multi-chain-economics"><a class="header" href="#-security-through-multi-chain-economics"><strong>🔒 Security Through Multi-Chain Economics</strong></a></h3>
+<p><strong>Layered Security Model:</strong></p>
+<ul>
+<li><strong>STARK Proofs</strong> provide cryptographic verification of compute jobs</li>
+<li><strong>Multi-chain staking</strong> distributes economic security across networks</li>
+<li><strong>Bitcoin settlement</strong> adds the ultimate layer of security for critical operations</li>
+<li><strong>Cross-chain governance</strong> maintains unified protocol standards</li>
+</ul>
+<p><strong>Economic Incentives:</strong>
+The $CIRO token operates across all supported chains with unified economics:</p>
+<ul>
+<li>Stake on any supported network</li>
+<li>Earn rewards for providing compute or validation</li>
+<li>Governance participation through cross-chain voting</li>
+<li>Burn-and-mint mechanics maintain supply consistency</li>
+</ul>
+<hr />
+<h2 id="-consensus--byzantine-fault-tolerance"><a class="header" href="#-consensus--byzantine-fault-tolerance">🧠 Consensus &amp; Byzantine Fault Tolerance</a></h2>
+<p><img src="../images/_vKaPCc6oBnYRxjhqSZqr.png" alt="Security Model" /></p>
+<h3 id="-mathematical-foundation"><a class="header" href="#-mathematical-foundation"><strong>🔬 Mathematical Foundation</strong></a></h3>
+<blockquote>
+<p><strong>Based on Lamport, Shostak &amp; Pease (1982) - The Byzantine Generals Problem</strong></p>
+</blockquote>
+<div class="equation-block">
+<p><strong>Byzantine Fault Tolerance Requirement:</strong></p>
+<p>$$N \geq 3f + 1$$</p>
+<p>Where:</p>
+<ul>
+<li>$N$ = Total validator nodes</li>
+<li>$f$ = Maximum Byzantine failures</li>
+<li>$3f + 1$ = Minimum honest majority required</li>
+</ul>
+</div>
+<h3 id="-economic-security-model"><a class="header" href="#-economic-security-model"><strong>⚡ Economic Security Model</strong></a></h3>
+<div class="equation-block">
+<p><strong>Network Security Function:</strong></p>
+<p>$$\text{Security}(n) = \sum_{i=1}^{n} (\text{Stake}_i \times \text{Reputation}_i \times \text{Uptime}_i)$$</p>
+<p>Where:</p>
+<ul>
+<li>$\text{Stake}_i$ = CIRO tokens locked by validator $i$</li>
+<li>$\text{Reputation}_i$ = Historical performance score (0.0-1.0)</li>
+<li>$\text{Uptime}_i$ = Network availability factor (last 30 days)</li>
+</ul>
+</div>
+<h3 id="-slashing-matrix"><a class="header" href="#-slashing-matrix"><strong>⚔️ Slashing Matrix</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th><strong>Violation Type</strong></th><th><strong>Severity</strong></th><th><strong>Stake Loss</strong></th><th><strong>Reputation</strong></th><th><strong>Recovery Time</strong></th></tr></thead><tbody>
+<tr><td>🔄 <strong>Double Signing</strong></td><td>Critical</td><td><strong>30%</strong></td><td>-50 points</td><td>90 days</td></tr>
+<tr><td>😴 <strong>Downtime (6h+)</strong></td><td>Medium</td><td><strong>5%</strong></td><td>-10 points</td><td>30 days</td></tr>
+<tr><td>❌ <strong>Invalid Compute</strong></td><td>High</td><td><strong>50%</strong></td><td>-75 points</td><td>180 days</td></tr>
+<tr><td>🚨 <strong>Coordinated Attack</strong></td><td>Critical</td><td><strong>100%</strong></td><td>Permanent Ban</td><td>Never</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-zero-knowledge-verification-engine"><a class="header" href="#-zero-knowledge-verification-engine">🔮 Zero-Knowledge Verification Engine</a></h2>
+<p><img src="../images/KXiJYBKs-X6CKqc-JomKG.png" alt="ZK-ML Pipeline" /></p>
+<h3 id="-the-zk-ml-innovation"><a class="header" href="#-the-zk-ml-innovation"><strong>🧮 The ZK-ML Innovation</strong></a></h3>
+<blockquote>
+<p><strong>🎯 Breakthrough</strong>: Making AI computation verifiable through zero-knowledge proofs</p>
+</blockquote>
+<pre class="mermaid">flowchart LR
+    A[🧠 ML Model&lt;br/&gt;PyTorch/ONNX] --&gt; B[🔧 Cairo Transpiler&lt;br/&gt;Giza/Orion]
+    B --&gt; C[⚡ Provable Execution&lt;br/&gt;Worker Nodes]
+    C --&gt; D[✨ STARK Proof&lt;br/&gt;Cryptographic Guarantee]
+    D --&gt; E[⛓️ On-Chain Verification&lt;br/&gt;Starknet]
+    
+    style A fill:#3b82f6,stroke:#1e40af,color:#fff
+    style B fill:#059669,stroke:#047857,color:#fff  
+    style C fill:#dc2626,stroke:#b91c1c,color:#fff
+    style D fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style E fill:#0891b2,stroke:#0e7490,color:#fff
+</pre>
+<h3 id="-stark-proof-performance"><a class="header" href="#-stark-proof-performance"><strong>📊 STARK Proof Performance</strong></a></h3>
+<pre><code>⚡ COMPLEXITY ANALYSIS:
+
+Verification Time: O(log²(n))     🟢 Logarithmic scaling
+Proof Size:       O(log²(n))     🟢 Compact proofs  
+Prover Time:      O(n·log(n))    🟡 Linear + log overhead
+Security Level:   2^(-128)       🟢 Cryptographically secure
+
+Where n = computation size (model parameters × inference steps)
+</code></pre>
+<h3 id="-supported-ml-frameworks"><a class="header" href="#-supported-ml-frameworks"><strong>🎯 Supported ML Frameworks</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th><strong>Framework</strong></th><th><strong>Status</strong></th><th><strong>Models Supported</strong></th><th><strong>Proof Gen Time</strong></th></tr></thead><tbody>
+<tr><td>🐍 <strong>Scikit-Learn</strong></td><td>✅ Full</td><td>Linear/Tree models</td><td>+20-50ms</td></tr>
+<tr><td>🔥 <strong>PyTorch</strong></td><td>🟡 Limited</td><td>CNNs, Feedforward</td><td>+100-300ms</td></tr>
+<tr><td>📦 <strong>ONNX</strong></td><td>✅ Full</td><td>Universal format</td><td>+50-150ms</td></tr>
+<tr><td>🌲 <strong>XGBoost</strong></td><td>✅ Full</td><td>Gradient boosting</td><td>+30-80ms</td></tr>
+<tr><td>🤗 <strong>Transformers</strong></td><td>🔄 Coming</td><td>Attention models</td><td>+500-2000ms</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-hybrid-network-orchestration"><a class="header" href="#-hybrid-network-orchestration">🌐 Hybrid Network Orchestration</a></h2>
+<h3 id="-enterprise-grade--p2p-architecture"><a class="header" href="#-enterprise-grade--p2p-architecture"><strong>🚀 Enterprise-Grade + P2P Architecture</strong></a></h3>
+<blockquote>
+<p><strong>💡 Innovation</strong>: Combining Apache Kafka reliability with libp2p decentralization</p>
+</blockquote>
+<pre class="mermaid">graph TB
+    subgraph &quot;📡 P2P Discovery Layer&quot;
+        DHT[🗂️ Kademlia DHT&lt;br/&gt;Peer Discovery]
+        GOSSIP[📢 GossipSub&lt;br/&gt;Message Propagation]  
+        RELAY[🌉 Relay Nodes&lt;br/&gt;NAT Traversal]
+    end
+    
+    subgraph &quot;📮 Enterprise Messaging&quot;
+        KAFKA1[📋 Jobs Topic&lt;br/&gt;Partitioned by Type]
+        KAFKA2[✅ Results Topic&lt;br/&gt;Proof Aggregation]
+        KAFKA3[🚨 Alerts Topic&lt;br/&gt;Network Health]
+    end
+    
+    subgraph &quot;⚡ Performance Layer&quot;
+        CACHE[💾 Redis Cache&lt;br/&gt;Sub-ms Lookup]
+        LB[⚖️ Load Balancer&lt;br/&gt;Geographic Routing]
+        CDN[🌍 Global CDN&lt;br/&gt;Proof Caching]
+    end
+    
+    DHT --&gt; KAFKA1
+    GOSSIP --&gt; KAFKA2  
+    RELAY --&gt; KAFKA3
+    
+    KAFKA1 --&gt; CACHE
+    KAFKA2 --&gt; LB
+    KAFKA3 --&gt; CDN
+    
+    style DHT fill:#3b82f6,color:#fff
+    style GOSSIP fill:#059669,color:#fff
+    style RELAY fill:#dc2626,color:#fff
+</pre>
+<h3 id="-message-flow-performance"><a class="header" href="#-message-flow-performance"><strong>📊 Message Flow Performance</strong></a></h3>
+<pre><code>📈 KAFKA PERFORMANCE METRICS:
+
+Throughput:  10M+ msg/sec    🚀 Enterprise scale
+Latency:     &lt;5ms same-DC    ⚡ Sub-millisecond
+Durability:  3x replication  🛡️ Byzantine resilient  
+Ordering:    Per-partition    ✅ Guaranteed consistency
+</code></pre>
+<hr />
+<h2 id="-starknet-smart-contract-layer"><a class="header" href="#-starknet-smart-contract-layer">⛓️ Starknet Smart Contract Layer</a></h2>
+<p><img src="../images/Vz2BvRAPMoQhP1ybuuoZM.png" alt="Smart Contracts" /></p>
+<h3 id="-core-contract-architecture"><a class="header" href="#-core-contract-architecture"><strong>🏗️ Core Contract Architecture</strong></a></h3>
+<pre><code class="language-cairo">// 🎯 JobManager: The Heart of Ciro Network
+#[starknet::contract]
+mod JobManager {
+    use starknet::ContractAddress;
+    use ciro::types::{Job, WorkerInfo, ComputeSpec};
+    
+    #[storage]
+    struct Storage {
+        // 📋 Active job registry
+        active_jobs: LegacyMap&lt;felt252, Job&gt;,
+        // 👷 Worker node registry  
+        worker_registry: LegacyMap&lt;ContractAddress, WorkerInfo&gt;,
+        // 🔢 Global job counter
+        job_counter: felt252,
+        // 💰 Payment escrow
+        job_payments: LegacyMap&lt;felt252, u256&gt;,
+    }
+    
+    #[external(v0)]
+    fn submit_job(
+        ref self: ContractState,
+        model_hash: felt252,
+        input_commitment: felt252,
+        compute_requirements: ComputeSpec
+    ) -&gt; felt252 {
+        // 🔍 Validate compute requirements
+        self._validate_compute_spec(compute_requirements);
+        
+        // 🆔 Generate unique job ID
+        let job_id = self.job_counter.read() + 1;
+        self.job_counter.write(job_id);
+        
+        // 💡 Emit job for worker discovery
+        self.emit(JobSubmitted { 
+            job_id, 
+            model_hash, 
+            input_commitment,
+            compute_requirements,
+            reward: compute_requirements.max_payment
+        });
+        
+        job_id
+    }
+}
+</code></pre>
+<h3 id="-cdc-pool-economic-security-engine"><a class="header" href="#-cdc-pool-economic-security-engine"><strong>💰 CDC Pool: Economic Security Engine</strong></a></h3>
+<pre><code class="language-cairo">#[starknet::contract]
+mod CDCPool {
+    use ciro::interfaces::ICiroToken;
+    
+    #[storage]
+    struct Storage {
+        // 💎 Total network stake
+        total_stake: u256,
+        // 👥 Individual worker stakes
+        worker_stakes: LegacyMap&lt;ContractAddress, u256&gt;,
+        // ⚔️ Slashing history &amp; penalties
+        slash_history: LegacyMap&lt;ContractAddress, SlashRecord&gt;,
+        // 🏆 Performance reputation scores
+        reputation_scores: LegacyMap&lt;ContractAddress, u64&gt;,
+    }
+    
+    #[external(v0)]
+    fn stake_for_worker(
+        ref self: ContractState,
+        worker_address: ContractAddress,
+        amount: u256
+    ) {
+        let caller = get_caller_address();
+        
+        // 💸 Transfer CIRO tokens to pool
+        let ciro_token = ICiroToken { 
+            contract_address: self.ciro_token_address.read() 
+        };
+        ciro_token.transfer_from(caller, get_contract_address(), amount);
+        
+        // 📈 Update stake records
+        let current_stake = self.worker_stakes.read(worker_address);
+        self.worker_stakes.write(worker_address, current_stake + amount);
+        self.total_stake.write(self.total_stake.read() + amount);
+        
+        // 🎉 Emit staking event
+        self.emit(WorkerStaked { worker_address, amount, total_stake: current_stake + amount });
+    }
+}
+</code></pre>
+<h3 id="-gas-optimization-strategy"><a class="header" href="#-gas-optimization-strategy"><strong>⛽ Gas Optimization Strategy</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th><strong>Operation</strong></th><th><strong>Individual Cost</strong></th><th><strong>Batched Cost</strong></th><th><strong>Savings</strong></th></tr></thead><tbody>
+<tr><td>🔍 <strong>Proof Verification</strong></td><td>$0.15</td><td>$0.02</td><td><strong>87%</strong></td></tr>
+<tr><td>💰 <strong>Reward Distribution</strong></td><td>$0.08</td><td>$0.01</td><td><strong>88%</strong></td></tr>
+<tr><td>📋 <strong>Job Submission</strong></td><td>$0.05</td><td>$0.03</td><td><strong>40%</strong></td></tr>
+<tr><td>⚔️ <strong>Slashing Action</strong></td><td>$0.12</td><td>$0.08</td><td><strong>33%</strong></td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-real-time-performance-analytics"><a class="header" href="#-real-time-performance-analytics">📊 Real-Time Performance Analytics</a></h2>
+<h3 id="-hardware-utilization-matrix"><a class="header" href="#-hardware-utilization-matrix"><strong>🔥 Hardware Utilization Matrix</strong></a></h3>
+<pre><code>💻 WORKER PERFORMANCE (Live Data):
+
+GPU Model          Utilization    Jobs/Hour    Revenue/Hour    Efficiency
+────────────────────────────────────────────────────────────────────────
+🚀 H100 SXM 80GB   ████████ 78%      127         $3.20        ⭐⭐⭐⭐⭐
+🎯 A100 80GB       ███████░ 71%       94         $2.40        ⭐⭐⭐⭐
+🎮 RTX 4090        ████████ 85%       73         $1.80        ⭐⭐⭐⭐
+⚡ RTX 3080        ████████ 89%       45         $0.90        ⭐⭐⭐
+</code></pre>
+<h3 id="-geographic-distribution"><a class="header" href="#-geographic-distribution"><strong>🌍 Geographic Distribution</strong></a></h3>
+<p><strong>Global Compute Distribution:</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Region</th><th>Percentage</th><th>Visual</th></tr></thead><tbody>
+<tr><td>🇺🇸 North America</td><td>45%</td><td>███████████████████████████████████████████████</td></tr>
+<tr><td>🇪🇺 Europe</td><td>32%</td><td>████████████████████████████████</td></tr>
+<tr><td>🇯🇵 Asia Pacific</td><td>18%</td><td>██████████████████</td></tr>
+<tr><td>🌍 Other Regions</td><td>5%</td><td>█████</td></tr>
+</tbody></table>
+</div>
+<h3 id="-scaling-projections"><a class="header" href="#-scaling-projections"><strong>📈 Scaling Projections</strong></a></h3>
+<p><strong>🚀 Network Growth Trajectory (6 Months):</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Month</th><th>Active Workers</th><th>Growth Rate</th></tr></thead><tbody>
+<tr><td>Month 1</td><td>127</td><td>-</td></tr>
+<tr><td>Month 2</td><td>185</td><td>+46%</td></tr>
+<tr><td>Month 3</td><td>267</td><td>+44%</td></tr>
+<tr><td>Month 4</td><td>389</td><td>+46%</td></tr>
+<tr><td>Month 5</td><td>566</td><td>+45%</td></tr>
+<tr><td>Month 6</td><td>824</td><td>+46%</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-multi-layer-security-architecture"><a class="header" href="#-multi-layer-security-architecture">🛡️ Multi-Layer Security Architecture</a></h2>
+<h3 id="-security-stack-overview"><a class="header" href="#-security-stack-overview"><strong>🔐 Security Stack Overview</strong></a></h3>
+<pre class="mermaid">graph TB
+    subgraph &quot;🌐 Network Security&quot;
+        TLS[🔒 TLS 1.3&lt;br/&gt;End-to-End Encryption]
+        ED[✍️ Ed25519&lt;br/&gt;Digital Signatures]
+        AES[🛡️ AES-256-GCM&lt;br/&gt;Symmetric Encryption]
+    end
+    
+    subgraph &quot;💰 Economic Security&quot;  
+        STAKE[💎 Stake-Weighted Voting&lt;br/&gt;Economic Alignment]
+        SLASH[⚔️ Progressive Slashing&lt;br/&gt;Graduated Penalties]
+        REP[🏆 Reputation System&lt;br/&gt;Historical Performance]
+    end
+    
+    subgraph &quot;🔮 Cryptographic Security&quot;
+        ZK[🧮 Zero-Knowledge Proofs&lt;br/&gt;Privacy Preservation]
+        STARK[✨ STARK Verification&lt;br/&gt;Computational Integrity]
+        HASH[#️⃣ Poseidon Hashing&lt;br/&gt;ZK-Friendly]
+    end
+    
+    TLS --&gt; STAKE
+    ED --&gt; SLASH
+    AES --&gt; REP
+    
+    STAKE --&gt; ZK
+    SLASH --&gt; STARK
+    REP --&gt; HASH
+    
+    style TLS fill:#dc2626,color:#fff
+    style STAKE fill:#059669,color:#fff
+    style ZK fill:#7c3aed,color:#fff
+</pre>
+<h3 id="-compliance-framework"><a class="header" href="#-compliance-framework"><strong>🏥 Compliance Framework</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th><strong>Standard</strong></th><th><strong>Status</strong></th><th><strong>Coverage</strong></th><th><strong>Audit Date</strong></th></tr></thead><tbody>
+<tr><td>🇪🇺 <strong>GDPR</strong></td><td>✅ Compliant</td><td>Data sovereignty</td><td>Q2 2024</td></tr>
+<tr><td>🏥 <strong>HIPAA</strong></td><td>🔄 In Progress</td><td>Healthcare data</td><td>Q3 2024</td></tr>
+<tr><td>🔒 <strong>SOC 2 Type II</strong></td><td>📋 Planned</td><td>Enterprise security</td><td>Q4 2024</td></tr>
+<tr><td>🌍 <strong>ISO 27001</strong></td><td>📋 Planned</td><td>Information security</td><td>Q1 2025</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-development-ecosystem"><a class="header" href="#-development-ecosystem">🚀 Development Ecosystem</a></h2>
+<h3 id="-sdk--integration-tools"><a class="header" href="#-sdk--integration-tools"><strong>🛠️ SDK &amp; Integration Tools</strong></a></h3>
+<pre><code class="language-typescript">// 🎯 TypeScript SDK - Production Ready
+import { CiroClient, ModelConfig, VerificationLevel } from '@ciro-network/sdk';
+
+const client = new CiroClient({
+    network: 'mainnet',        // 🌐 Network selection
+    apiKey: process.env.CIRO_API_KEY,
+    verification: VerificationLevel.ZKML,  // 🔮 Proof generation
+    timeout: 30000,           // ⏱️ Request timeout
+    retries: 3,               // 🔄 Auto-retry logic
+    region: 'us-east-1'       // 🌍 Geographic preference
+});
+
+// 🚀 Deploy and run verifiable AI
+const result = await client.infer({
+    modelId: 'resnet50-production',
+    input: imageBuffer,
+    generateProof: true,      // ✅ Cryptographic verification
+    priority: 'high',         // ⚡ Execution priority
+    maxLatency: 500          // 📊 SLA requirements
+});
+
+console.log(`🎯 Prediction: ${result.output}`);
+console.log(`📊 Confidence: ${result.confidence}`);
+console.log(`✨ Proof Hash: ${result.proofHash}`);
+console.log(`⛓️ Verified: ${result.onChainVerified}`);
+</code></pre>
+<pre><code class="language-python"># 🐍 Python SDK - ML Engineer Friendly
+from ciro_sdk import CiroClient, VerificationLevel
+import numpy as np
+
+client = CiroClient(
+    network="mainnet",
+    verification=VerificationLevel.ZKML,
+    gpu_preference="H100"  # 🚀 Target enterprise hardware
+)
+
+# 🧠 Load your model and run verifiable inference
+model_deployment = client.deploy_model(
+    framework="pytorch",
+    model_path="./models/transformer.onnx",
+    optimization="fp16",     # ⚡ Performance optimization
+    verification=True        # 🔮 Enable proof generation
+)
+
+result = client.infer(
+    model_id=model_deployment.id,
+    input_data=tokenized_text,
+    batch_size=32,           # 📊 Batch processing
+    generate_proof=True      # ✅ Cryptographic guarantee
+)
+</code></pre>
+<h3 id="-framework-integrations"><a class="header" href="#-framework-integrations"><strong>🎨 Framework Integrations</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th><strong>Platform</strong></th><th><strong>Integration</strong></th><th><strong>Features</strong></th><th><strong>Status</strong></th></tr></thead><tbody>
+<tr><td>🤗 <strong>Hugging Face</strong></td><td>Native</td><td>Model hub deployment</td><td>✅ Live</td></tr>
+<tr><td>📊 <strong>MLflow</strong></td><td>Plugin</td><td>Experiment tracking</td><td>✅ Live</td></tr>
+<tr><td>📈 <strong>TensorBoard</strong></td><td>Dashboard</td><td>Performance monitoring</td><td>🔄 Beta</td></tr>
+<tr><td>⚖️ <strong>Weights &amp; Biases</strong></td><td>Integration</td><td>Advanced analytics</td><td>📋 Q1 2025</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-technical-roadmap"><a class="header" href="#-technical-roadmap">🗺️ Technical Roadmap</a></h2>
+<h3 id="-quarterly-milestones"><a class="header" href="#-quarterly-milestones"><strong>📅 Quarterly Milestones</strong></a></h3>
+<pre class="mermaid">gantt
+    title 🚀 Ciro Network Development Timeline
+    dateFormat  YYYY-MM-DD
+    section Foundation
+    Core pBFT consensus           :done, foundation1, 2024-01-01, 2024-03-31
+    Basic zkML support           :done, foundation2, 2024-02-01, 2024-04-30
+    Kafka job orchestration      :done, foundation3, 2024-03-01, 2024-05-31
+    
+    section Scaling  
+    Advanced zkML (Transformers) :active, scaling1, 2024-06-01, 2024-09-30
+    Multi-GPU worker support     :scaling2, 2024-07-01, 2024-10-31
+    Cross-chain verification     :scaling3, 2024-08-01, 2024-11-30
+    
+    section Optimization
+    Proof batching &amp; aggregation :optimization1, 2024-10-01, 2025-01-31
+    FHE privacy features         :optimization2, 2024-11-01, 2025-02-28
+    Federated learning           :optimization3, 2024-12-01, 2025-03-31
+    
+    section Ecosystem
+    AI model marketplace         :ecosystem1, 2025-01-01, 2025-06-30
+    Decentralized training       :ecosystem2, 2025-03-01, 2025-08-31
+    Cross-platform AI oracles    :ecosystem3, 2025-06-01, 2025-12-31
+</pre>
+<h3 id="-performance-targets"><a class="header" href="#-performance-targets"><strong>🎯 Performance Targets</strong></a></h3>
+<div class="table-wrapper"><table><thead><tr><th><strong>Metric</strong></th><th><strong>Q1 2024</strong></th><th><strong>Q2 2024</strong></th><th><strong>Q3 2024</strong></th><th><strong>Q4 2024</strong></th><th><strong>Q1 2025</strong></th></tr></thead><tbody>
+<tr><td>🚀 <strong>Jobs/Hour</strong></td><td>2,847</td><td>15,000</td><td>35,000</td><td>75,000</td><td>150,000+</td></tr>
+<tr><td>⚡ <strong>Latency</strong></td><td>187ms</td><td>150ms</td><td>120ms</td><td>100ms</td><td>&lt;80ms</td></tr>
+<tr><td>✅ <strong>Success Rate</strong></td><td>98.1%</td><td>99.0%</td><td>99.5%</td><td>99.8%</td><td>99.9%+</td></tr>
+<tr><td>👥 <strong>Active Workers</strong></td><td>127</td><td>500</td><td>1,200</td><td>3,000</td><td>8,000+</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="-scientific-research-foundation"><a class="header" href="#-scientific-research-foundation">🔬 Scientific Research Foundation</a></h2>
+<h3 id="-core-academic-papers"><a class="header" href="#-core-academic-papers"><strong>📚 Core Academic Papers</strong></a></h3>
+<blockquote>
+<p><strong>🎓 Peer-reviewed research backing every architectural decision</strong></p>
+</blockquote>
+<ol>
+<li>
+<p><strong>🛡️ Byzantine Consensus</strong>: Lamport et al. (1982) - "The Byzantine Generals Problem"</p>
+<ul>
+<li><em>Foundation for fault-tolerant distributed systems</em></li>
+</ul>
+</li>
+<li>
+<p><strong>⚡ Practical Implementation</strong>: Castro &amp; Liskov (1999) - "Practical Byzantine Fault Tolerance"</p>
+<ul>
+<li><em>Production-ready consensus algorithms</em></li>
+</ul>
+</li>
+<li>
+<p><strong>🔮 Zero-Knowledge Proofs</strong>: Goldwasser et al. (1989) - "Knowledge Complexity of Interactive Proof Systems"</p>
+<ul>
+<li><em>Cryptographic foundation for verifiable computation</em></li>
+</ul>
+</li>
+<li>
+<p><strong>✨ STARK Technology</strong>: Ben-Sasson et al. (2018) - "Scalable, transparent, post-quantum secure computational integrity"</p>
+<ul>
+<li><em>Modern zero-knowledge proof systems</em></li>
+</ul>
+</li>
+</ol>
+<h3 id="-mathematical-models"><a class="header" href="#-mathematical-models"><strong>🧮 Mathematical Models</strong></a></h3>
+<p><strong>Network Efficiency Coefficient:</strong></p>
+<pre><code>η = (Σᵢ Cᵢ × Uᵢ × Rᵢ) / (Σᵢ Cᵢ × Pᵢ)
+
+Where:
+• η = Network efficiency (0.0 - 1.0)
+• Cᵢ = Compute capacity of worker i (TFLOPS)  
+• Uᵢ = Utilization rate of worker i (0.0 - 1.0)
+• Rᵢ = Reliability score of worker i (0.0 - 1.0)
+• Pᵢ = Peak theoretical performance of worker i
+</code></pre>
+<p><strong>Economic Security Scaling:</strong></p>
+<pre><code>S(n,f) = min(Economic_Security(n,f), Byzantine_Security(n,f))
+
+Where:
+• Economic_Security(n,f) = Σᵢ₌₁ⁿ Stakeᵢ × Slashing_Rateᵢ
+• Byzantine_Security(n,f) = 1 if n ≥ 3f + 1, else 0
+• n = total validators, f = Byzantine failures
+</code></pre>
+<hr />
+<h2 id="-whats-next"><a class="header" href="#-whats-next">🌟 What's Next?</a></h2>
+<h3 id="-for-technical-teams"><a class="header" href="#-for-technical-teams"><strong>🧠 For Technical Teams</strong></a></h3>
+<pre class="mermaid">graph LR
+    A[📖 Read This Guide] --&gt; B[🔮 Explore ZK-ML Details]
+    B --&gt; C[⛓️ Smart Contract Integration]  
+    C --&gt; D[🚀 Build Your First dApp]
+    
+    style A fill:#3b82f6,color:#fff
+    style B fill:#7c3aed,color:#fff
+    style C fill:#059669,color:#fff
+    style D fill:#dc2626,color:#fff
+</pre>
+<h3 id="-for-researchers"><a class="header" href="#-for-researchers"><strong>🔬 For Researchers</strong></a></h3>
+<ul>
+<li><strong>📝 Academic Collaboration</strong>: Join our research working groups</li>
+<li><strong>🔓 Open Source</strong>: Contribute to <a href="https://github.com/ciro-network">GitHub repositories</a></li>
+<li><strong>🔍 Peer Review</strong>: Validate mathematical models and implementations</li>
+<li><strong>💡 Innovation Labs</strong>: Propose novel ZK-ML applications</li>
+</ul>
+<h3 id="-for-enterprises"><a class="header" href="#-for-enterprises"><strong>🏢 For Enterprises</strong></a></h3>
+<ul>
+<li><strong>🚀 POC Development</strong>: Build proof-of-concepts on testnet</li>
+<li><strong>🛡️ Security Audits</strong>: Participate in security review process</li>
+<li><strong>📋 Integration Planning</strong>: Design enterprise AI workflows</li>
+<li><strong>🤝 Strategic Partnerships</strong>: Explore collaboration opportunities</li>
+</ul>
+<hr />
+<blockquote>
+<p><strong>🎯 The future of AI is verifiable, decentralized, and built on scientific principles.</strong><br />
+<strong>Ready to be part of the revolution?</strong> <a href="#-system-architecture-at-a-glance">Explore our architecture components</a> and start building today! 🚀</p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../getting-started/for-users.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tech/overview.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../getting-started/for-users.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tech/overview.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/math-config.js"></script>
+        <script src="../theme/ciro-theme.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

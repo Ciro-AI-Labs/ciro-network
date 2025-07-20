@@ -1,0 +1,48 @@
+# Task ID: 12
+# Title: Worker Docker Container Implementation
+# Status: pending
+# Dependencies: 9
+# Priority: high
+# Description: Implement Docker container for CPU-based worker nodes with inference execution capabilities.
+# Details:
+1. Create Dockerfile for worker container
+2. Implement worker service in Rust
+3. Add job processing logic
+4. Implement result signing and attestation
+5. Add health check endpoints
+6. Implement metrics collection
+7. Create logging and monitoring
+8. Add auto-update mechanism
+
+Docker configuration:
+```dockerfile
+FROM rust:1.70-slim as builder
+WORKDIR /app
+COPY . .
+RUN cargo build --release
+
+FROM debian:bullseye-slim
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app/target/release/cdc-worker /usr/local/bin/
+EXPOSE 8080
+CMD ["cdc-worker"]
+```
+
+Worker service structure:
+```rust
+struct WorkerService {
+    coordinator_client: CoordinatorClient,
+    job_processor: JobProcessor,
+    metrics: MetricsCollector,
+    wallet: StarknetWallet,
+}
+```
+
+# Test Strategy:
+1. Build and test Docker container
+2. Test job processing with sample jobs
+3. Test result signing and attestation
+4. Test health check endpoints
+5. Test metrics collection
+6. Test auto-update mechanism
+7. Benchmark container performance
