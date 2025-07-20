@@ -1,239 +1,279 @@
-# ⚙️ Rust Worker Node
+# CIRO Network Coordinator
 
-**High-Performance Compute Workers for CIRO Network**
+A production-ready coordinator system for the CIRO Network, designed to manage job distribution, worker registration, and blockchain integration on Starknet.
 
-## Overview
+## 🚀 Current Status
 
-The Rust worker node is the core infrastructure component that connects GPU
-owners to the CIRO Network. It handles job execution, resource management, P2P
-networking, and blockchain interactions with enterprise-grade performance and
-security.
+### ✅ Working Components
+- **Simple Coordinator** - Basic job and worker management
+- **Core Types** - Job, Worker, and Blockchain integration types
+- **Configuration System** - Comprehensive configuration management
+- **Basic Blockchain Integration** - Starknet client and contract interactions
+- **Database Integration** - SQLite-based job and worker storage
 
-## Architecture
+### ❌ Known Issues
+- **Network Module Compilation Errors** - P2P network, discovery, and gossip protocol issues
+- **Enhanced Coordinator Type Mismatches** - NetworkCoordinator vs NetworkCoordinatorService conflicts
+- **Missing Methods** - Several components have incomplete implementations
+- **Async/Await Issues** - Incorrect handling of futures and async tasks
 
+## 🏗️ Architecture
+
+### Simple Coordinator (Working)
 ```
-rust-node/
-├── src/
-│   ├── main.rs                     # Entry point and CLI
-│   ├── lib.rs                      # Core library exports
-│   ├── node/                       # Node management
-│   │   ├── mod.rs
-│   │   ├── worker.rs              # Worker node implementation
-│   │   ├── coordinator.rs         # Job coordination
-│   │   └── health.rs              # Health monitoring
-│   ├── compute/                    # Compute engine
-│   │   ├── mod.rs
-│   │   ├── executor.rs            # Job execution engine
-│   │   ├── containers.rs          # Docker container management
-│   │   ├── gpu.rs                 # GPU resource management
-│   │   └── verification.rs        # Result verification
-│   ├── network/                    # P2P networking
-│   │   ├── mod.rs
-│   │   ├── p2p.rs                 # libp2p implementation
-│   │   ├── discovery.rs           # Peer discovery
-│   │   └── gossip.rs              # Gossip protocol
-│   ├── blockchain/                 # Starknet integration
-│   │   ├── mod.rs
-│   │   ├── client.rs              # Starknet client
-│   │   ├── contracts.rs           # Contract interactions
-│   │   └── events.rs              # Event handling
-│   ├── storage/                    # Data persistence
-│   │   ├── mod.rs
-│   │   ├── database.rs            # Local database
-│   │   └── cache.rs               # In-memory cache
-│   └── utils/                      # Utilities
-│       ├── mod.rs
-│       ├── crypto.rs              # Cryptographic utilities
-│       ├── config.rs              # Configuration management
-│       └── metrics.rs             # Performance metrics
-├── docker/
-│   ├── Dockerfile.worker          # Worker node Docker image
-│   ├── Dockerfile.coordinator     # Coordinator Docker image
-│   └── docker-compose.yml         # Development environment
-└── config/
-    ├── default.toml               # Default configuration
-    ├── development.toml           # Development settings
-    └── production.toml            # Production settings
+SimpleCoordinator
+├── Job Management
+│   ├── Job submission and tracking
+│   ├── Job status updates
+│   └── Job result collection
+├── Worker Management
+│   ├── Worker registration
+│   ├── Health monitoring
+│   └── Load balancing
+├── Blockchain Integration
+│   ├── Starknet client
+│   ├── Contract interactions
+│   └── Transaction management
+└── REST API
+    ├── Health endpoints
+    ├── Job management
+    └── Worker management
 ```
 
-## Key Components
+### Enhanced Coordinator (In Development)
+```
+EnhancedCoordinator
+├── KafkaCoordinator
+├── NetworkCoordinator
+├── JobProcessor
+├── WorkerManager
+├── BlockchainIntegration
+└── MetricsCollector
+```
 
-### 🔧 **Worker Node**
-
-- GPU resource management and monitoring
-- Job execution and result verification
-- Peer-to-peer networking and discovery
-- Blockchain state synchronization
-
-### 🚀 **Compute Engine**
-
-- Docker container orchestration
-- GPU workload scheduling
-- Resource isolation and security
-- Performance optimization
-
-### 🌐 **P2P Network**
-
-- libp2p-based networking stack
-- Peer discovery and routing
-- Gossip protocol for job distribution
-- NAT traversal and connectivity
-
-### ⛓️ **Blockchain Integration**
-
-- Starknet client and contract interactions
-- Event listening and processing
-- Transaction signing and submission
-- State synchronization
-
-## Development Setup
+## 🚀 Quick Start
 
 ### Prerequisites
+- Rust 1.70+
+- SQLite
+- Starknet Sepolia testnet access
 
-- **Rust** 1.70+ ([Install](https://rustup.rs/))
-- **Docker** ([Install](https://docs.docker.com/get-docker/))
-- **CUDA** 12.0+ (for GPU support)
+### Build and Run
 
-### Getting Started
-
-1. **Clone and build**
-
-   ```bash
-   cd rust-node
-   cargo build --release
-   ```
-
-2. **Run tests**
-
-   ```bash
-   cargo test
-   ```
-
-3. **Start development node**
-
-   ```bash
-   cargo run -- --config config/development.toml
-   ```
-
-## Configuration
-
-### Basic Configuration
-
-```toml
-# config/default.toml
-[node]
-id = "worker-001"
-bind_address = "0.0.0.0:8080"
-data_dir = "./data"
-
-[gpu]
-enabled = true
-devices = "all"
-memory_limit = "80%"
-
-[network]
-listen_port = 9000
-bootstrap_peers = []
-
-[blockchain]
-network = "testnet"
-rpc_url = "https://starknet-testnet.infura.io/v3/YOUR_KEY"
-```
-
-### GPU Configuration
-
-```toml
-[gpu]
-enabled = true
-devices = ["0", "1"]  # Specific GPU indices
-memory_limit = "8GB"
-utilization_threshold = 0.9
-```
-
-## Running the Node
-
-### Development Mode
-
+1. **Build the project:**
 ```bash
-# Start with development configuration
-cargo run -- --config config/development.toml
-
-# Enable debug logging
-RUST_LOG=debug cargo run -- --config config/development.toml
+cargo build
 ```
 
-### Production Mode
-
+2. **Run the simple coordinator:**
 ```bash
-# Build optimized binary
-cargo build --release
-
-# Run with production configuration
-./target/release/ciro-worker --config config/production.toml
+cargo run --bin ciro-coordinator
 ```
 
-### Docker Deployment
-
+3. **Run with custom config:**
 ```bash
-# Build Docker image
-docker build -f docker/Dockerfile.worker -t ciro-worker .
-
-# Run worker container
-docker run -d \
-  --name ciro-worker \
-  --gpus all \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v ./data:/app/data \
-  ciro-worker
+cargo run --bin ciro-coordinator config.json
 ```
 
-## Monitoring
+### Configuration
+
+Create a `config.json` file:
+```json
+{
+  "server_port": 8080,
+  "blockchain": {
+    "rpc_url": "https://alpha-sepolia.starknet.io",
+    "chain_id": "SN_SEPOLIA",
+    "contract_address": "0x1234567890abcdef",
+    "private_key": "0x0000000000000000000000000000000000000000000000000000000000000001"
+  },
+  "database": {
+    "url": "sqlite://./coordinator.db"
+  }
+}
+```
+
+## 📋 Available Commands
+
+### Job Management
+- Submit jobs with different types and priorities
+- Track job status and completion
+- Collect job results and distribute rewards
+
+### Worker Management
+- Register workers with capabilities
+- Monitor worker health and performance
+- Balance load across available workers
+
+### Blockchain Integration
+- Submit jobs to smart contracts
+- Track transaction status
+- Handle job completion and reward distribution
+
+## 🔧 Development
+
+### Current Focus Areas
+
+1. **Fix Network Module Issues**
+   - Resolve P2P network compilation errors
+   - Fix discovery protocol implementation
+   - Complete gossip protocol implementation
+
+2. **Resolve Type Mismatches**
+   - Align NetworkCoordinator and NetworkCoordinatorService
+   - Fix missing method implementations
+   - Correct async/await handling
+
+3. **Complete Enhanced Coordinator**
+   - Fix Kafka integration issues
+   - Complete metrics collection
+   - Implement proper error handling
+
+### Compilation Issues to Address
+
+#### Network Module (src/network/)
+- **P2P Network**: Mutable borrow issues with Arc<P2PNetwork>
+- **Discovery**: Future trait implementation issues
+- **Gossip**: Missing P2PMessage variants and method signatures
+
+#### Coordinator Module (src/coordinator/)
+- **Type Mismatches**: NetworkCoordinator vs NetworkCoordinatorService
+- **Missing Methods**: get_blockchain_stats, proper async handling
+- **Kafka Integration**: Consumer/producer initialization issues
+
+#### Blockchain Integration
+- **Transaction Handling**: FieldElement unwrap_or issues
+- **Error Handling**: Proper Result type handling
+
+### Testing Strategy
+
+1. **Unit Tests**
+   - Test individual components
+   - Mock external dependencies
+   - Verify error handling
+
+2. **Integration Tests**
+   - Test coordinator workflows
+   - Verify blockchain interactions
+   - Test API endpoints
+
+3. **End-to-End Tests**
+   - Complete job lifecycle
+   - Worker registration and job assignment
+   - Blockchain transaction flow
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **Compilation Errors**
+   - Most errors are in the enhanced coordinator
+   - Use simple coordinator for immediate functionality
+   - Focus on network module fixes first
+
+2. **Blockchain Connection**
+   - Verify RPC URL and network configuration
+   - Check contract address and private key
+   - Ensure sufficient balance for transactions
+
+3. **Database Issues**
+   - Verify SQLite file permissions
+   - Check database URL format
+   - Ensure proper schema initialization
+
+### Debug Mode
+
+Enable debug logging:
+```bash
+RUST_LOG=debug cargo run --bin ciro-coordinator
+```
+
+## 📊 Monitoring
 
 ### Health Checks
+- Coordinator status endpoint: `GET /health`
+- Component status: `GET /status`
+- Job statistics: `GET /jobs/stats`
+- Worker statistics: `GET /workers/stats`
 
-```bash
-# Check node health
-curl http://localhost:8080/health
-
-# Get node metrics
-curl http://localhost:8080/metrics
-```
-
-### Performance Metrics
-
-- CPU and GPU utilization
-- Memory usage and limits
-- Network throughput
+### Metrics
 - Job completion rates
-- Error rates and latency
+- Worker performance metrics
+- Blockchain transaction success rates
+- Network connectivity status
 
-## Security
+## 🔄 Next Steps
 
-### Isolation
+### Phase 1: Fix Critical Issues (Priority 1)
+1. **Resolve Network Module Compilation**
+   - Fix P2P network mutable borrow issues
+   - Complete discovery protocol implementation
+   - Fix gossip protocol message handling
 
-- Docker containers for job execution
-- Resource limits and quotas
-- Network isolation
-- Filesystem restrictions
+2. **Fix Type Mismatches**
+   - Align NetworkCoordinator types
+   - Implement missing methods
+   - Fix async/await patterns
 
-### Cryptography
+### Phase 2: Complete Enhanced Coordinator (Priority 2)
+1. **Kafka Integration**
+   - Fix consumer/producer initialization
+   - Implement proper message handling
+   - Add error recovery mechanisms
 
-- Ed25519 node identity keys
-- TLS for all network communications
-- Signature verification for jobs
-- Encrypted data storage
+2. **Metrics and Monitoring**
+   - Complete metrics collection
+   - Add comprehensive logging
+   - Implement health monitoring
 
-## Contributing
+### Phase 3: Production Features (Priority 3)
+1. **Security**
+   - Add authentication and authorization
+   - Implement rate limiting
+   - Add input validation
 
-1. **Code Style**: Follow Rust conventions with `rustfmt`
-2. **Testing**: Write unit and integration tests
-3. **Documentation**: Document all public APIs
-4. **Performance**: Profile and optimize critical paths
-5. **Security**: Follow secure coding practices
+2. **Scalability**
+   - Add load balancing
+   - Implement caching
+   - Add horizontal scaling support
 
-## Resources
+3. **Reliability**
+   - Add circuit breakers
+   - Implement retry mechanisms
+   - Add backup and recovery
 
-- [Rust Book](https://doc.rust-lang.org/book/)
-- [libp2p Documentation](https://docs.libp2p.io/)
-- [Docker Documentation](https://docs.docker.com/)
-- [CUDA Programming Guide](https://docs.nvidia.com/cuda/)
+## 🤝 Contributing
+
+### Development Workflow
+1. Fork the repository
+2. Create a feature branch
+3. Make changes and add tests
+4. Ensure all tests pass
+5. Submit a pull request
+
+### Code Style
+- Follow Rust conventions
+- Add comprehensive documentation
+- Include unit tests for new features
+- Update this README for significant changes
+
+### Testing
+- Run `cargo test` before submitting
+- Add integration tests for new features
+- Verify blockchain interactions work correctly
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For issues and questions:
+1. Check the troubleshooting section
+2. Review existing issues
+3. Create a new issue with detailed information
+4. Include logs and error messages
+
+---
+
+**Note**: The enhanced coordinator is currently under development. Use the simple coordinator for immediate functionality while the enhanced version is being completed.

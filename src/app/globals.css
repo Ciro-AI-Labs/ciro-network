@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Galactic Color Palette */
+:root {
+  /* Deep Space Colors */
+  --space-black: #0a0a0f;
+  --cosmic-dark: #1a1a2e;
+  --nebula-purple: #16213e;
+  --void-blue: #0f3460;
+  
+  /* Stellar Accents */
+  --star-white: #ffffff;
+  --cosmic-cyan: #00ffff;
+  --nebula-pink: #ff69b4;
+  --aurora-green: #00ff88;
+  --cosmic-orange: #ff6b35;
+  --stellar-yellow: #ffd700;
+  
+  /* Mathematical Gradients */
+  --fractal-gradient: linear-gradient(135deg, #00ffff 0%, #ff69b4 50%, #00ff88 100%);
+  --cosmic-gradient: linear-gradient(45deg, #0f3460 0%, #16213e 50%, #1a1a2e 100%);
+  --stellar-gradient: linear-gradient(90deg, #ffd700 0%, #ff6b35 50%, #ff69b4 100%);
+  
+  /* Depth & Dimension */
+  --space-shadow: 0 8px 32px rgba(0, 255, 255, 0.1);
+  --cosmic-glow: 0 0 20px rgba(255, 105, 180, 0.3);
+  --stellar-shine: 0 0 30px rgba(255, 215, 0, 0.4);
+}
+
+/* Base Styles */
+body {
+  background: var(--space-black);
+  color: var(--star-white);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Galactic Background Patterns */
+.galactic-bg {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 105, 180, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
+    linear-gradient(135deg, var(--space-black) 0%, var(--cosmic-dark) 100%);
+  position: relative;
+}
+
+.galactic-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, var(--star-white), transparent),
+    radial-gradient(2px 2px at 40px 70px, var(--cosmic-cyan), transparent),
+    radial-gradient(1px 1px at 90px 40px, var(--nebula-pink), transparent),
+    radial-gradient(1px 1px at 130px 80px, var(--aurora-green), transparent),
+    radial-gradient(2px 2px at 160px 30px, var(--stellar-yellow), transparent);
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: starfield 20s linear infinite;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+@keyframes starfield {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-100px); }
+}
+
+/* Mathematical Grid */
+.math-grid {
+  background-image: 
+    linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 15s linear infinite;
+}
+
+@keyframes grid-move {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
+}
+
+/* Fractal Animations */
+.fractal-pulse {
+  animation: fractal-pulse 4s ease-in-out infinite;
+}
+
+@keyframes fractal-pulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.1) rotate(180deg);
+    opacity: 1;
+  }
+}
+
+.cosmic-float {
+  animation: cosmic-float 6s ease-in-out infinite;
+}
+
+@keyframes cosmic-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-20px) rotate(120deg); }
+  66% { transform: translateY(10px) rotate(240deg); }
+}
+
+/* Text Gradients */
+.text-fractal {
+  background: var(--fractal-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+.text-cosmic {
+  background: var(--cosmic-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-stellar {
+  background: var(--stellar-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: stellar-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes stellar-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Interactive Elements */
+.cosmic-button {
+  background: linear-gradient(45deg, var(--void-blue), var(--nebula-purple));
+  border: 1px solid var(--cosmic-cyan);
+  box-shadow: var(--space-shadow);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cosmic-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.cosmic-button:hover::before {
+  left: 100%;
+}
+
+.cosmic-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cosmic-glow);
+  border-color: var(--nebula-pink);
+}
+
+/* Mathematical Symbols */
+.math-symbol {
+  font-family: 'Times New Roman', serif;
+  font-style: italic;
+  color: var(--cosmic-cyan);
+  text-shadow: 0 0 10px var(--cosmic-cyan);
+}
+
+/* Emoji Styling */
+.emoji-large {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  animation: emoji-bounce 2s ease-in-out infinite;
+}
+
+@keyframes emoji-bounce {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+/* Depth Layers */
+.depth-layer-1 { z-index: 1; }
+.depth-layer-2 { z-index: 2; }
+.depth-layer-3 { z-index: 3; }
+.depth-layer-4 { z-index: 4; }
+
+/* Glassmorphism for Cards */
+.cosmic-glass {
+  background: rgba(26, 26, 46, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: var(--space-shadow);
+}
+
+/* Particle Effects */
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--cosmic-cyan);
+  border-radius: 50%;
+  animation: particle-float 8s linear infinite;
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .galactic-bg::before {
+    background-size: 100px 50px;
+  }
+  
+  .math-grid {
+    background-size: 25px 25px;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--space-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cosmic-cyan);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nebula-pink);
+} 

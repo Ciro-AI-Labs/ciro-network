@@ -4,9 +4,9 @@
       "command": "npx",
       "args": ["-y", "--package=task-master-ai", "task-master-ai"],
       "env": {
-        "ANTHROPIC_API_KEY": "ANTHROPIC_API_KEY_HERE",
+        "ANTHROPIC_API_KEY": "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",
         "PERPLEXITY_API_KEY": "PERPLEXITY_API_KEY_HERE",
-        "OPENAI_API_KEY": "OPENAI_API_KEY_HERE",
+        "OPENAI_API_KEY": "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",
         "GOOGLE_API_KEY": "GOOGLE_API_KEY_HERE",
         "XAI_API_KEY": "XAI_API_KEY_HERE",
         "OPENROUTER_API_KEY": "OPENROUTER_API_KEY_HERE",

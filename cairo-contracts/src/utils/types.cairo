@@ -6,6 +6,13 @@
 pub enum JobType {
     AIInference,
     AITraining,
+    ComputerVision,
+    NLP,
+    AudioProcessing,
+    TimeSeriesAnalysis,
+    MultimodalAI,
+    ReinforcementLearning,
+    SpecializedAI,
     ProofGeneration,
     ProofVerification,
     DataProcessing,

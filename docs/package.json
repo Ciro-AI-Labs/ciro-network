@@ -1,0 +1,15 @@
+{
+  "name": "ciro-network-docs",
+  "version": "1.0.0",
+  "description": "Documentation for CIRO Network using mdBook",
+  "private": true,
+  "scripts": {
+    "dev": "mdbook serve --open",
+    "build": "mdbook build",
+    "clean": "mdbook clean",
+    "test": "mdbook test",
+    "watch": "mdbook watch"
+  },
+  "keywords": ["documentation", "mdbook", "ciro-network"],
+  "author": "CIRO Labs Team"
+} 

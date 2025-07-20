@@ -1,114 +1,55 @@
 {
-  "name": "ciro-network",
-  "version": "0.1.0",
-  "description": "CIRO Network - Starknet-native decentralized compute layer",
-  "type": "module",
+  "name": "ciro-network-website",
+  "version": "1.0.0",
+  "description": "Beautiful, animated marketing website for Ciro Network - The future of verifiable AI compute",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev:docs\" \"npm run dev:backend\"",
-    "dev:docs": "mdbook serve docs --open",
-    "dev:backend": "echo 'Backend development setup - to be implemented'",
-    "build": "npm run build:docs && npm run build:rust",
-    "build:docs": "mdbook build docs",
-    "build:rust": "cargo build --release",
-    "test": "npm run test:docs && npm run test:rust && npm run test:js",
-    "test:docs": "mdbook test docs",
-    "test:rust": "cargo test --all",
-    "test:js": "echo 'JavaScript/TypeScript tests - to be implemented'",
-    "lint": "npm run lint:all",
-    "lint:all": "npm run lint:js && npm run lint:docs && npm run lint:rust && npm run lint:cairo",
-    "lint:js": "eslint . --fix",
-    "lint:docs": "markdownlint docs/src/**/*.md --fix",
-    "lint:rust": "cargo clippy --all-targets --all-features -- -D warnings",
-    "lint:cairo": "echo 'Cairo linting - to be implemented with scarb'",
-    "format": "npm run format:all",
-    "format:all": "npm run format:js && npm run format:docs && npm run format:rust && npm run format:cairo",
-    "format:js": "prettier --write .",
-    "format:docs": "prettier --write 'docs/**/*.md' 'docs/**/*.json' 'docs/**/*.toml'",
-    "format:rust": "cargo fmt --all",
-    "format:cairo": "echo 'Cairo formatting - to be implemented with scarb'",
-    "clean": "npm run clean:docs && npm run clean:rust && npm run clean:js",
-    "clean:docs": "rm -rf docs/book",
-    "clean:rust": "cargo clean",
-    "clean:js": "rm -rf node_modules/.cache dist build",
-    "setup": "npm run setup:docs && npm run setup:rust && npm run setup:hooks",
-    "setup:docs": "command -v mdbook >/dev/null 2>&1 || (echo 'Installing mdBook...' && cargo install mdbook mdbook-mermaid mdbook-last-changed)",
-    "setup:rust": "rustup update && rustup component add rustfmt clippy",
-    "setup:hooks": "husky install",
-    "docs": "npm run build:docs && npm run serve:docs",
-    "serve:docs": "mdbook serve docs --open",
-    "check": "npm run check:all",
-    "check:all": "npm run check:js && npm run check:docs && npm run check:rust && npm run check:cairo",
-    "check:js": "eslint . && tsc --noEmit",
-    "check:docs": "mdbook build docs && markdownlint docs/src/**/*.md",
-    "check:rust": "cargo check --all-targets --all-features",
-    "check:cairo": "echo 'Cairo check - to be implemented with scarb'",
-    "quality": "npm run format:all && npm run lint:all && npm run check:all",
-    "pre-commit": "lint-staged",
-    "prepare": "husky"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "docs:dev": "cd docs && mdbook serve --open",
+    "docs:build": "cd docs && mdbook build",
+    "docs:clean": "cd docs && mdbook clean",
+    "dev:all": "concurrently \"npm run dev\" \"npm run docs:dev\""
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
+    "@sendgrid/mail": "^8.1.5",
+    "@supabase/supabase-js": "^2.52.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "framer-motion": "^10.18.0",
+    "katex": "^0.16.22",
+    "lucide-react": "^0.294.0",
+    "mermaid": "^11.9.0",
+    "next": "14.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-katex": "^3.1.0",
+    "tailwind-merge": "^2.1.0",
+    "tailwindcss": "^3.3.6",
+    "tailwindcss-animate": "^1.0.7",
+    "three": "^0.170.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.0.0",
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "concurrently": "^8.2.2",
-    "eslint": "^8.57.0",
-    "eslint-plugin-jsx-a11y": "^6.8.0",
-    "eslint-plugin-prettier": "^5.1.0",
-    "eslint-plugin-react": "^7.33.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-security": "^2.1.0",
-    "eslint-plugin-sonarjs": "^0.24.0",
-    "eslint-plugin-unicorn": "^51.0.0",
-    "husky": "^9.0.0",
-    "lint-staged": "^15.2.0",
-    "markdownlint-cli": "^0.39.0",
-    "prettier": "^3.2.0",
-    "prettier-plugin-organize-attributes": "^1.0.0",
-    "prettier-plugin-tailwindcss": "^0.5.0",
-    "typescript": "^5.3.0"
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.39",
+    "@types/react-dom": "^18.2.17",
+    "@types/react-katex": "^3.0.4",
+    "@types/three": "^0.170.0",
+    "autoprefixer": "^10.4.16",
+    "concurrently": "^9.2.0",
+    "eslint": "^8.54.0",
+    "eslint-config-next": "14.0.4",
+    "postcss": "^8.4.32",
+    "typescript": "^5.3.2"
   },
   "engines": {
-    "node": ">=18.0.0"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,yml,yaml}": [
-      "prettier --write"
-    ],
-    "*.md": [
-      "markdownlint --fix"
-    ],
-    "*.rs": [
-      "cargo fmt --",
-      "cargo clippy --fix --allow-dirty --allow-staged -- -D warnings"
-    ],
-    "*.cairo": [
-      "echo 'Cairo formatting - to be implemented with scarb'"
-    ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ciro-ai-labs/ciro-network.git"
-  },
-  "keywords": [
-    "starknet",
-    "rust",
-    "cairo",
-    "gpu",
-    "compute",
-    "decentralized",
-    "depin",
-    "ai"
-  ],
-  "author": "CIRO Labs Team",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ciro-ai-labs/ciro-network/issues"
-  },
-  "homepage": "https://github.com/ciro-ai-labs/ciro-network#readme"
+    "node": ">=18.17.0"
+  }
 }

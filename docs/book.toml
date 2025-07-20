@@ -29,79 +29,43 @@ use-default-preprocessors = true
 # renderer = ["html"]
 
 [preprocessor.mermaid]
-# Enable Mermaid diagrams
-command = "mdbook-mermaid"
 
-# Additional preprocessors can be added as needed
-# [preprocessor.plantuml]
-# command = "mdbook-plantuml"
-# 
-# [preprocessor.admonish]
-# command = "mdbook-admonish"
-#
+# Disable KaTeX temporarily to fix syntax errors
 # [preprocessor.katex]
-# command = "mdbook-katex"
+# # KaTeX math rendering for better equation display
+# # Only process content inside explicit math delimiters
+# macros = ""
+# output-dir = "katex"
+# create-css = true
+# no-css = false
+# include-src = false
+
+[output]
 
 [output.html]
-# HTML output configuration
-smart-punctuation = true
-mathjax-support = true
-copy-fonts = true
-additional-css = ["theme/ciro-theme.css", "theme/custom.css"]
-additional-js = ["theme/ciro-theme.js"]
-no-section-label = false
-git-repository-url = "https://github.com/Ciro-AI-Labs/ciro-network"
-git-repository-icon = "fa-github"
-edit-url-template = "https://github.com/Ciro-AI-Labs/ciro-network/edit/main/docs/{path}"
-site-url = "https://docs.ciro.network/"
+default-theme = "navy"
+preferred-dark-theme = "navy"
+site-url = "/"
 cname = "docs.ciro.network"
-input-404 = "404.md"
-redirect = {}
-
-[output.html.search]
-enable = true
-limit-results = 30
-teaser-word-count = 30
-use-boolean-and = true
-boost-title = 2
-boost-hierarchy = 1
-boost-paragraph = 1
-expand = true
-heading-split-level = 3
-
-[output.html.print]
-enable = true
-page-break = true
+git-repository-url = "https://github.com/ciro-network/ciro-network"
+edit-url-template = "https://github.com/ciro-network/ciro-network/edit/main/docs/{path}"
+additional-css = [
+    "theme/ciro-theme.css",
+    "theme/custom.css"
+]
+additional-js = [
+    "theme/math-config.js",
+    "theme/ciro-theme.js"
+]
+mathjax-support = true
 
 [output.html.fold]
 enable = true
-level = 2
-
-[output.linkcheck]
-# Check for broken links (optional - requires mdbook-linkcheck)
-optional = true
-follow-web-links = false
-traverse-parent-directories = true
-exclude = ["localhost", "127.0.0.1", "0.0.0.0", "github.com", "ciro.network"]
-
-[output.epub]
-# Generate EPUB version (optional - requires mdbook-epub)
-optional = true
-cover-image = "images/ciro-cover.svg"
-additional-css = ["theme/epub.css"]
-
-[output.html.code]
-# Code highlighting configuration
-theme = "ayu"
-default-language = "rust"
-copy-js = true
-line-numbers = true
-editable = true
+level = 0
 
 [output.html.playground]
-# Rust playground integration
-runnable = true
 editable = true
+copyable = true
 copy-js = true
-
-# Note: Custom theme variables are handled via CSS variables in theme/ciro-theme.css 
+line-numbers = false
+runnable = true 
