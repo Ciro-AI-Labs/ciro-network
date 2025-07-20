@@ -17,7 +17,8 @@ import {
   BookOpen,
   FileText,
   Coins,
-  Network
+  Network,
+  MessageCircle
 } from "lucide-react"
 import Image from "next/image"
 
@@ -156,7 +157,9 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <a 
-                  href="/coming-soon" 
+                  href="https://docs.ciro.network" 
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white/70 hover:text-cosmic-cyan transition-colors text-sm flex items-center gap-2"
                 >
                   <BookOpen className="w-3 h-3" />
@@ -193,9 +196,12 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <a 
-                  href="/coming-soon" 
-                  className="text-white/70 hover:text-cosmic-cyan transition-colors text-sm"
+                  href="https://www.ciroai.us/" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-cosmic-cyan transition-colors text-sm flex items-center gap-2"
                 >
+                  <ExternalLink className="w-3 h-3" />
                   Our Story
                 </a>
               </li>
@@ -222,6 +228,17 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-white font-semibold text-lg">Community</h3>
             <ul className="space-y-2">
+              <li>
+                <a 
+                  href="https://discord.gg/PhAX4XWwnH"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-cosmic-cyan transition-colors text-sm flex items-center gap-2"
+                >
+                  <MessageCircle className="w-3 h-3" />
+                  Discord
+                </a>
+              </li>
               <li>
                 <a 
                   href="/coming-soon" 

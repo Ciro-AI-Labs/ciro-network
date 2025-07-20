@@ -410,7 +410,7 @@ export default function HomePage() {
     { name: 'Products', href: '/coming-soon', hasDropdown: false },
     { name: 'Solutions', href: '/coming-soon', hasDropdown: false },
     { name: 'Documentation', href: '/coming-soon', hasDropdown: true },
-    { name: 'About', href: '/coming-soon', hasDropdown: false }
+    { name: 'About', href: 'https://www.ciroai.us/', hasDropdown: false }
   ]
 
   const productsDropdown = [
@@ -650,13 +650,43 @@ export default function HomePage() {
                 >
                   <a
                     href={item.href}
-                    className="text-white/80 hover:text-cosmic-cyan transition-colors duration-300 font-medium"
+                    target={item.href.startsWith('http') ? '_blank' : undefined}
+                    rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className="text-white/80 hover:text-cosmic-cyan transition-colors duration-300 font-medium flex items-center gap-1"
                   >
                     <span>{item.name}</span>
+                    {item.hasDropdown && <ChevronDown className="w-4 h-4" />}
                   </a>
                   
                   {/* Hover Glow Effect */}
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cosmic-cyan to-nebula-pink group-hover:w-full transition-all duration-300"></div>
+                  
+                  {/* Documentation Dropdown */}
+                  {item.hasDropdown && item.name === 'Documentation' && (
+                    <div className="absolute top-full left-0 mt-2 w-80 bg-black/90 backdrop-blur-3xl border border-cosmic-cyan/40 rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                      <div className="p-4 space-y-3">
+                        {documentationDropdown.map((dropdownItem, idx) => (
+                          <a
+                            key={dropdownItem.title}
+                            href={dropdownItem.href}
+                            target={dropdownItem.href.startsWith('http') ? '_blank' : undefined}
+                            rel={dropdownItem.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-cosmic-cyan/10 transition-colors duration-200 group/item"
+                          >
+                            <dropdownItem.icon className="w-5 h-5 text-cosmic-cyan mt-0.5 flex-shrink-0" />
+                            <div>
+                              <h4 className="text-white font-medium text-sm group-hover/item:text-cosmic-cyan transition-colors">
+                                {dropdownItem.title}
+                              </h4>
+                              <p className="text-white/60 text-xs mt-1">
+                                {dropdownItem.description}
+                              </p>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </motion.div>
@@ -706,13 +736,34 @@ export default function HomePage() {
         >
           <div className="px-4 py-6 space-y-4">
             {menuItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="block text-white/80 hover:text-cosmic-cyan transition-colors duration-300 font-medium py-2"
-              >
-                {item.name}
-              </a>
+              <div key={item.name}>
+                <a
+                  href={item.href}
+                  target={item.href.startsWith('http') ? '_blank' : undefined}
+                  rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  className="block text-white/80 hover:text-cosmic-cyan transition-colors duration-300 font-medium py-2"
+                >
+                  {item.name}
+                </a>
+                
+                {/* Mobile Documentation Dropdown */}
+                {item.hasDropdown && item.name === 'Documentation' && (
+                  <div className="ml-4 mt-2 space-y-2 border-l border-cosmic-cyan/30 pl-4">
+                    {documentationDropdown.map((dropdownItem) => (
+                      <a
+                        key={dropdownItem.title}
+                        href={dropdownItem.href}
+                        target={dropdownItem.href.startsWith('http') ? '_blank' : undefined}
+                        rel={dropdownItem.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        className="flex items-center gap-2 text-white/60 hover:text-cosmic-cyan transition-colors text-sm py-1"
+                      >
+                        <dropdownItem.icon className="w-4 h-4" />
+                        {dropdownItem.title}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
             <div className="pt-4 space-y-3">
               <button 
@@ -1395,7 +1446,7 @@ export default function HomePage() {
                   className="cosmic-button px-8 py-4 rounded-lg text-lg font-semibold flex items-center justify-center gap-3 group relative overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 to-yellow-500/20 animate-pulse"></div>
-                  <span className="relative">🔥 Join Testnet Now</span>
+                  <span>🔥 Join Testnet Now</span>
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative" />
                 </button>
               </div>
