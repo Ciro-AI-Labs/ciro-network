@@ -447,6 +447,15 @@ export default function ComingSoonPage() {
                 <Github className="w-5 h-5" />
               </a>
               <a
+                href="https://discord.gg/PhAX4XWwnH"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/60 hover:text-cosmic-cyan transition-colors"
+                aria-label="Discord"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </a>
+              <a
                 href="https://x.com/cironetw0rk"
                 target="_blank"
                 rel="noopener noreferrer"
