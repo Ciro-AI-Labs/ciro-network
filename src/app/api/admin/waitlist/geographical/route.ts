@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase-server'
+import { getSupabaseServer } from '@/lib/supabase-server'
 
 export async function GET(request: NextRequest) {
   try {
     // Get waitlist entries with geographical data
-    const { data: waitlistEntries, error } = await supabaseServer
+    const supabase = getSupabaseServer()
+    const { data: waitlistEntries, error } = await supabase
       .from('waitlist')
       .select('*')
       .not('country', 'is', null)

@@ -21,10 +21,11 @@ export async function GET() {
     
     // Try to import and test Supabase
     try {
-      const { supabaseServer } = await import('@/lib/supabase-server')
+      const { getSupabaseServer } = await import('@/lib/supabase-server')
       
       // Test a simple query
-      const { data, error } = await supabaseServer
+      const supabase = getSupabaseServer()
+      const { data, error } = await supabase
         .from('waitlist')
         .select('count')
         .limit(1)

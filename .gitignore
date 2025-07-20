@@ -295,3 +295,4 @@ Thumbs.db
 # ==================== END OF .gitignore ====================
 # Next.js build output
 .next/
+.vercel
