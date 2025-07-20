@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get all waitlist entries with analytics data
-    const { getSupabaseServer } = await import('@/lib/supabase-server')
-    const supabase = getSupabaseServer()
-    const { data: waitlistEntries, error } = await supabase
+          // Get all waitlist entries with analytics data
+      const { getSupabaseServer } = await import('@/lib/supabase-server')
+      const supabase = await getSupabaseServer()
+      const { data: waitlistEntries, error } = await supabase
       .from('waitlist')
       .select('*')
       .order('created_at', { ascending: false })
@@ -56,10 +56,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Update the waitlist entry status
-    const { getSupabaseServer } = await import('@/lib/supabase-server')
-    const supabase = getSupabaseServer()
-    const { data, error } = await supabase
+          // Update the waitlist entry status
+      const { getSupabaseServer } = await import('@/lib/supabase-server')
+      const supabase = await getSupabaseServer()
+      const { data, error } = await supabase
       .from('waitlist')
       .update({ status })
       .eq('id', id)

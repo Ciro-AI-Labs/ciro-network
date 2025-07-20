@@ -24,7 +24,7 @@ export async function GET() {
       const { getSupabaseServer } = await import('@/lib/supabase-server')
       
       // Test a simple query
-      const supabase = getSupabaseServer()
+      const supabase = await getSupabaseServer()
       const { data, error } = await supabase
         .from('waitlist')
         .select('count')

@@ -4,7 +4,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get analytics data from the waitlist table
     const { getSupabaseServer } = await import('@/lib/supabase-server')
-    const supabase = getSupabaseServer()
+    const supabase = await getSupabaseServer()
     const { data: waitlistEntries, error } = await supabase
       .from('waitlist')
       .select('*')
