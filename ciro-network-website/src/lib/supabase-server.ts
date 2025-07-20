@@ -1,15 +1,17 @@
 // Conditional Supabase client that only loads when needed
-const supabaseUrl = 'https://lzgxtrefdbalpzmuoduf.supabase.co'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://lzgxtrefdbalpzmuoduf.supabase.co'
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // Only log and throw errors in development or when the key is actually needed
 const isDevelopment = process.env.NODE_ENV === 'development'
+const isBuild = process.env.NODE_ENV === 'production' && !process.env.VERCEL_URL
 
 if (isDevelopment) {
   console.log('Supabase Server Config:', {
     url: supabaseUrl,
     hasKey: !!supabaseServiceKey,
-    keyLength: supabaseServiceKey?.length || 0
+    keyLength: supabaseServiceKey?.length || 0,
+    isBuild
   })
 }
 
@@ -17,21 +19,42 @@ if (isDevelopment) {
 let supabaseServer: any = null
 
 async function getSupabaseServer() {
+  // During build time, return a mock client to prevent build failures
+  if (isBuild) {
+    return {
+      from: () => ({
+        select: () => ({
+          order: () => ({
+            data: [],
+            error: null
+          })
+        }),
+        insert: () => ({ data: null, error: null }),
+        update: () => ({ data: null, error: null }),
+        delete: () => ({ data: null, error: null })
+      })
+    }
+  }
+
   if (!supabaseServiceKey) {
-    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable for server operations')
+    throw new Error('Missing Supabase environment variables')
   }
-  
+
   if (!supabaseServer) {
-    // Dynamic import to avoid build-time resolution
-    const { createClient } = await import('@supabase/supabase-js')
-    supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    } catch (error) {
+      console.error('Failed to create Supabase client:', error)
+      throw new Error('Failed to initialize Supabase client')
+    }
   }
-  
+
   return supabaseServer
 }
 

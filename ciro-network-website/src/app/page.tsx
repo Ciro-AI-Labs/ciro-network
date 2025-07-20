@@ -409,7 +409,7 @@ export default function HomePage() {
   const menuItems = [
     { name: 'Products', href: '/coming-soon', hasDropdown: false },
     { name: 'Solutions', href: '/coming-soon', hasDropdown: false },
-    { name: 'Documentation', href: '/coming-soon', hasDropdown: false },
+    { name: 'Documentation', href: '/coming-soon', hasDropdown: true },
     { name: 'About', href: '/coming-soon', hasDropdown: false }
   ]
 
@@ -427,8 +427,8 @@ export default function HomePage() {
       href: '/coming-soon'
     },
     {
-      title: 'Network Infrastructure',
-      description: 'Global distributed computing network',
+      title: 'Decentralized Network',
+      description: 'Peer-to-peer compute infrastructure',
       icon: Network,
       href: '/coming-soon'
     }
@@ -448,8 +448,8 @@ export default function HomePage() {
       href: '/coming-soon'
     },
     {
-      title: 'Startup Acceleration',
-      description: 'Cost-effective AI compute for startups',
+      title: 'Startup Accelerator',
+      description: 'Affordable compute for growing companies',
       icon: Rocket,
       href: '/coming-soon'
     }
@@ -460,7 +460,7 @@ export default function HomePage() {
       title: 'Knowledge Base',
       description: 'Complete documentation and guides',
       icon: BookOpen,
-      href: '/coming-soon'
+      href: 'https://docs.ciro.network'
     },
     {
       title: 'The Manifesto',

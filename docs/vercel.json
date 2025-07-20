@@ -1,8 +1,8 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "echo 'Using pre-built documentation'",
   "outputDirectory": "book",
-  "installCommand": "curl -L https://github.com/rust-lang/mdBook/releases/download/v0.4.37/mdbook-v0.4.37-x86_64-unknown-linux-gnu.tar.gz | tar xz && chmod +x mdbook && sudo mv mdbook /usr/local/bin/ && npm install",
-  "devCommand": "npm run dev",
+  "installCommand": "echo 'No installation needed'",
+  "devCommand": "echo 'Dev mode not available'",
   "framework": null,
   "headers": [
     {

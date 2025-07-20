@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseServer } from '@/lib/supabase-server'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get waitlist entries with marketing data
-    const { getSupabaseServer } = await import('@/lib/supabase-server')
     const supabase = await getSupabaseServer()
+    
+    // Get all waitlist entries with marketing data
     const { data: waitlistEntries, error } = await supabase
       .from('waitlist')
       .select('*')
@@ -19,89 +20,98 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([])
     }
 
+    // Define types
+    interface WaitlistEntry {
+      id: string
+      email: string
+      marketing_channel?: string
+      utm_source?: string
+      utm_medium?: string
+      utm_campaign?: string
+      created_at: string
+      [key: string]: any
+    }
+
+    interface MarketingData {
+      [channel: string]: {
+        count: number
+        percentage: number
+        sources: { [source: string]: number }
+        mediums: { [medium: string]: number }
+        campaigns: { [campaign: string]: number }
+      }
+    }
+
     // Group entries by marketing channel and UTM parameters
-    const marketingData = waitlistEntries.reduce((acc, entry) => {
+    const marketingData = waitlistEntries.reduce((acc: MarketingData, entry: WaitlistEntry) => {
       const marketingChannel = entry.marketing_channel || 'direct'
       const utmSource = entry.utm_source || 'unknown'
       const utmMedium = entry.utm_medium || 'unknown'
       const utmCampaign = entry.utm_campaign || 'unknown'
       
-      const key = `${marketingChannel}-${utmSource}-${utmMedium}-${utmCampaign}`
-      
-      if (!acc[key]) {
-        acc[key] = {
-          marketing_channel: marketingChannel,
-          utm_source: utmSource,
-          utm_medium: utmMedium,
-          utm_campaign: utmCampaign,
-          signup_count: 0,
-          approved_count: 0,
-          avg_time_on_site: 0,
-          avg_page_views: 0,
-          avg_form_fill_time: 0,
-          abandoned_forms: 0,
-          total_time_on_site: 0,
-          total_page_views: 0,
-          total_form_fill_time: 0,
-          time_on_site_count: 0,
-          page_views_count: 0,
-          form_fill_count: 0
+      if (!acc[marketingChannel]) {
+        acc[marketingChannel] = {
+          count: 0,
+          percentage: 0,
+          sources: {},
+          mediums: {},
+          campaigns: {}
         }
       }
       
-      acc[key].signup_count += 1
+      acc[marketingChannel].count++
       
-      if (entry.status === 'approved') {
-        acc[key].approved_count += 1
+      // Track UTM sources
+      if (!acc[marketingChannel].sources[utmSource]) {
+        acc[marketingChannel].sources[utmSource] = 0
       }
+      acc[marketingChannel].sources[utmSource]++
       
-      if (entry.time_on_site_seconds) {
-        acc[key].total_time_on_site += entry.time_on_site_seconds
-        acc[key].time_on_site_count += 1
+      // Track UTM mediums
+      if (!acc[marketingChannel].mediums[utmMedium]) {
+        acc[marketingChannel].mediums[utmMedium] = 0
       }
+      acc[marketingChannel].mediums[utmMedium]++
       
-      if (entry.page_views_count) {
-        acc[key].total_page_views += entry.page_views_count
-        acc[key].page_views_count += 1
+      // Track UTM campaigns
+      if (!acc[marketingChannel].campaigns[utmCampaign]) {
+        acc[marketingChannel].campaigns[utmCampaign] = 0
       }
-      
-      if (entry.form_fill_duration_seconds) {
-        acc[key].total_form_fill_time += entry.form_fill_duration_seconds
-        acc[key].form_fill_count += 1
-      }
-      
-      // Count abandoned forms (entries with form start time but no completion time)
-      if (entry.form_start_time && !entry.form_completion_time) {
-        acc[key].abandoned_forms += 1
-      }
+      acc[marketingChannel].campaigns[utmCampaign]++
       
       return acc
-    }, {} as Record<string, any>)
-
-    // Group by marketing channel only for dashboard display
-    const channelData = waitlistEntries.reduce((acc, entry) => {
-      const channel = entry.marketing_channel || 'direct'
-      
-      if (!acc[channel]) {
-        acc[channel] = 0
-      }
-      acc[channel] += 1
-      return acc
-    }, {} as Record<string, number>)
+    }, {} as MarketingData)
 
     // Calculate percentages
-    const total = waitlistEntries.length
-    const formattedData = Object.entries(channelData).map(([source, count]) => ({
-      source,
-      count: count as number,
-      percentage: total > 0 ? Math.round((count as number / total) * 100) : 0,
-      conversion_rate: 0 // TODO: Calculate conversion rate
-    }))
+    const totalEntries = waitlistEntries.length
+    Object.keys(marketingData).forEach(channel => {
+      marketingData[channel].percentage = Math.round((marketingData[channel].count / totalEntries) * 100)
+    })
 
-    // Sort by count descending
-    formattedData.sort((a, b) => (b.count as number) - (a.count as number))
+    // Convert to array format for easier frontend consumption
+    const formattedMarketingData = Object.entries(marketingData).map(([channel, data]) => {
+      const channelInfo = data as { count: number; percentage: number; sources: { [source: string]: number }; mediums: { [medium: string]: number }; campaigns: { [campaign: string]: number } }
+      return {
+        channel,
+        count: channelInfo.count,
+        percentage: channelInfo.percentage,
+        topSources: Object.entries(channelInfo.sources)
+          .map(([source, count]) => ({ source, count: count as number }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5),
+        topMediums: Object.entries(channelInfo.mediums)
+          .map(([medium, count]) => ({ medium, count: count as number }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5),
+        topCampaigns: Object.entries(channelInfo.campaigns)
+          .map(([campaign, count]) => ({ campaign, count: count as number }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5)
+      }
+    }).sort((a, b) => b.count - a.count)
 
-    return NextResponse.json(formattedData)
+    return NextResponse.json(formattedMarketingData)
+
   } catch (error) {
     console.error('Marketing API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

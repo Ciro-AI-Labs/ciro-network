@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseServer } from '@/lib/supabase-server'
 
 export async function GET(request: NextRequest) {
   try {
           // Get all waitlist entries with analytics data
-      const { getSupabaseServer } = await import('@/lib/supabase-server')
       const supabase = await getSupabaseServer()
       const { data: waitlistEntries, error } = await supabase
       .from('waitlist')
@@ -57,7 +57,6 @@ export async function PUT(request: NextRequest) {
     }
 
           // Update the waitlist entry status
-      const { getSupabaseServer } = await import('@/lib/supabase-server')
       const supabase = await getSupabaseServer()
       const { data, error } = await supabase
       .from('waitlist')
