@@ -144,7 +144,7 @@ export default function WaitlistAnalytics() {
         <h1 className="text-3xl font-bold mb-8">Waitlist Analytics Dashboard</h1>
         
         {/* Overview Cards */}
-        <Grid cols={4} gap={6} className="mb-8">
+        <Grid cols={4} gap="lg" className="mb-8">
           <Card>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{totalSignups}</div>
@@ -177,7 +177,7 @@ export default function WaitlistAnalytics() {
         {/* User Types */}
         <Card className="mb-8">
           <h2 className="text-xl font-semibold mb-4">User Types</h2>
-          <Grid cols={4} gap={4}>
+          <Grid cols={4} gap="default">
             <div className="text-center">
               <div className="text-lg font-semibold">{latestData.developers || 0}</div>
               <div className="text-sm text-gray-600">Developers</div>
@@ -212,7 +212,7 @@ export default function WaitlistAnalytics() {
         {/* Device Types */}
         <Card className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Device Types</h2>
-          <Grid cols={3} gap={4}>
+          <Grid cols={3} gap="default">
             <div className="text-center">
               <div className="text-lg font-semibold">{latestData.desktop_users || 0}</div>
               <div className="text-sm text-gray-600">Desktop</div>
@@ -240,7 +240,7 @@ export default function WaitlistAnalytics() {
         {/* Marketing Channels */}
         <Card className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Marketing Channels</h2>
-          <Grid cols={5} gap={4}>
+          <Grid cols={5} gap="default">
             <div className="text-center">
               <div className="text-lg font-semibold">{latestData.organic_traffic || 0}</div>
               <div className="text-sm text-gray-600">Organic</div>
@@ -267,7 +267,7 @@ export default function WaitlistAnalytics() {
         {/* Engagement Metrics */}
         <Card className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Engagement Metrics</h2>
-          <Grid cols={3} gap={4}>
+          <Grid cols={3} gap="default">
             <div className="text-center">
               <div className="text-lg font-semibold">{formatTime(latestData.avg_time_on_site || 0)}</div>
               <div className="text-sm text-gray-600">Avg Time on Site</div>
