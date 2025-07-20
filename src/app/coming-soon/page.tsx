@@ -438,7 +438,7 @@ export default function ComingSoonPage() {
           <div className="text-center space-y-6">
             <div className="flex justify-center items-center gap-4">
               <a
-                href="https://github.com/ciro-network"
+                href="https://github.com/Ciro-AI-Labs/ciro-network"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 hover:text-cosmic-cyan transition-colors"
@@ -447,29 +447,22 @@ export default function ComingSoonPage() {
                 <Github className="w-5 h-5" />
               </a>
               <a
-                href="https://twitter.com/ciro_network"
+                href="https://x.com/cironetw0rk"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 hover:text-cosmic-cyan transition-colors"
-                aria-label="Twitter"
+                aria-label="X (Twitter)"
               >
                 <Twitter className="w-5 h-5" />
               </a>
               <a
-                href="https://linkedin.com/company/ciro-network"
+                href="https://www.linkedin.com/company/cirolabs"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 hover:text-cosmic-cyan transition-colors"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-5 h-5" />
-              </a>
-              <a
-                href="mailto:hello@ciro.network"
-                className="text-white/60 hover:text-cosmic-cyan transition-colors"
-                aria-label="Email"
-              >
-                <Mail className="w-5 h-5" />
               </a>
             </div>
             <p className="text-white/60 text-sm">

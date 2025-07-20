@@ -3031,7 +3031,7 @@ export default function HomePage() {
                 
                 <div className="space-y-4">
                   <a
-                    href="https://discord.gg/ciro"
+                    href="https://discord.gg/PhAX4XWwnH"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full bg-gradient-to-r from-[#5865F2] to-[#4752C4] hover:from-[#4752C4] hover:to-[#3C45A5] py-4 rounded-lg font-semibold text-white transition-all transform hover:scale-105 flex items-center justify-center gap-3 shadow-lg"
@@ -3041,13 +3041,13 @@ export default function HomePage() {
                   </a>
                   
                   <a
-                    href="https://twitter.com/cironetwork"
+                    href="https://x.com/cironetw0rk"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full bg-gradient-to-r from-[#1DA1F2] to-[#1A91DA] hover:from-[#1A91DA] hover:to-[#1681BF] py-4 rounded-lg font-semibold text-white transition-all transform hover:scale-105 flex items-center justify-center gap-3 shadow-lg"
                   >
                     <Twitter className="w-5 h-5" />
-                    Follow on Twitter
+                    Follow on X
                   </a>
                   
                   <a

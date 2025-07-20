@@ -86,7 +86,7 @@ export default function PrivacyPolicy() {
               </p>
               <div className="bg-black/40 rounded-lg p-4">
                 <p className="text-cosmic-cyan">Email: privacy@cironetwork.com</p>
-                <p className="text-cosmic-cyan">Discord: discord.gg/ciro</p>
+                <p className="text-cosmic-cyan">Discord: discord.gg/PhAX4XWwnH</p>
               </div>
             </section>
 
