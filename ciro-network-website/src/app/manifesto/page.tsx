@@ -1736,107 +1736,159 @@ export default function ManifestoPage() {
             <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center">
               <Lock className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-4xl font-bold">Burn Mechanics</h2>
+            <h2 className="text-4xl font-bold">Advanced Burn Mechanics</h2>
           </div>
 
           <p className="text-gray-300 leading-relaxed mb-8">
-            CIRO Network's economic model incorporates burn mechanisms to ensure long-term sustainability and 
-            discourage inflation while promoting network security and growth.
+            CIRO Network implements sophisticated burn mechanisms with mathematical precision to ensure long-term 
+            sustainability and value accrual. Our production-ready smart contracts execute these burns automatically 
+            through governance-controlled parameters, creating deflationary pressure while maintaining network security.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
-            <div className="bg-gradient-to-br from-red-900/20 to-pink-800/20 border border-red-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-semibold mb-4 text-red-400">Revenue Burn</h3>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">
-                A percentage of network revenue is automatically burned to reduce supply and increase scarcity.
-              </p>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li>• Dynamic burn rate based on network security</li>
-                <li>• Reduces inflation</li>
-                <li>• Encourages economic sustainability</li>
-                <li>• Prevents excessive token supply</li>
-              </ul>
+          <div className="grid lg:grid-cols-2 gap-8 mb-8">
+            {/* Mathematical Framework */}
+            <div className="bg-gray-900 rounded-xl p-6">
+              <h3 className="text-xl font-semibold mb-4 text-red-400">🧮 Mathematical Framework</h3>
+              
+              <div className="space-y-4">
+                <div className="bg-black/50 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2">Dynamic Supply Evolution</h4>
+                  <div className="bg-gray-800/50 p-3 rounded mb-2">
+                    <code className="text-cyan-400 text-sm">S(t+1) = S(t) × (1 + r_inf(t)) - B(t)</code>
+                  </div>
+                  <p className="text-gray-400 text-xs">
+                    Where r_inf(t) is adaptive inflation rate based on network security requirements
+                  </p>
+                </div>
+                
+                <div className="bg-black/50 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2">Adaptive Inflation Rate</h4>
+                  <div className="bg-gray-800/50 p-3 rounded mb-2">
+                    <code className="text-cyan-400 text-sm">r_inf(t) = max(r_min, SecurityBudget_USD / (S(t) × P(t)))</code>
+                  </div>
+                  <p className="text-gray-400 text-xs">
+                    Inflation adjusts to maintain $2M minimum security budget
+                  </p>
+                </div>
+                
+                <div className="bg-black/50 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2">Revenue Burn Function</h4>
+                  <div className="bg-gray-800/50 p-3 rounded mb-2">
+                    <code className="text-cyan-400 text-sm">B_revenue(t) = min(R(t) × burn_rate, max_burn_per_period)</code>
+                  </div>
+                  <p className="text-gray-400 text-xs">
+                    70% of network revenue automatically burned with safety caps
+                  </p>
+                </div>
+                
+                <div className="bg-black/50 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2">Buyback Burn Mechanism</h4>
+                  <div className="bg-gray-800/50 p-3 rounded mb-2">
+                    <code className="text-cyan-400 text-sm">B_buyback(t) = Treasury_ETH(t) / P_CIRO(t)</code>
+                  </div>
+                  <p className="text-gray-400 text-xs">
+                    Treasury ETH converted to CIRO and permanently burned
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-900/20 to-blue-800/20 border border-purple-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-semibold mb-4 text-purple-400">Buyback Burn</h3>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">
-                CIRO Token is burned when the Foundation's treasury is replenished, ensuring long-term value.
-              </p>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li>• Treasury ETH converted to CIRO</li>
-                <li>• CIRO burned</li>
-                <li>• Prevents inflation from treasury replenishment</li>
-                <li>• Encourages token retention</li>
-              </ul>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-900/20 to-teal-800/20 border border-green-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-semibold mb-4 text-green-400">Network Growth</h3>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">
-                Economic incentives and network effects encourage more participants and resources.
-              </p>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li>• More liquidity and tasks</li>
-                <li>• Stronger network security</li>
-                <li>• More robust economic model</li>
-                <li>• Decentralized governance</li>
-              </ul>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-900/20 to-cyan-800/20 border border-blue-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-semibold mb-4 text-blue-400">Economic Sustainability</h3>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">
-                Deflationary tokenomics and economic incentives ensure long-term sustainability.
-              </p>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li>• Self-regulating economy</li>
-                <li>• Deflationary token mechanics</li>
-                <li>• Economic incentives for participation</li>
-                <li>• Long-term network growth</li>
-              </ul>
+            {/* Implementation Details */}
+            <div className="bg-gray-900 rounded-xl p-6">
+              <h3 className="text-xl font-semibold mb-4 text-orange-400">⚙️ Implementation Details</h3>
+              
+              <div className="space-y-3">
+                <div className="border border-gray-600 rounded-lg p-3">
+                  <h4 className="text-white font-bold mb-2 flex items-center text-sm">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                    Weekly Dutch Auctions
+                  </h4>
+                  <p className="text-gray-300 text-xs">
+                    Minimize market impact through time-distributed burn execution via professional market makers
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-3">
+                  <h4 className="text-white font-bold mb-2 flex items-center text-sm">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                    70% Revenue Pipeline
+                  </h4>
+                  <p className="text-gray-300 text-xs">
+                    Automatic STRK/USD &rarr; CIRO &rarr; burn pipeline ensures consistent deflationary pressure
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-3">
+                  <h4 className="text-white font-bold mb-2 flex items-center text-sm">
+                    <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                    Protocol-Owned Liquidity
+                  </h4>
+                  <p className="text-gray-300 text-xs">
+                    $4M POL target provides 8-week burn buffer with 1% maximum slippage protection
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-3">
+                  <h4 className="text-white font-bold mb-2 flex items-center text-sm">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    Circuit Breakers
+                  </h4>
+                  <p className="text-gray-300 text-xs">
+                    Dynamic auction throttling if &gt;60% daily volatility (no trading halts - just slower burns)
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-3">
+                  <h4 className="text-white font-bold mb-2 flex items-center text-sm">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    Governance Controls
+                  </h4>
+                  <p className="text-gray-300 text-xs">
+                                         Maximum &plusmn;15% burn rate changes per 30-day epoch with emergency override capabilities
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-4 bg-red-900/20 border border-red-600/30 rounded-lg p-3">
+                <h4 className="text-red-400 font-bold mb-1 text-sm">🎯 Burn Source Priority</h4>
+                <p className="text-red-300 text-xs">
+                  All scheduled burns draw EXCLUSIVELY from Foundation/Treasury pool (180M tokens). 
+                  This protects circulating supply while maintaining deflationary pressure.
+                </p>
+              </div>
             </div>
           </div>
 
-                     {/* Mathematical Models for Burn Mechanisms */}
-           <h3 className="text-2xl font-semibold mb-4 text-cosmic-cyan">Mathematical Burn Models</h3>
-           <div className="grid md:grid-cols-2 gap-6 mb-8">
-             <div className="bg-gray-900 rounded-xl p-6">
-               <h4 className="text-lg font-semibold mb-4 text-red-400">Revenue Burn Formula</h4>
-               <div className="bg-black/50 rounded-lg p-4 mb-4">
-                 <div className="mb-2 text-cosmic-cyan">Dynamic Burn Rate:</div>
-                 <MathFormula formula={`B_r(t) = \\min\\left(R(t) \\cdot \\alpha \\cdot \\frac{S_{target}}{S(t)}, B_{max}\\right)`} />
-                 <div className="text-gray-400 text-xs mt-2">
-                   Where α is base burn rate, S_target is target supply, S(t) is current supply
-                 </div>
-               </div>
-               <div className="bg-black/50 rounded-lg p-4">
-                 <div className="mb-2 text-cosmic-cyan">Security-Adjusted Burn:</div>
-                 <MathFormula formula={`B_{final}(t) = B_r(t) \\cdot \\left(1 - \\frac{SecurityBudget_{required}}{SecurityBudget_{current}}\\right)`} />
-                 <div className="text-gray-400 text-xs mt-2">
-                   Burn rate reduces when security budget is below threshold
-                 </div>
-               </div>
-             </div>
-
-             <div className="bg-gray-900 rounded-xl p-6">
-               <h4 className="text-lg font-semibold mb-4 text-purple-400">Treasury Buyback Model</h4>
-               <div className="bg-black/50 rounded-lg p-4 mb-4">
-                 <div className="mb-2 text-cosmic-cyan">Buyback Amount:</div>
-                 <MathFormula formula={`B_{buyback}(t) = \\frac{Treasury_{ETH}(t) \\cdot \\beta}{P_{CIRO/ETH}(t)}`} />
-                 <div className="text-gray-400 text-xs mt-2">
-                   Where β is buyback percentage (default 25% of treasury growth)
-                 </div>
-               </div>
-               <div className="bg-black/50 rounded-lg p-4">
-                 <div className="mb-2 text-cosmic-cyan">Price Impact Protection:</div>
-                 <MathFormula formula={`B_{limited}(t) = \\min\\left(B_{buyback}(t), \\frac{Volume_{24h}}{10}\\right)`} />
-                 <div className="text-gray-400 text-xs mt-2">
-                   Limits buyback to prevent excessive price impact
-                 </div>
-               </div>
-             </div>
-           </div>
+          {/* Live Smart Contract Integration */}
+          <div className="bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-700/50 rounded-xl p-6 mb-8">
+            <h3 className="text-xl font-semibold mb-4 text-red-400">🔗 Production-Ready Implementation</h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold text-white mb-2">Burn Manager Contract</h4>
+                <code className="text-xs text-blue-400 bg-black/50 p-2 rounded block break-all mb-2">
+                  0x070d665978b7275e5f4cea991d9508bc32b592f6244d1303a22f5c22bdc89ea5
+                </code>
+                <ul className="text-gray-300 text-xs space-y-1">
+                  <li>• Revenue Burns: Automated execution</li>
+                  <li>• Buyback Execution: Market-optimized</li>
+                  <li>• Market Impact Minimization: Built-in protection</li>
+                  <li>• Deflationary Mechanics: Governance-controlled</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-white mb-2">CIRO Token Contract</h4>
+                <code className="text-xs text-blue-400 bg-black/50 p-2 rounded block break-all mb-2">
+                  0x03c0f7574905d7cbc2cca18d6c090265fa35b572d8e9dc62efeb5339908720d8
+                </code>
+                <ul className="text-gray-300 text-xs space-y-1">
+                  <li>• Minting/Burning: Smart contract controlled</li>
+                  <li>• Governance Integration: Vote-weighted decisions</li>
+                  <li>• Dynamic Supply: Mathematical precision</li>
+                  <li>• ERC-20 Compatible: Standard compliance</li>
+                </ul>
+              </div>
+            </div>
+          </div>
 
            {/* Burn Flow Diagram */}
            <h3 className="text-xl font-semibold mb-4 text-cosmic-cyan">Burn Mechanism Flow</h3>
@@ -2145,59 +2197,239 @@ export default function ManifestoPage() {
             <div className="w-10 h-10 bg-gradient-to-r from-cosmic-cyan to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-4xl font-bold">Tokenomics</h2>
+            <h2 className="text-4xl font-bold">Tokenomics v4.1</h2>
           </div>
           
           <div className="bg-gradient-to-r from-cosmic-cyan/5 to-blue-500/5 border border-cosmic-cyan/20 rounded-xl p-8 mb-8">
             <p className="text-lg text-gray-200 leading-relaxed mb-4">
-              <strong className="text-cosmic-cyan">CIRO Tokenomics</strong> implement a sophisticated economic model designed for 
-              long-term sustainability, security, and decentralized governance. The protocol leverages a multi-layered economic 
-              framework with dynamic supply mechanisms and game-theoretic incentive alignment.
+              <strong className="text-cosmic-cyan">CIRO Tokenomics v4.1</strong> implements a research-based hybrid architecture designed for 
+              sustainable 50x-200x returns through governance-controlled supply management, revenue-token linkage, and advanced burn mechanics. 
+              Our production-ready smart contracts are live on Starknet Sepolia testnet, ready for mainnet deployment.
             </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <span className="bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-sm border border-green-500/30">
+                ✅ PRODUCTION READY
+              </span>
+              <span className="bg-blue-900/30 text-blue-400 px-3 py-1 rounded-full text-sm border border-blue-500/30">
+                🔒 PEER REVIEWED
+              </span>
+              <span className="bg-purple-900/30 text-purple-400 px-3 py-1 rounded-full text-sm border border-purple-500/30">
+                📊 MARKET-TESTED
+              </span>
+            </div>
+          </div>
+
+          {/* Live Smart Contracts Section */}
+          <div className="mb-12">
+            <h3 className="text-2xl font-semibold mb-6 text-cosmic-cyan">🚀 Live Smart Contracts</h3>
+            <p className="text-gray-300 mb-6 text-sm">
+              Successfully deployed on <strong>Starknet Sepolia Testnet</strong> - Ready for mainnet launch
+            </p>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {[
+                {
+                  name: "CIRO Token",
+                  address: "0x03c0f7574905d7cbc2cca18d6c090265fa35b572d8e9dc62efeb5339908720d8",
+                  features: ["ERC-20 Compatible", "Minting/Burning", "Governance Integration", "Dynamic Supply"]
+                },
+                {
+                  name: "CDC Pool",
+                  address: "0x05f73c551dbfda890090c8ee89858992dfeea9794a63ad83e6b1706e9836aeba",
+                  features: ["Worker Staking", "Slashing Mechanisms", "Reward Distribution", "Reputation System"]
+                },
+                {
+                  name: "Job Manager",
+                  address: "0x00bf025663b8a7c7e43393f082b10afe66bd9ddb06fb5e521e3adbcf693094bd",
+                  features: ["Job Orchestration", "Payment Processing", "Worker Assignment", "Lifecycle Management"]
+                },
+                {
+                  name: "Governance Treasury",
+                  address: "0x00b8d816d8a909d7320c442b22d378d87bd41b3008b46b1cce56fc94d0e4a4be",
+                  features: ["DAO Treasury", "Proposal Execution", "Fund Management", "Security Budget"]
+                },
+                {
+                  name: "Linear Vesting",
+                  address: "0x00a8c57c46ba8ed81e2e1f4e421e26d5b8a1e3bb0b59f66b1d3a3b2b3d65e9da",
+                  features: ["Team Vesting", "Cliff Periods", "Linear Release", "Emergency Controls"]
+                },
+                {
+                  name: "Burn Manager",
+                  address: "0x070d665978b7275e5f4cea991d9508bc32b592f6244d1303a22f5c22bdc89ea5",
+                  features: ["Revenue Burns", "Buyback Execution", "Market Impact Minimization", "Deflationary Mechanics"]
+                }
+              ].map((contract, index) => (
+                <div key={index} className="bg-black/40 border border-gray-700 rounded-lg p-4 hover:border-blue-500/50 transition-all duration-300">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-bold text-white">{contract.name}</h4>
+                    <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+                      ✅ DEPLOYED
+                    </span>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-xs text-gray-400 mb-1">Contract Address:</p>
+                    <code className="text-xs text-blue-400 bg-gray-800 p-2 rounded block break-all">
+                      {contract.address}
+                    </code>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-2">Features:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {contract.features.map((feature, idx) => (
+                        <span key={idx} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4 text-center">
+              <p className="text-yellow-400 text-sm">
+                <strong>⚡ Mainnet Ready:</strong> All contracts successfully tested and deployed. 
+                Comprehensive integration testing completed. Ready for production launch.
+              </p>
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8 mb-12">
             <div className="lg:col-span-2">
-              <h3 className="text-2xl font-semibold mb-4 text-cosmic-cyan">Token Distribution</h3>
+              <h3 className="text-2xl font-semibold mb-4 text-cosmic-cyan">Token Supply & Distribution</h3>
               <div className="bg-gray-900 rounded-xl p-6 mb-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-blue-900/20 rounded-lg">
-                    <span className="font-medium">Community & Ecosystem</span>
-                    <span className="text-cosmic-cyan font-bold">40%</span>
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <h4 className="text-lg font-semibold mb-3 text-yellow-400">🪙 Supply Mechanics</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg">
+                        <span className="text-gray-300 text-sm">Maximum Supply Cap</span>
+                        <span className="text-white font-bold">1B CIRO</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg">
+                        <span className="text-gray-300 text-sm">Initial Circulating</span>
+                        <span className="text-green-400 font-bold">50M CIRO</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg">
+                        <span className="text-gray-300 text-sm">Remaining to Mint</span>
+                        <span className="text-purple-400 font-bold">950M CIRO</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-green-900/20 rounded-lg">
-                    <span className="font-medium">Foundation Treasury</span>
-                    <span className="text-green-400 font-bold">25%</span>
+                  <div>
+                    <h4 className="text-lg font-semibold mb-3 text-orange-400">📊 Token Allocation</h4>
+                    <div className="space-y-2">
+                      {[
+                        { category: "Ecosystem/Rewards", percentage: "30%", tokens: "300M", color: "bg-green-500" },
+                        { category: "Foundation/Treasury", percentage: "18%", tokens: "180M", color: "bg-blue-500" },
+                        { category: "Team", percentage: "15%", tokens: "150M", color: "bg-purple-500" },
+                        { category: "Private Sale", percentage: "7.5%", tokens: "75M", color: "bg-red-500" },
+                        { category: "Development", percentage: "7%", tokens: "70M", color: "bg-gray-500" },
+                        { category: "Public Sale", percentage: "5%", tokens: "50M", color: "bg-yellow-500" }
+                      ].map((item, index) => (
+                        <div key={index} className="flex items-center space-x-3">
+                          <div className={`w-3 h-3 ${item.color} rounded`}></div>
+                          <div className="flex-1 flex justify-between items-center">
+                            <span className="text-gray-300 text-xs">{item.category}</span>
+                            <div className="text-right">
+                              <span className="text-white font-bold text-xs">{item.tokens}</span>
+                              <span className="text-gray-400 text-xs ml-1">({item.percentage})</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-purple-900/20 rounded-lg">
-                    <span className="font-medium">Core Team</span>
-                    <span className="text-purple-400 font-bold">20%</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-yellow-900/20 rounded-lg">
-                    <span className="font-medium">Investors</span>
-                    <span className="text-yellow-400 font-bold">15%</span>
-                  </div>
+                </div>
+                
+                <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4">
+                  <p className="text-blue-300 text-sm">
+                    <strong>Smart Contract Control:</strong> All future minting controlled by governance-approved smart contracts 
+                    with mathematical precision and security guarantees.
+                  </p>
                 </div>
               </div>
 
-              <h3 className="text-2xl font-semibold mb-4 text-cosmic-cyan">Vesting Schedules</h3>
+              <h3 className="text-2xl font-semibold mb-4 text-cosmic-cyan">Fundraising Structure</h3>
               <div className="bg-gray-900 rounded-xl p-6">
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Community Allocation</span>
-                    <span className="text-cosmic-cyan">Immediate + Linear over 24 months</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Core Team</span>
-                    <span className="text-purple-400">12-month cliff + 36-month linear</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Investors</span>
-                    <span className="text-yellow-400">6-month cliff + 24-month linear</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Foundation</span>
-                    <span className="text-green-400">Milestone-based release</span>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-800">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-white font-bold">Round</th>
+                        <th className="px-4 py-3 text-left text-white font-bold">Tokens</th>
+                        <th className="px-4 py-3 text-left text-white font-bold">Price</th>
+                        <th className="px-4 py-3 text-left text-white font-bold">Raise</th>
+                        <th className="px-4 py-3 text-left text-white font-bold">FDV</th>
+                        <th className="px-4 py-3 text-left text-white font-bold">Vesting</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        {
+                          round: "Seed",
+                          tokens: "50M",
+                          price: "$0.01",
+                          raise: "$500K",
+                          fdv: "$10M",
+                          vesting: "6-mo cliff &rarr; 18-mo linear",
+                          multiplier: "1x"
+                        },
+                        {
+                          round: "Private",
+                          tokens: "75M",
+                          price: "$0.05",
+                          raise: "$3.75M",
+                          fdv: "$50M",
+                          vesting: "12-mo cliff &rarr; 24-mo linear",
+                          multiplier: "5x"
+                        },
+                        {
+                          round: "Strategic",
+                          tokens: "50M",
+                          price: "$0.10",
+                          raise: "$5M",
+                          fdv: "$100M",
+                          vesting: "3-mo cliff &rarr; 12-mo linear",
+                          multiplier: "2x"
+                        },
+                        {
+                          round: "Public",
+                          tokens: "50M",
+                          price: "$0.20",
+                          raise: "$10M",
+                          fdv: "$200M",
+                          vesting: "25% TGE, 6-mo linear",
+                          multiplier: "2x"
+                        }
+                      ].map((round, index) => (
+                        <tr key={index} className="border-t border-gray-700 hover:bg-gray-800/30">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-white font-bold">{round.round}</span>
+                              <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+                                {round.multiplier}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">{round.tokens}</td>
+                          <td className="px-4 py-3 text-green-400 font-bold">{round.price}</td>
+                          <td className="px-4 py-3 text-yellow-400 font-bold">{round.raise}</td>
+                          <td className="px-4 py-3 text-purple-400 font-bold">{round.fdv}</td>
+                          <td className="px-4 py-3 text-gray-300 text-xs">{round.vesting}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="mt-6 text-center">
+                  <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-4">
+                    <h4 className="text-green-400 font-bold text-lg mb-2">Total Funds Raised: $19.25M</h4>
+                    <p className="text-green-300 text-sm">
+                      Smooth progression curve (1x &rarr; 5x &rarr; 2x &rarr; 2x) provides manageable steps for investors 
+                      while maintaining sustainable growth trajectory.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -2215,20 +2447,118 @@ export default function ManifestoPage() {
                   <div className="text-gray-400 text-sm">Minimum Security Budget</div>
                 </div>
                 <div className="bg-gray-900 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-purple-400">Dynamic</div>
-                  <div className="text-gray-400 text-sm">Inflation Rate</div>
+                  <div className="text-2xl font-bold text-purple-400">50x-200x</div>
+                  <div className="text-gray-400 text-sm">Target Returns</div>
                 </div>
                 <div className="bg-gray-900 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-red-400">Variable</div>
-                  <div className="text-gray-400 text-sm">Burn Rate</div>
+                  <div className="text-2xl font-bold text-red-400">70%</div>
+                  <div className="text-gray-400 text-sm">Revenue Burn Rate</div>
                 </div>
+                <div className="bg-gray-900 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-yellow-400">Dynamic</div>
+                  <div className="text-gray-400 text-sm">Inflation Rate</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Advanced Burn Mechanics */}
+          <h3 className="text-2xl font-semibold mb-6 text-cosmic-cyan">🔥 Advanced Burn Mechanics</h3>
+          <div className="grid lg:grid-cols-2 gap-8 mb-8">
+            <div className="bg-gray-900 rounded-xl p-6">
+              <h4 className="text-lg font-semibold mb-4 text-red-400">🧮 Mathematical Framework</h4>
+              
+              <div className="space-y-4">
+                <div className="bg-black/50 rounded-lg p-4">
+                  <h5 className="text-white font-bold mb-2">Dynamic Supply Evolution</h5>
+                  <code className="text-cyan-400 text-sm bg-gray-800/50 p-2 rounded block">
+                    S(t+1) = S(t) × (1 + r_inf(t)) - B(t)
+                  </code>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Where r_inf(t) is adaptive inflation rate based on network security requirements
+                  </p>
+                </div>
+                
+                <div className="bg-black/50 rounded-lg p-4">
+                  <h5 className="text-white font-bold mb-2">Revenue Burn Function</h5>
+                  <code className="text-cyan-400 text-sm bg-gray-800/50 p-2 rounded block">
+                    B_revenue(t) = min(R(t) × burn_rate, max_burn_per_period)
+                  </code>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Percentage of network revenue automatically burned with safety caps
+                  </p>
+                </div>
+                
+                <div className="bg-black/50 rounded-lg p-4">
+                  <h5 className="text-white font-bold mb-2">Buyback Burn Mechanism</h5>
+                  <code className="text-cyan-400 text-sm bg-gray-800/50 p-2 rounded block">
+                    B_buyback(t) = Treasury_ETH(t) / P_CIRO(t)
+                  </code>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Treasury ETH converted to CIRO and permanently burned
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 rounded-xl p-6">
+              <h4 className="text-lg font-semibold mb-4 text-orange-400">⚙️ Implementation Details</h4>
+              
+              <div className="space-y-3">
+                <div className="border border-gray-600 rounded-lg p-3">
+                  <h5 className="text-white font-bold mb-2 flex items-center text-sm">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                    Weekly Dutch Auctions
+                  </h5>
+                  <p className="text-gray-300 text-xs">
+                    Minimize market impact through time-distributed burn execution via professional market makers
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-3">
+                  <h5 className="text-white font-bold mb-2 flex items-center text-sm">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                    70% Revenue Pipeline
+                  </h5>
+                  <p className="text-gray-300 text-xs">
+                    Automatic STRK/USD &rarr; CIRO &rarr; burn pipeline ensures consistent deflationary pressure
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-3">
+                  <h5 className="text-white font-bold mb-2 flex items-center text-sm">
+                    <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                    Protocol-Owned Liquidity
+                  </h5>
+                  <p className="text-gray-300 text-xs">
+                    $4M POL target provides 8-week burn buffer with 1% maximum slippage protection
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-3">
+                  <h5 className="text-white font-bold mb-2 flex items-center text-sm">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    Circuit Breakers
+                  </h5>
+                  <p className="text-gray-300 text-xs">
+                    Dynamic auction throttling if &gt;60% daily volatility (no trading halts - just slower burns)
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-4 bg-red-900/20 border border-red-600/30 rounded-lg p-3">
+                <h5 className="text-red-400 font-bold mb-1 text-sm">🎯 Burn Source Priority</h5>
+                <p className="text-red-300 text-xs">
+                  All scheduled burns draw EXCLUSIVELY from Foundation/Treasury pool (180M tokens). 
+                  This protects circulating supply while maintaining deflationary pressure.
+                </p>
               </div>
             </div>
           </div>
 
           {/* Token Flow Diagram */}
           <h3 className="text-2xl font-semibold mb-4 text-cosmic-cyan">Token Flow Architecture</h3>
-                     <MermaidDiagram
+          <MermaidDiagram
              chart={`graph TD
     subgraph "Token Sources"
         MINT[Token Minting]
@@ -2284,75 +2614,102 @@ export default function ManifestoPage() {
 `}
           />
 
-          {/* Mathematical Models */}
-          <h3 className="text-2xl font-semibold mb-4 text-cosmic-cyan">Economic Models</h3>
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-gray-900 rounded-xl p-6">
-              <h4 className="text-lg font-semibold mb-4 text-purple-400">Dynamic Supply Model</h4>
-              <div className="bg-black/50 rounded-lg p-4 mb-4 font-mono text-sm">
-                <div className="mb-2 text-cosmic-cyan">Supply Evolution:</div>
-                <div className="text-white mb-2">S(t+1) = S(t) * (1 + r_inf(t)) - B(t)</div>
-                <div className="text-gray-400 text-xs">
-                  Where r_inf(t) is adaptive inflation rate based on network security requirements
+          {/* Return Projections */}
+          <h3 className="text-2xl font-semibold mb-6 text-cosmic-cyan">📈 Return Projections & Benchmarks</h3>
+          <div className="grid lg:grid-cols-3 gap-6 mb-8">
+            {[
+              {
+                scenario: "Conservative",
+                multiplier: "50x-75x",
+                timeline: "3-5 years",
+                price: "$1.00 - $1.50",
+                description: "Based on Render Network's proven performance trajectory",
+                color: "from-green-400 to-green-600"
+              },
+              {
+                scenario: "Aggressive",
+                multiplier: "100x-150x",
+                timeline: "2-4 years",
+                price: "$2.00 - $3.00",
+                description: "Market leadership in verifiable AI compute sector",
+                color: "from-yellow-400 to-orange-500"
+              },
+              {
+                scenario: "Moonshot",
+                multiplier: "200x+",
+                timeline: "5+ years",
+                price: "$4.00+",
+                description: "Dominant infrastructure for global AI economy",
+                color: "from-purple-400 to-pink-500"
+              }
+            ].map((projection, index) => (
+              <div key={index} className="bg-black/40 border border-gray-700 rounded-xl p-6 hover:border-gray-500 transition-colors">
+                <div className={`bg-gradient-to-r ${projection.color} text-white text-center py-2 rounded-lg mb-4`}>
+                  <h4 className="text-lg font-bold">{projection.scenario}</h4>
                 </div>
+                <div className="text-center mb-4">
+                  <div className="text-3xl font-bold text-white mb-2">{projection.multiplier}</div>
+                  <div className="text-gray-400 text-sm">{projection.timeline}</div>
+                </div>
+                <div className="text-center mb-4">
+                  <div className="text-xl font-bold text-yellow-400">{projection.price}</div>
+                  <div className="text-gray-500 text-xs">Target Price Range</div>
+                </div>
+                <p className="text-gray-300 text-sm text-center">{projection.description}</p>
               </div>
-              <div className="bg-black/50 rounded-lg p-4 font-mono text-sm">
-                <div className="mb-2 text-cosmic-cyan">Inflation Rate:</div>
-                <div className="text-white mb-2">r_inf(t) = max(r_min, SecurityBudget_USD / (S(t) * P(t)))</div>
-                <div className="text-gray-400 text-xs">
-                  Inflation adjusts to maintain $2M minimum security budget
-                </div>
+            ))}
+          </div>
+          
+          <div className="bg-blue-900/20 border border-blue-600/30 rounded-xl p-6 mb-8">
+            <h4 className="text-xl font-semibold mb-4 text-blue-400 text-center">📊 Competitive Benchmarks</h4>
+            <div className="grid md:grid-cols-3 gap-6 text-center">
+              <div>
+                <h5 className="text-white font-bold mb-2">Render Network (RNDR)</h5>
+                <p className="text-green-400 text-xl font-bold">59x - 247x</p>
+                <p className="text-gray-400 text-sm">Proven DePIN performance</p>
               </div>
-            </div>
-
-            <div className="bg-gray-900 rounded-xl p-6">
-              <h4 className="text-lg font-semibold mb-4 text-purple-400">Burn Mechanisms</h4>
-              <div className="bg-black/50 rounded-lg p-4 mb-4 font-mono text-sm">
-                <div className="mb-2 text-cosmic-cyan">Revenue Burn:</div>
-                <div className="text-white mb-2">B_revenue(t) = min(R(t) * burn_rate, max_burn_per_period)</div>
-                <div className="text-gray-400 text-xs">
-                  Percentage of network revenue automatically burned
-                </div>
+              <div>
+                <h5 className="text-white font-bold mb-2">Akash Network (AKT)</h5>
+                <p className="text-yellow-400 text-xl font-bold">12x - 85x</p>
+                <p className="text-gray-400 text-sm">Decentralized compute</p>
               </div>
-              <div className="bg-black/50 rounded-lg p-4 font-mono text-sm">
-                <div className="mb-2 text-cosmic-cyan">Buyback Burn:</div>
-                <div className="text-white mb-2">B_buyback(t) = Treasury_ETH(t) / P_CIRO(t)</div>
-                <div className="text-gray-400 text-xs">
-                  Treasury ETH converted to CIRO and burned
-                </div>
+              <div>
+                <h5 className="text-white font-bold mb-2">CIRO Target</h5>
+                <p className="text-purple-400 text-xl font-bold">50x - 200x</p>
+                <p className="text-gray-400 text-sm">Verifiable AI compute</p>
               </div>
             </div>
           </div>
 
           {/* Governance Structure */}
           <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-700/50 rounded-xl p-8">
-            <h3 className="text-2xl font-semibold mb-4 text-purple-400">Governance Framework</h3>
+            <h3 className="text-2xl font-semibold mb-4 text-purple-400">🗳️ Governance Framework</h3>
             <div className="grid md:grid-cols-3 gap-6">
               <div>
-                <h4 className="font-semibold text-white mb-2">Proposal Types</h4>
+                <h4 className="font-semibold text-white mb-2">Emergency Multisig Council</h4>
                 <ul className="text-gray-400 text-sm space-y-1">
-                  <li>• Treasury allocation (67% threshold)</li>
-                  <li>• Protocol upgrades (75% threshold)</li>
-                  <li>• Parameter changes (60% threshold)</li>
-                  <li>• Emergency actions (90% threshold)</li>
+                  <li>• Staker-Elected Seats: 3/7</li>
+                  <li>• External Guardians: 3/7</li>
+                  <li>• Core Team Rep: 1/7</li>
+                  <li>• Emergency powers only (Level-3+ incidents)</li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-white mb-2">Voting Power</h4>
+                <h4 className="font-semibold text-white mb-2">Proposal Thresholds</h4>
+                <ul className="text-gray-400 text-sm space-y-1">
+                  <li>• Treasury allocation: 67% threshold</li>
+                  <li>• Protocol upgrades: 75% threshold</li>
+                  <li>• Parameter changes: 60% threshold</li>
+                  <li>• Emergency actions: 90% threshold</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-white mb-2">Voting Power Structure</h4>
                 <ul className="text-gray-400 text-sm space-y-1">
                   <li>• Base: 1 CIRO = 1 vote</li>
                   <li>• Long-term holders: 1.5x multiplier</li>
                   <li>• Active participants: 2x multiplier</li>
                   <li>• Delegation supported</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-white mb-2">Security Features</h4>
-                <ul className="text-gray-400 text-sm space-y-1">
-                  <li>• Timelock for execution</li>
-                  <li>• Emergency pause mechanism</li>
-                  <li>• Multi-sig council backup</li>
-                  <li>• Proposal cooldowns</li>
                 </ul>
               </div>
             </div>

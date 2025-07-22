@@ -21,7 +21,8 @@ import {
   Star,
   Code,
   Palette,
-  Clock
+  Clock,
+  TrendingUp
 } from 'lucide-react'
 import { 
   Zap, 
@@ -663,22 +664,30 @@ export default function HomePage() {
                   
                   {/* Documentation Dropdown */}
                   {item.hasDropdown && item.name === 'Documentation' && (
-                    <div className="absolute top-full left-0 mt-2 w-80 bg-black/90 backdrop-blur-3xl border border-cosmic-cyan/40 rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                      <div className="p-4 space-y-3">
+                    <div className="absolute top-full left-0 mt-2 w-80 bg-black/20 backdrop-blur-2xl border border-cosmic-cyan/30 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+                      {/* Glass Effect Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-cosmic-cyan/5 to-purple-500/5 rounded-xl"></div>
+                      {/* Border Glow */}
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cosmic-cyan/20 via-purple-500/20 to-cosmic-cyan/20 opacity-50"></div>
+                      
+                      <div className="relative p-4 space-y-3">
                         {documentationDropdown.map((dropdownItem, idx) => (
                           <a
                             key={dropdownItem.title}
                             href={dropdownItem.href}
                             target={dropdownItem.href.startsWith('http') ? '_blank' : undefined}
                             rel={dropdownItem.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-cosmic-cyan/10 transition-colors duration-200 group/item"
+                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 hover:backdrop-blur-sm border border-transparent hover:border-cosmic-cyan/20 transition-all duration-200 group/item relative overflow-hidden"
                           >
-                            <dropdownItem.icon className="w-5 h-5 text-cosmic-cyan mt-0.5 flex-shrink-0" />
-                            <div>
-                              <h4 className="text-white font-medium text-sm group-hover/item:text-cosmic-cyan transition-colors">
+                            {/* Hover Glow Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-cosmic-cyan/10 to-purple-500/10 opacity-0 group-hover/item:opacity-100 transition-opacity duration-200"></div>
+                            
+                            <dropdownItem.icon className="w-5 h-5 text-cosmic-cyan mt-0.5 flex-shrink-0 relative z-10" />
+                            <div className="relative z-10">
+                              <h4 className="text-white font-medium text-sm group-hover/item:text-cosmic-cyan transition-colors duration-200">
                                 {dropdownItem.title}
                               </h4>
-                              <p className="text-white/60 text-xs mt-1">
+                              <p className="text-white/70 text-xs mt-1 group-hover/item:text-white/90 transition-colors duration-200">
                                 {dropdownItem.description}
                               </p>
                             </div>
@@ -748,14 +757,14 @@ export default function HomePage() {
                 
                 {/* Mobile Documentation Dropdown */}
                 {item.hasDropdown && item.name === 'Documentation' && (
-                  <div className="ml-4 mt-2 space-y-2 border-l border-cosmic-cyan/30 pl-4">
+                  <div className="ml-4 mt-2 space-y-2 border-l border-cosmic-cyan/30 pl-4 bg-black/10 backdrop-blur-sm rounded-r-lg p-3">
                     {documentationDropdown.map((dropdownItem) => (
                       <a
                         key={dropdownItem.title}
                         href={dropdownItem.href}
                         target={dropdownItem.href.startsWith('http') ? '_blank' : undefined}
                         rel={dropdownItem.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                        className="flex items-center gap-2 text-white/60 hover:text-cosmic-cyan transition-colors text-sm py-1"
+                        className="flex items-center gap-2 text-white/70 hover:text-cosmic-cyan transition-all duration-200 text-sm py-2 px-2 rounded-lg hover:bg-white/5"
                       >
                         <dropdownItem.icon className="w-4 h-4" />
                         {dropdownItem.title}
@@ -1759,10 +1768,18 @@ export default function HomePage() {
               transition={{ duration: 0.8 }}
               className="text-center mb-12"
             >
-              <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">Token Economics</h3>
+              <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">CIRO Tokenomics v4.1</h3>
               <p className="text-lg text-white/70">
-                Built for scale, security, and sustainable growth
+                Research-based architecture designed for sustainable 50x-200x returns with production-ready smart contracts
               </p>
+              <div className="mt-4 flex justify-center flex-wrap gap-3">
+                <span className="bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-xs border border-green-500/30">
+                  ✅ PRODUCTION READY
+                </span>
+                <span className="bg-blue-900/30 text-blue-400 px-3 py-1 rounded-full text-xs border border-blue-500/30">
+                  📊 MARKET-TESTED
+                </span>
+              </div>
             </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -1776,8 +1793,8 @@ export default function HomePage() {
                 <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-cyan-400/20">
                   <Coins className="w-6 h-6 text-white" />
                 </div>
-                <div className="text-2xl font-bold text-cyan-400 mb-2">1 Billion</div>
-                <div className="text-sm text-white/60">Total Supply</div>
+                <div className="text-2xl font-bold text-cyan-400 mb-2">1B CIRO</div>
+                <div className="text-sm text-white/60">Maximum Supply Cap</div>
               </motion.div>
 
               {/* Initial Circulating */}
@@ -1790,11 +1807,11 @@ export default function HomePage() {
                 <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-purple-400/20">
                   <Zap className="w-6 h-6 text-white" />
                 </div>
-                <div className="text-2xl font-bold text-purple-400 mb-2">50 Million</div>
+                <div className="text-2xl font-bold text-purple-400 mb-2">50M CIRO</div>
                 <div className="text-sm text-white/60">Initial Circulating</div>
               </motion.div>
 
-              {/* Governance Rights */}
+              {/* Target Returns */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1802,41 +1819,99 @@ export default function HomePage() {
                 className="cosmic-glass p-6 rounded-2xl text-center border-2 border-emerald-400/60 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-400/20 transition-all duration-300 group"
               >
                 <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-emerald-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-400/20">
-                  <Shield className="w-6 h-6 text-white" />
+                  <TrendingUp className="w-6 h-6 text-white" />
                 </div>
-                <div className="text-2xl font-bold text-emerald-400 mb-2">Progressive</div>
-                <div className="text-sm text-white/60">Governance Rights</div>
+                <div className="text-2xl font-bold text-emerald-400 mb-2">50x-200x</div>
+                <div className="text-sm text-white/60">Target Returns</div>
               </motion.div>
 
-              {/* Burn Mechanism */}
+              {/* Burn Rate */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="cosmic-glass p-6 rounded-2xl text-center border-2 border-yellow-400/60 hover:border-yellow-400 hover:shadow-lg hover:shadow-yellow-400/20 transition-all duration-300 group"
+                className="cosmic-glass p-6 rounded-2xl text-center border-2 border-red-400/60 hover:border-red-400 hover:shadow-lg hover:shadow-red-400/20 transition-all duration-300 group"
               >
-                <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-yellow-400/20">
+                <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-red-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-red-400/20">
                   <Atom className="w-6 h-6 text-white" />
                 </div>
-                <div className="text-2xl font-bold text-yellow-400 mb-2">Revenue Burn</div>
-                <div className="text-sm text-white/60">Deflationary Model</div>
+                <div className="text-2xl font-bold text-red-400 mb-2">70%</div>
+                <div className="text-sm text-white/60">Revenue Burn Rate</div>
               </motion.div>
             </div>
+
+            {/* Live Smart Contracts */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="mt-12 bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-600/30 rounded-2xl p-8"
+            >
+              <div className="text-center mb-8">
+                <h4 className="text-2xl font-bold mb-2 text-blue-400">🚀 Live Smart Contracts</h4>
+                <p className="text-white/70">Production-ready contracts deployed on Starknet Sepolia testnet</p>
+              </div>
+              
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="bg-black/40 p-4 rounded-lg border border-gray-600/50">
+                  <h5 className="font-bold text-white mb-2">CIRO Token</h5>
+                  <code className="text-xs text-blue-400 block mb-2 break-all">
+                    0x03c0f7574905d7cbc2cca18d6c090265fa35b572d8e9dc62efeb5339908720d8
+                  </code>
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">ERC-20</span>
+                    <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">Governance</span>
+                  </div>
+                </div>
+                
+                <div className="bg-black/40 p-4 rounded-lg border border-gray-600/50">
+                  <h5 className="font-bold text-white mb-2">Burn Manager</h5>
+                  <code className="text-xs text-blue-400 block mb-2 break-all">
+                    0x070d665978b7275e5f4cea991d9508bc32b592f6244d1303a22f5c22bdc89ea5
+                  </code>
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded">Burns</span>
+                    <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded">Buybacks</span>
+                  </div>
+                </div>
+                
+                <div className="bg-black/40 p-4 rounded-lg border border-gray-600/50">
+                  <h5 className="font-bold text-white mb-2">CDC Pool</h5>
+                  <code className="text-xs text-blue-400 block mb-2 break-all">
+                    0x05f73c551dbfda890090c8ee89858992dfeea9794a63ad83e6b1706e9836aeba
+                  </code>
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded">Staking</span>
+                    <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">Rewards</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 text-center">
+                <a 
+                  href="/tokenomics" 
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300"
+                >
+                  View Complete Tokenomics
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </motion.div>
           </div>
 
           {/* Governance Power */}
           <div className="mb-20">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center mb-12"
-            >
-              <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Progressive Governance</h3>
-              <p className="text-lg text-white/70">
-                Your voice matters. The longer you hold, the more power you have.
-              </p>
-            </motion.div>
+                          <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-center mb-12"
+              >
+                <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Emergency Multisig Governance</h3>
+                <p className="text-lg text-white/70">
+                  Decentralized governance with emergency multisig council for rapid response capabilities.
+                </p>
+              </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               {/* Left: Governance Tiers */}
@@ -1847,36 +1922,36 @@ export default function HomePage() {
                 className="space-y-6"
               >
                 <div className="cosmic-glass p-6 rounded-2xl border-2 border-yellow-400/60">
-                  <h4 className="text-xl font-bold mb-4 text-yellow-400">Voting Power Multipliers</h4>
+                  <h4 className="text-xl font-bold mb-4 text-yellow-400">Emergency Multisig Council</h4>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-cyan-400/40">
                       <div>
-                        <div className="font-semibold text-white">New Holders</div>
-                        <div className="text-sm text-white/60">0-1 year</div>
+                        <div className="font-semibold text-white">Staker-Elected Seats</div>
+                        <div className="text-sm text-white/60">Community representatives</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-cyan-400">1.0x</div>
-                        <div className="text-sm text-white/60">Base Power</div>
+                        <div className="font-bold text-cyan-400">3/7</div>
+                        <div className="text-sm text-white/60">Majority</div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-purple-400/40">
                       <div>
-                        <div className="font-semibold text-white">Long-term Holders</div>
-                        <div className="text-sm text-white/60">1-2 years</div>
+                        <div className="font-semibold text-white">External Guardians</div>
+                        <div className="text-sm text-white/60">Independent oversight</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-purple-400">1.2x</div>
-                        <div className="text-sm text-white/60">20% Bonus</div>
+                        <div className="font-bold text-purple-400">3/7</div>
+                        <div className="text-sm text-white/60">Balance</div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-emerald-400/40">
                       <div>
-                        <div className="font-semibold text-white">Veteran Holders</div>
-                        <div className="text-sm text-white/60">2+ years</div>
+                        <div className="font-semibold text-white">Core Team Rep</div>
+                        <div className="text-sm text-white/60">Technical expertise</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-emerald-400">1.5x</div>
-                        <div className="text-sm text-white/60">50% Bonus</div>
+                        <div className="font-bold text-emerald-400">1/7</div>
+                        <div className="text-sm text-white/60">Advisory</div>
                       </div>
                     </div>
                   </div>
@@ -1886,20 +1961,20 @@ export default function HomePage() {
                   <h4 className="text-xl font-bold mb-4 text-orange-400">Proposal Thresholds</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-white/70">Minor Changes</span>
-                      <span className="text-cyan-400 font-semibold">50K CIRO</span>
+                      <span className="text-white/70">Parameter Changes</span>
+                      <span className="text-cyan-400 font-semibold">60% Threshold</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-white/70">Major Changes</span>
-                      <span className="text-purple-400 font-semibold">250K CIRO</span>
+                      <span className="text-white/70">Treasury Allocation</span>
+                      <span className="text-purple-400 font-semibold">67% Threshold</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-white/70">Protocol Upgrades</span>
-                      <span className="text-aurora-green font-semibold">1M CIRO</span>
+                      <span className="text-emerald-400 font-semibold">75% Threshold</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-white/70">Emergency Actions</span>
-                      <span className="text-stellar-yellow font-semibold">5M CIRO</span>
+                      <span className="text-yellow-400 font-semibold">90% Threshold</span>
                     </div>
                   </div>
                 </div>
@@ -1955,23 +2030,23 @@ export default function HomePage() {
                 </div>
 
                 <div className="cosmic-glass p-6 rounded-2xl">
-                  <h4 className="text-xl font-bold mb-4 text-stellar-yellow">Voting Periods</h4>
+                  <h4 className="text-xl font-bold mb-4 text-yellow-400">Key Features</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-white/70">Emergency</span>
-                      <span className="text-red-400 font-semibold">1 Hour</span>
+                      <span className="text-white/70">Emergency Response</span>
+                      <span className="text-red-400 font-semibold">24-72h</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-white/70">Critical</span>
-                      <span className="text-orange-400 font-semibold">24 Hours</span>
+                      <span className="text-white/70">Timelock Protection</span>
+                      <span className="text-orange-400 font-semibold">7+ Days</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-white/70">Standard</span>
-                      <span className="text-cosmic-cyan font-semibold">7 Days</span>
+                      <span className="text-white/70">Smart Contract Control</span>
+                      <span className="text-cyan-400 font-semibold">Multi-sig</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-white/70">Upgrades</span>
-                      <span className="text-nebula-pink font-semibold">14 Days</span>
+                      <span className="text-white/70">Upgrade Process</span>
+                      <span className="text-purple-400 font-semibold">Progressive</span>
                     </div>
                   </div>
                 </div>
@@ -1981,119 +2056,123 @@ export default function HomePage() {
 
           {/* Reward Program & Incentives */}
           <div className="mb-20">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center mb-12"
-            >
-              <h3 className="text-3xl font-bold mb-4 text-aurora-green">Reward Program & Incentives</h3>
-              <p className="text-lg text-white/70">
-                Earn more by contributing more. Our tiered reward system rewards commitment and performance.
-              </p>
-            </motion.div>
+                          <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-center mb-12"
+              >
+                <h3 className="text-3xl font-bold mb-4 text-emerald-400">Staking & Rewards</h3>
+                <p className="text-lg text-white/70">
+                  Secure the network and earn rewards through our comprehensive staking program.
+                </p>
+              </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Worker Tiers */}
+              {/* Staking Tiers */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
-                className="cosmic-glass p-8 rounded-2xl"
+                className="cosmic-glass p-8 rounded-2xl border-2 border-cyan-400/60"
               >
-                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-cosmic-cyan to-nebula-pink rounded-full flex items-center justify-center">
-                  <Cpu className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-full flex items-center justify-center">
+                  <Coins className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="text-xl font-bold mb-4 text-cosmic-cyan">Worker Tiers</h4>
+                <h4 className="text-xl font-bold mb-4 text-cyan-400">CDC Pool Staking</h4>
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center justify-between">
-                    <span className="text-white/70">Basic ($100)</span>
-                    <span className="text-cosmic-cyan font-semibold">5% Bonus</span>
+                    <span className="text-white/70">Security Collateral</span>
+                    <span className="text-cyan-400 font-semibold">Variable APY</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-white/70">Premium ($500)</span>
-                    <span className="text-nebula-pink font-semibold">10% Bonus</span>
+                    <span className="text-white/70">Network Security</span>
+                    <span className="text-purple-400 font-semibold">Rewards</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-white/70">Enterprise ($2.5K)</span>
-                    <span className="text-aurora-green font-semibold">15% Bonus</span>
+                    <span className="text-white/70">Job Assignment</span>
+                    <span className="text-emerald-400 font-semibold">Weighted Priority</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-white/70">Infrastructure ($10K)</span>
-                    <span className="text-stellar-yellow font-semibold">25% Bonus</span>
+                    <span className="text-white/70">Slashing Protection</span>
+                    <span className="text-yellow-400 font-semibold">Progressive</span>
                   </div>
                 </div>
                 <p className="text-sm text-white/60">
-                  Higher tiers get priority job allocation and performance bonuses
+                  Higher stakes earn proportionally more rewards and priority job allocation
                 </p>
               </motion.div>
 
-              {/* Holder Benefits */}
+              {/* Return Projections */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="cosmic-glass p-8 rounded-2xl"
+                className="cosmic-glass p-8 rounded-2xl border-2 border-green-400/60"
               >
-                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-nebula-pink to-aurora-green rounded-full flex items-center justify-center">
-                  <Coins className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="text-xl font-bold mb-4 text-nebula-pink">Holder Benefits</h4>
+                <h4 className="text-xl font-bold mb-4 text-green-400">Return Projections</h4>
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2 text-sm text-white/60">
-                    <CheckCircle className="w-4 h-4 text-aurora-green" />
-                    <span>Fee discounts up to 75%</span>
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span>Target 50x-200x returns over 5-7 years</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-white/60">
-                    <CheckCircle className="w-4 h-4 text-aurora-green" />
-                    <span>Priority access to new features</span>
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span>Based on TAM penetration models</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-white/60">
-                    <CheckCircle className="w-4 h-4 text-aurora-green" />
-                    <span>Exclusive governance rights</span>
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span>Conservative revenue growth assumptions</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-white/60">
-                    <CheckCircle className="w-4 h-4 text-aurora-green" />
-                    <span>Revenue sharing from network fees</span>
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span>Built-in burn mechanisms drive scarcity</span>
                   </div>
                 </div>
                 <p className="text-sm text-white/60">
-                  Large holders get institutional-grade benefits and influence
+                  Mathematical framework designed for sustainable long-term growth
                 </p>
               </motion.div>
 
-              {/* Burn Mechanism */}
+              {/* Advanced Burn Mechanism */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="cosmic-glass p-8 rounded-2xl"
+                className="cosmic-glass p-8 rounded-2xl border-2 border-red-400/60"
               >
-                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-aurora-green to-stellar-yellow rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-red-400 to-orange-500 rounded-full flex items-center justify-center">
                   <Atom className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="text-xl font-bold mb-4 text-aurora-green">Revenue Burn</h4>
+                <h4 className="text-xl font-bold mb-4 text-red-400">70% Revenue Burn</h4>
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2 text-sm text-white/60">
-                    <CheckCircle className="w-4 h-4 text-aurora-green" />
-                    <span>Automatic token burning from fees</span>
+                    <CheckCircle className="w-4 h-4 text-red-400" />
+                    <span>70% of all network revenue burned automatically</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-white/60">
-                    <CheckCircle className="w-4 h-4 text-aurora-green" />
-                    <span>Dynamic burn rate adjustment</span>
+                    <CheckCircle className="w-4 h-4 text-red-400" />
+                    <span>Weekly Dutch auctions minimize market impact</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-white/60">
-                    <CheckCircle className="w-4 h-4 text-aurora-green" />
-                    <span>Governance-controlled parameters</span>
+                    <CheckCircle className="w-4 h-4 text-red-400" />
+                    <span>Protocol-owned liquidity for price stability</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-white/60">
-                    <CheckCircle className="w-4 h-4 text-aurora-green" />
-                    <span>Transparent burn tracking</span>
+                    <CheckCircle className="w-4 h-4 text-red-400" />
+                    <span>Burns from Foundation pool protect circulating supply</span>
                   </div>
                 </div>
-                <p className="text-sm text-white/60">
-                  Network growth directly increases token scarcity
-                </p>
+                <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-3">
+                  <p className="text-xs text-red-300">
+                    <strong>Mathematical Framework:</strong> S(t+1) = S(t) × (1 + r_inf(t)) - B(t)
+                    <br />
+                    Dynamic supply evolution with governance-controlled burn rates
+                  </p>
+                </div>
               </motion.div>
             </div>
           </div>

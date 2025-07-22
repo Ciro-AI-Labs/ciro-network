@@ -1,1021 +1,720 @@
- 'use client';
+'use client';
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Brain, Shield, Network, Cpu, Zap, Globe, Lock, TrendingUp, Users, Award, 
-  ArrowRight, CheckCircle, Menu, X, ExternalLink, Copy, Coins, Flame, 
-  Building, Clock, Target, Code, Layers, ChevronDown, ChevronUp, GitBranch,
-  DollarSign, Percent, Calendar, TrendingDown, BarChart3, PieChart,
-  Wallet, Vote, Timer, Repeat, Activity
-} from 'lucide-react';
-import MermaidDiagram from '@/components/MermaidDiagram';
-import MathFormula from '@/components/MathFormula';
-import PartnershipInquiryForm from '@/components/PartnershipInquiryForm';
-import ComputeProviderForm from '@/components/ComputeProviderForm';
-
-const tokenomicsData = {
-  totalSupply: "1,000,000,000",
-  initialCirculating: "50,000,000",
-  contractAddress: "0x03c0f7574905d7cbc2cca18d6c090265fa35b572d8e9dc62efeb5339908720d8",
-  network: "Starknet Sepolia",
-  decimals: 18
-};
-
-const distributionData = [
-  { category: "Private Sale", percentage: 15, amount: "150M", description: "Strategic investors and partners", color: "bg-purple-500" },
-  { category: "Public Sale", percentage: 10, amount: "100M", description: "Community token sale", color: "bg-blue-500" },
-  { category: "Team & Advisors", percentage: 20, amount: "200M", description: "4-year vesting with 1-year cliff", color: "bg-green-500" },
-  { category: "Foundation", percentage: 15, amount: "150M", description: "Ecosystem development fund", color: "bg-orange-500" },
-  { category: "Community Rewards", percentage: 25, amount: "250M", description: "Staking, mining, and incentives", color: "bg-cosmic-cyan" },
-  { category: "Liquidity & Treasury", percentage: 10, amount: "100M", description: "DEX liquidity and reserves", color: "bg-pink-500" },
-  { category: "Research & Development", percentage: 5, amount: "50M", description: "Protocol development", color: "bg-yellow-500" }
-];
-
-const stakingTiers = [
-  { tier: "Basic", usdAmount: "$100", ciroAmount: "~200 CIRO", allocation: "1.0x", bonus: "5%", description: "Entry level compute provider" },
-  { tier: "Premium", usdAmount: "$500", ciroAmount: "~1K CIRO", allocation: "1.2x", bonus: "10%", description: "Serious commitment level" },
-  { tier: "Enterprise", usdAmount: "$2,500", ciroAmount: "~5K CIRO", allocation: "1.5x", bonus: "15%", description: "Business tier operations" },
-  { tier: "Infrastructure", usdAmount: "$10,000", ciroAmount: "~20K CIRO", allocation: "2.0x", bonus: "25%", description: "Data center operators" },
-  { tier: "Fleet", usdAmount: "$50,000", ciroAmount: "~100K CIRO", allocation: "2.5x", bonus: "30%", description: "Fleet operators" },
-  { tier: "Datacenter", usdAmount: "$100,000", ciroAmount: "~200K CIRO", allocation: "3.0x", bonus: "35%", description: "Major operators" },
-  { tier: "Hyperscale", usdAmount: "$250,000", ciroAmount: "~500K CIRO", allocation: "4.0x", bonus: "40%", description: "Hyperscale providers" },
-  { tier: "Institutional", usdAmount: "$500,000", ciroAmount: "~1M CIRO", allocation: "5.0x", bonus: "50%", description: "Institutional grade" }
-];
-
-const roadmapPhases = [
-  {
-    phase: "Phase 1: Private",
-    period: "Q4 2024 - Q2 2025",
-    status: "current",
-    description: "Private funding and core team building",
-    milestones: [
-      "Private sale completion",
-      "Core team expansion",
-      "Smart contract development",
-      "Testnet preparation"
-    ]
-  },
-  {
-    phase: "Phase 2: Testnet",
-    period: "Q3 2025",
-    status: "upcoming",
-    description: "Public testnet launch and community building",
-    milestones: [
-      "Testnet deployment",
-      "Worker node onboarding",
-      "Community incentives program",
-      "Bug bounty launch"
-    ]
-  },
-  {
-    phase: "Phase 3: Mainnet",
-    period: "Q4 2025",
-    status: "planned",
-    description: "Mainnet launch and token distribution",
-    milestones: [
-      "Mainnet deployment",
-      "Token generation event",
-      "DEX listings",
-      "Governance activation"
-    ]
-  },
-  {
-    phase: "Phase 4: Scale",
-    period: "2026+",
-    status: "planned",
-    description: "Ecosystem expansion and multichain deployment",
-    milestones: [
-      "Multichain integration",
-      "Enterprise partnerships",
-      "Advanced AI features",
-      "Global expansion"
-    ]
-  }
-];
+import React from 'react';
 
 export default function TokenomicsPage() {
-  const [mounted, setMounted] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [expandedTier, setExpandedTier] = useState<number | null>(null);
-  const [copiedAddress, setCopiedAddress] = useState(false);
-  const [isPartnershipFormOpen, setIsPartnershipFormOpen] = useState(false);
-  const [isComputeProviderFormOpen, setIsComputeProviderFormOpen] = useState(false);
-
-  // Ensure component is mounted before rendering
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const copyAddress = async () => {
-    await navigator.clipboard.writeText(tokenomicsData.contractAddress);
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2000);
-  };
-
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: PieChart },
-    { id: 'distribution', label: 'Distribution', icon: BarChart3 },
-    { id: 'staking', label: 'Staking Tiers', icon: Layers },
-    { id: 'mechanics', label: 'Token Mechanics', icon: Cpu },
-    { id: 'roadmap', label: 'Roadmap', icon: Calendar },
-    { id: 'technical', label: 'Technical', icon: Code },
-    { id: 'multichain', label: 'Multichain', icon: GitBranch }
-  ];
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-950 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-cosmic-cyan/30 border-t-cosmic-cyan rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-950 text-white">
-      {/* Mobile Menu Button */}
-      <div className="md:hidden fixed top-4 right-4 z-50">
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="bg-black/80 backdrop-blur-sm border border-gray-800 rounded-lg p-3 text-white hover:bg-gray-800 transition-colors"
-        >
-          {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
-
-      {/* Mobile Menu Overlay */}
-      {isMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/90 backdrop-blur-sm">
-          <div className="flex flex-col h-full">
-            <div className="flex items-center gap-2 p-6 pb-4 border-b border-gray-800">
-              <div className="w-8 h-8 bg-gradient-to-r from-cosmic-cyan to-blue-500 rounded-lg flex items-center justify-center">
-                <Coins className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-bold tracking-tight">Tokenomics</h2>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <ul className="space-y-3">
-                {tabs.map((tab) => (
-                  <li key={tab.id}>
-                    <button 
-                      onClick={() => {
-                        setActiveTab(tab.id);
-                        setIsMenuOpen(false);
-                      }}
-                      className={`flex items-center gap-3 w-full text-left text-sm font-medium py-2 px-3 rounded-lg transition-colors ${
-                        activeTab === tab.id 
-                          ? 'bg-cosmic-cyan/20 text-cosmic-cyan border-l-2 border-cosmic-cyan' 
-                          : 'hover:text-cosmic-cyan hover:bg-cosmic-cyan/10'
-                      }`}
-                    >
-                      <tab.icon className="w-4 h-4" />
-                      {tab.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="p-6 border-t border-gray-800">
-              <a 
-                href="/" 
-                className="flex items-center gap-2 text-cosmic-cyan hover:text-blue-400 transition-colors text-sm font-medium"
-              >
-                ← Back to Home
-              </a>
+    <div className="min-h-screen bg-black text-white">
+      {/* Hero Section */}
+      <section className="relative py-20 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              CIRO Tokenomics v4.1
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto">
+              Research-Based Hybrid Architecture for Sustainable 50x-200x Returns
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm">
+              <span className="bg-green-900/30 text-green-400 px-4 py-2 rounded-full border border-green-500/30">
+                ✅ PRODUCTION READY
+              </span>
+              <span className="bg-blue-900/30 text-blue-400 px-4 py-2 rounded-full border border-blue-500/30">
+                🔒 PEER REVIEWED
+              </span>
+              <span className="bg-purple-900/30 text-purple-400 px-4 py-2 rounded-full border border-purple-500/30">
+                📊 MARKET-TESTED
+              </span>
             </div>
           </div>
         </div>
-      )}
+      </section>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-4 py-2 mb-6">
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-            <span className="text-purple-400 text-sm font-medium">Private Phase Active</span>
-          </div>
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 bg-gradient-to-r from-white via-cosmic-cyan to-purple-400 bg-clip-text text-transparent">
-            CIRO Tokenomics
-          </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Decentralized compute infrastructure powered by innovative tokenomics and Cairo smart contracts
+      {/* Deployed Smart Contracts */}
+      <section className="py-16 px-6 bg-gray-900/20">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold mb-12 text-center">
+            <span className="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+              🚀 Live Smart Contracts
+            </span>
+          </h2>
+          <p className="text-center text-gray-300 mb-12 text-lg">
+            Successfully deployed on <strong>Starknet Sepolia Testnet</strong> - Ready for mainnet launch
           </p>
-        </div>
-
-        {/* Private Phase Banner */}
-        <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-500/30 rounded-xl p-8 mb-12">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <Lock className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-purple-400">We're Currently in Private Phase</h2>
-              <p className="text-gray-300 mb-4 leading-relaxed">
-                CIRO Network is actively building our core infrastructure and forming strategic partnerships. 
-                We're working with select institutions, compute providers, and strategic investors to establish 
-                the foundation for the world's first verifiable AI compute network.
-              </p>
-              <div className="grid md:grid-cols-2 gap-6">
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                name: "CIRO Token",
+                address: "0x03c0f7574905d7cbc2cca18d6c090265fa35b572d8e9dc62efeb5339908720d8",
+                classHash: "0x04c34ceab2c8127d01a3f894a2aa3f7c0ffbd5fb1f1ae91b19d478c1955bad70",
+                features: ["ERC-20 Compatible", "Minting/Burning", "Governance Integration", "Dynamic Supply"],
+                status: "✅ DEPLOYED"
+              },
+              {
+                name: "CDC Pool",
+                address: "0x05f73c551dbfda890090c8ee89858992dfeea9794a63ad83e6b1706e9836aeba",
+                classHash: "0x05d9e1c8839eae6fbdbb756ed73a8f5d9d1533e4283e1d0445b0b00252e06fb5",
+                features: ["Worker Staking", "Slashing Mechanisms", "Reward Distribution", "Reputation System"],
+                status: "✅ DEPLOYED"
+              },
+              {
+                name: "Job Manager",
+                address: "0x00bf025663b8a7c7e43393f082b10afe66bd9ddb06fb5e521e3adbcf693094bd",
+                classHash: "0x0197378e15788f4822dbce9f05b4fda8376a09ab6f1a408515bd1e9226e40b4d",
+                features: ["Job Orchestration", "Payment Processing", "Worker Assignment", "Lifecycle Management"],
+                status: "✅ DEPLOYED"
+              },
+              {
+                name: "Governance Treasury",
+                address: "0x00b8d816d8a909d7320c442b22d378d87bd41b3008b46b1cce56fc94d0e4a4be",
+                features: ["DAO Treasury", "Proposal Execution", "Fund Management", "Security Budget"],
+                status: "✅ DEPLOYED"
+              },
+              {
+                name: "Linear Vesting",
+                address: "0x00a8c57c46ba8ed81e2e1f4e421e26d5b8a1e3bb0b59f66b1d3a3b2b3d65e9da",
+                features: ["Team Vesting", "Cliff Periods", "Linear Release", "Emergency Controls"],
+                status: "✅ DEPLOYED"
+              },
+              {
+                name: "Burn Manager",
+                address: "0x070d665978b7275e5f4cea991d9508bc32b592f6244d1303a22f5c22bdc89ea5",
+                features: ["Revenue Burns", "Buyback Execution", "Market Impact Minimization", "Deflationary Mechanics"],
+                status: "✅ DEPLOYED"
+              }
+            ].map((contract, index) => (
+              <div key={index} className="bg-black/40 border border-gray-700 rounded-xl p-6 hover:border-blue-500/50 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-white">{contract.name}</h3>
+                  <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+                    {contract.status}
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <p className="text-xs text-gray-400 mb-1">Contract Address:</p>
+                  <code className="text-xs text-blue-400 bg-gray-800 p-2 rounded block break-all">
+                    {contract.address}
+                  </code>
+                </div>
+                {contract.classHash && (
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-400 mb-1">Class Hash:</p>
+                    <code className="text-xs text-purple-400 bg-gray-800 p-2 rounded block break-all">
+                      {contract.classHash}
+                    </code>
+                  </div>
+                )}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3 text-white">Collaboration Opportunities</h3>
-                  <ul className="space-y-2 text-gray-300 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      Strategic partnerships
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      Compute provider onboarding
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      Research collaborations
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      Enterprise pilot programs
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-3 text-white">Get Involved</h3>
-                  <div className="space-y-3">
-                    <button 
-                      onClick={() => setIsPartnershipFormOpen(true)}
-                      className="block w-full bg-purple-600 hover:bg-purple-700 transition-colors px-4 py-2 rounded-lg text-center text-sm font-medium"
-                    >
-                      Partnership Inquiries
-                    </button>
-                    <button 
-                      onClick={() => setIsComputeProviderFormOpen(true)}
-                      className="block w-full bg-gray-700 hover:bg-gray-600 transition-colors px-4 py-2 rounded-lg text-center text-sm font-medium"
-                    >
-                      Compute Providers
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2 p-1 bg-gray-900 rounded-xl">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === tab.id 
-                    ? 'bg-cosmic-cyan text-black' 
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div className="space-y-8">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
-            <div className="space-y-8">
-              {/* Key Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Coins className="w-8 h-8 text-cosmic-cyan" />
-                    <div>
-                      <h3 className="font-semibold text-white">Total Supply</h3>
-                      <p className="text-2xl font-bold text-cosmic-cyan">{tokenomicsData.totalSupply}</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-400 text-sm">Fixed supply, no inflation</p>
-                </div>
-
-                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Activity className="w-8 h-8 text-green-400" />
-                    <div>
-                      <h3 className="font-semibold text-white">Initial Circulating</h3>
-                      <p className="text-2xl font-bold text-green-400">{tokenomicsData.initialCirculating}</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-400 text-sm">5% of total supply at launch</p>
-                </div>
-
-                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Flame className="w-8 h-8 text-red-400" />
-                    <div>
-                      <h3 className="font-semibold text-white">Burn Mechanism</h3>
-                      <p className="text-2xl font-bold text-red-400">Active</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-400 text-sm">Deflationary pressure via burns</p>
-                </div>
-
-                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Vote className="w-8 h-8 text-purple-400" />
-                    <div>
-                      <h3 className="font-semibold text-white">Governance</h3>
-                      <p className="text-2xl font-bold text-purple-400">DAO</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-400 text-sm">Complete on-chain governance</p>
-                </div>
-              </div>
-
-              {/* Contract Information */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-4 text-white">Smart Contract</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                    <div>
-                      <p className="text-sm text-gray-400">Contract Address</p>
-                      <code className="text-cosmic-cyan font-mono text-sm break-all">
-                        {tokenomicsData.contractAddress}
-                      </code>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={copyAddress}
-                        className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-                        title="Copy address"
-                      >
-                        {copiedAddress ? (
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <Copy className="w-4 h-4 text-gray-400" />
-                        )}
-                      </button>
-                      <a
-                        href={`https://sepolia.starkscan.co/token/${tokenomicsData.contractAddress}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-cosmic-cyan hover:bg-cosmic-cyan/80 text-black rounded-lg transition-colors"
-                        title="View on StarkScan"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-400">Network</p>
-                      <p className="text-white font-medium">{tokenomicsData.network}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400">Decimals</p>
-                      <p className="text-white font-medium">{tokenomicsData.decimals}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400">Symbol</p>
-                      <p className="text-white font-medium">CIRO</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400">Standard</p>
-                      <p className="text-white font-medium">ERC-20</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Ecosystem Architecture */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white">Token Ecosystem Architecture</h3>
-                <MermaidDiagram
-                  chart={`graph TD
-    CIRO[CIRO Token ERC-20]
-    CDC[CDC Pool - Staking & Validation]
-    JOB[Job Manager - Compute Marketplace]
-    LINEAR[Linear Vesting - Team/Investor Distribution]
-    MILESTONE[Milestone Vesting - Performance-Based]
-    BURN[Burn Manager - Deflationary Mechanisms]
-    TREASURY[Governance Treasury - Complete DAO]
-    
-    CIRO --> CDC
-    CIRO --> JOB
-    CIRO --> LINEAR
-    CIRO --> MILESTONE
-    CIRO --> BURN
-    CIRO --> TREASURY
-    
-    CDC --> JOB
-    JOB --> BURN
-    TREASURY --> BURN
-    
-    classDef token fill:#00d4ff,stroke:#00d4ff,stroke-width:2px,color:#000
-    classDef contract fill:#7c3aed,stroke:#8b5cf6,stroke-width:2px,color:#fff
-    classDef mechanism fill:#dc2626,stroke:#ef4444,stroke-width:2px,color:#fff
-    
-    class CIRO token
-    class CDC,JOB,LINEAR,MILESTONE contract
-    class BURN,TREASURY mechanism`}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Distribution Tab */}
-          {activeTab === 'distribution' && (
-            <div className="space-y-8">
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Distribution Chart */}
-                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                  <h3 className="text-xl font-semibold mb-6 text-white">Token Distribution</h3>
-                  <div className="space-y-4">
-                    {distributionData.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-4 h-4 ${item.color} rounded`}></div>
-                          <span className="text-white font-medium">{item.category}</span>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-white font-bold">{item.percentage}%</div>
-                          <div className="text-gray-400 text-sm">{item.amount}</div>
-                        </div>
-                      </div>
+                  <p className="text-xs text-gray-400 mb-2">Features:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {contract.features.map((feature, idx) => (
+                      <span key={idx} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
+                        {feature}
+                      </span>
                     ))}
                   </div>
                 </div>
-
-                {/* Distribution Details */}
-                <div className="space-y-4">
-                  {distributionData.map((item, index) => (
-                    <div key={index} className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className={`w-3 h-3 ${item.color} rounded`}></div>
-                        <h4 className="font-semibold text-white">{item.category}</h4>
-                        <span className="text-cosmic-cyan font-bold">{item.percentage}%</span>
-                      </div>
-                      <p className="text-gray-400 text-sm">{item.description}</p>
-                    </div>
-                  ))}
-                </div>
               </div>
-
-              {/* Vesting Schedule */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white">Vesting Schedule</h3>
-                <MermaidDiagram
-                  chart={`gantt
-    title Token Release Schedule
-    dateFormat  YYYY-MM-DD
-    axisFormat  %Y
-    
-    section Public Sale
-    Immediate Release    :done, public, 2025-01-01, 2025-01-31
-    
-    section Team & Advisors
-    1-Year Cliff         :cliff, 2025-01-01, 2026-01-01
-    3-Year Linear Vest   :vest, 2026-01-01, 2029-01-01
-    
-    section Foundation
-    6-Month Cliff        :cliff2, 2025-01-01, 2025-07-01
-    2-Year Linear Vest   :vest2, 2025-07-01, 2027-07-01
-    
-    section Community
-    Immediate Start      :done, comm, 2025-01-01, 2025-01-31
-    4-Year Distribution  :comm2, 2025-01-01, 2029-01-01`}
-                />
-              </div>
+            ))}
+          </div>
+          
+          <div className="mt-12 text-center">
+            <p className="text-gray-400 text-sm mb-4">
+              🔗 View contracts on <a href="https://sepolia.starkscan.co" className="text-blue-400 hover:underline">Starknet Sepolia Explorer</a>
+            </p>
+            <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4 max-w-2xl mx-auto">
+              <p className="text-yellow-400 text-sm">
+                <strong>⚡ Mainnet Ready:</strong> All contracts successfully tested and deployed. 
+                Comprehensive integration testing completed. Ready for production launch.
+              </p>
             </div>
-          )}
+          </div>
+        </div>
+      </section>
 
-          {/* Staking Tiers Tab */}
-          {activeTab === 'staking' && (
-            <div className="space-y-8">
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white">Worker Staking Tiers</h3>
-                <p className="text-gray-400 mb-6">
-                  CIRO Network uses USD-denominated staking tiers to ensure fair participation regardless of token price volatility. 
-                  Higher stakes unlock better job allocation priority and performance bonuses.
-                </p>
-                <div className="grid gap-4">
-                  {stakingTiers.map((tier, index) => (
-                    <div 
-                      key={index} 
-                      className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-cosmic-cyan/50 transition-colors cursor-pointer"
-                      onClick={() => setExpandedTier(expandedTier === index ? null : index)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-cosmic-cyan to-purple-500 rounded-lg flex items-center justify-center">
-                            <span className="text-black font-bold text-sm">{index + 1}</span>
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-white">{tier.tier}</h4>
-                            <p className="text-gray-400 text-sm">{tier.description}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
-                            <p className="text-cosmic-cyan font-bold">{tier.usdAmount}</p>
-                            <p className="text-gray-400 text-sm">{tier.ciroAmount}</p>
-                          </div>
-                          {expandedTier === index ? (
-                            <ChevronUp className="w-5 h-5 text-gray-400" />
-                          ) : (
-                            <ChevronDown className="w-5 h-5 text-gray-400" />
-                          )}
-                        </div>
-                      </div>
-                      
-                      {expandedTier === index && (
-                        <div className="mt-4 pt-4 border-t border-gray-700 grid md:grid-cols-2 gap-4">
-                          <div>
-                            <h5 className="font-semibold text-white mb-2">Benefits</h5>
-                            <ul className="space-y-1 text-sm text-gray-300">
-                              <li>• Job allocation priority: {tier.allocation}</li>
-                              <li>• Performance bonus: {tier.bonus}</li>
-                              <li>• Priority support access</li>
-                              <li>• Advanced analytics dashboard</li>
-                            </ul>
-                          </div>
-                          <div>
-                            <h5 className="font-semibold text-white mb-2">Requirements</h5>
-                            <ul className="space-y-1 text-sm text-gray-300">
-                              <li>• Minimum stake: {tier.usdAmount} USD</li>
-                              <li>• Hardware verification required</li>
-                              <li>• 99% uptime SLA</li>
-                              <li>• KYC compliance for enterprise+</li>
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+      {/* Token Supply & Distribution */}
+      <section className="py-16 px-6">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold mb-12 text-center">
+            <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+              💎 Token Supply & Distribution
+            </span>
+          </h2>
+          
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Supply Information */}
+            <div className="bg-black/40 border border-gray-700 rounded-xl p-8">
+              <h3 className="text-2xl font-bold mb-6 text-yellow-400">🪙 Supply Mechanics</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-4 bg-gray-800/50 rounded-lg">
+                  <span className="text-gray-300">Maximum Supply Cap</span>
+                  <span className="text-white font-bold">1,000,000,000 CIRO</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-gray-800/50 rounded-lg">
+                  <span className="text-gray-300">Initial Circulating</span>
+                  <span className="text-green-400 font-bold">50,000,000 CIRO</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-gray-800/50 rounded-lg">
+                  <span className="text-gray-300">Current Status</span>
+                  <span className="text-blue-400 font-bold">Minted & Deployed</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-gray-800/50 rounded-lg">
+                  <span className="text-gray-300">Remaining to Mint</span>
+                  <span className="text-purple-400 font-bold">950,000,000 CIRO</span>
+                </div>
+                <div className="mt-6 p-4 bg-blue-900/20 border border-blue-600/30 rounded-lg">
+                  <p className="text-blue-300 text-sm">
+                    <strong>Smart Contract Control:</strong> All future minting controlled by governance-approved smart contracts with mathematical precision and security guarantees.
+                  </p>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Token Mechanics Tab */}
-          {activeTab === 'mechanics' && (
-            <div className="space-y-8">
-              {/* Burn Mechanisms */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white flex items-center gap-3">
-                  <Flame className="w-6 h-6 text-red-400" />
-                  Deflationary Burn Mechanisms
-                </h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-red-400 mb-2">Revenue Burns</h4>
-                      <p className="text-gray-300 text-sm mb-3">
-                        Percentage of network revenue automatically burned to reduce supply.
-                      </p>
-                      <MathFormula 
-                        formula="Burn_{revenue} = Revenue \times BurnRate_{percentage}"
-                        inline={false}
-                      />
-                    </div>
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-red-400 mb-2">Market Buybacks</h4>
-                      <p className="text-gray-300 text-sm mb-3">
-                        Treasury-funded buybacks during favorable market conditions.
-                      </p>
-                      <MathFormula 
-                        formula="Buyback_{amount} = TreasuryAllocation \times PriceThreshold"
-                        inline={false}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-red-400 mb-2">Worker Penalties</h4>
-                      <p className="text-gray-300 text-sm mb-3">
-                        Slashed tokens from misbehaving workers are permanently burned.
-                      </p>
-                      <ul className="text-gray-400 text-sm space-y-1">
-                        <li>• Downtime violations: 1-5% stake</li>
-                        <li>• Invalid computations: 5-25% stake</li>
-                        <li>• Malicious behavior: 100% stake</li>
-                      </ul>
-                    </div>
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-red-400 mb-2">Governance Burns</h4>
-                      <p className="text-gray-300 text-sm">
-                        Community-voted emergency burns for supply adjustment.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Economic Model */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white">Economic Model</h3>
-                <MermaidDiagram
-                  chart={`graph LR
-    subgraph REVENUE[Revenue Sources]
-        JOBS[Job Fees]
-        STORAGE[Storage Fees]
-        BANDWIDTH[Bandwidth Fees]
-        PREMIUM[Premium Services]
-    end
-    
-    subgraph DISTRIBUTION[Fee Distribution]
-        WORKERS[70% - Workers]
-        TREASURY[20% - Treasury]
-        BURN[10% - Burn]
-    end
-    
-    subgraph TREASURY_USE[Treasury Usage]
-        DEV[Development 40%]
-        MARKETING[Marketing 30%]
-        BUYBACK[Buybacks 20%]
-        RESERVE[Reserve 10%]
-    end
-    
-    JOBS --> DISTRIBUTION
-    STORAGE --> DISTRIBUTION
-    BANDWIDTH --> DISTRIBUTION
-    PREMIUM --> DISTRIBUTION
-    
-    DISTRIBUTION --> WORKERS
-    DISTRIBUTION --> TREASURY
-    DISTRIBUTION --> BURN
-    
-    TREASURY --> TREASURY_USE
-    
-    classDef revenue fill:#059669,stroke:#10b981,stroke-width:2px,color:#fff
-    classDef distribution fill:#7c3aed,stroke:#8b5cf6,stroke-width:2px,color:#fff
-    classDef usage fill:#dc2626,stroke:#ef4444,stroke-width:2px,color:#fff
-    
-    class JOBS,STORAGE,BANDWIDTH,PREMIUM revenue
-    class WORKERS,TREASURY,BURN distribution
-    class DEV,MARKETING,BUYBACK,RESERVE usage`}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Roadmap Tab */}
-          {activeTab === 'roadmap' && (
-            <div className="space-y-8">
-              <div className="space-y-6">
-                {roadmapPhases.map((phase, index) => (
-                  <div key={index} className="relative">
-                    {index < roadmapPhases.length - 1 && (
-                      <div className="absolute left-6 top-12 bottom-0 w-0.5 bg-gradient-to-b from-cosmic-cyan to-transparent"></div>
-                    )}
-                    
-                    <div className="flex gap-6 items-start">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-black font-bold text-sm flex-shrink-0 ${
-                        phase.status === 'current' ? 'bg-cosmic-cyan' :
-                        phase.status === 'upcoming' ? 'bg-green-400' :
-                        'bg-gray-400'
-                      }`}>
-                        {index + 1}
-                      </div>
-                      <div className="flex-1 bg-gray-900 rounded-lg p-6 border border-gray-800">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className={`text-xl font-semibold ${
-                            phase.status === 'current' ? 'text-cosmic-cyan' :
-                            phase.status === 'upcoming' ? 'text-green-400' :
-                            'text-gray-400'
-                          }`}>
-                            {phase.phase}
-                          </h3>
-                          <span className="text-gray-400 text-sm">{phase.period}</span>
-                        </div>
-                        <p className="text-gray-300 mb-4">{phase.description}</p>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          {phase.milestones.map((milestone, mIndex) => (
-                            <div key={mIndex} className="flex items-center gap-2 text-sm">
-                              <CheckCircle className={`w-4 h-4 ${
-                                phase.status === 'current' ? 'text-cosmic-cyan' :
-                                phase.status === 'upcoming' ? 'text-green-400' :
-                                'text-gray-400'
-                              }`} />
-                              <span className="text-gray-300">{milestone}</span>
-                            </div>
-                          ))}
-                        </div>
+            {/* Distribution Chart */}
+            <div className="bg-black/40 border border-gray-700 rounded-xl p-8">
+              <h3 className="text-2xl font-bold mb-6 text-orange-400">📊 Token Allocation</h3>
+              <div className="space-y-3">
+                {[
+                  { category: "Ecosystem/Rewards", tokens: "300M", percentage: "30%", color: "bg-green-500" },
+                  { category: "Foundation/Treasury", tokens: "180M", percentage: "18%", color: "bg-blue-500" },
+                  { category: "Team", tokens: "150M", percentage: "15%", color: "bg-purple-500" },
+                  { category: "Private Sale", tokens: "75M", percentage: "7.5%", color: "bg-red-500" },
+                  { category: "Development", tokens: "70M", percentage: "7%", color: "bg-gray-500" },
+                  { category: "Public Sale", tokens: "50M", percentage: "5%", color: "bg-yellow-500" },
+                  { category: "Strategic Round", tokens: "50M", percentage: "5%", color: "bg-pink-500" },
+                  { category: "Seed Round", tokens: "50M", percentage: "5%", color: "bg-cyan-500" },
+                  { category: "Liquidity/Market", tokens: "50M", percentage: "5%", color: "bg-orange-500" },
+                  { category: "Advisors", tokens: "25M", percentage: "2.5%", color: "bg-indigo-500" }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center space-x-4">
+                    <div className={`w-4 h-4 ${item.color} rounded`}></div>
+                    <div className="flex-1 flex justify-between items-center">
+                      <span className="text-gray-300 text-sm">{item.category}</span>
+                      <div className="text-right">
+                        <span className="text-white font-bold text-sm">{item.tokens}</span>
+                        <span className="text-gray-400 text-xs ml-2">({item.percentage})</span>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          )}
-
-          {/* Technical Tab */}
-          {activeTab === 'technical' && (
-            <div className="space-y-8">
-              {/* Why Cairo Section */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white flex items-center gap-3">
-                  <Code className="w-6 h-6 text-cosmic-cyan" />
-                  Why Cairo & Starknet?
-                </h3>
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div>
-                    <h4 className="font-semibold text-cosmic-cyan mb-3">Cairo Language Benefits</h4>
-                    <ul className="space-y-3 text-gray-300">
-                      <li className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span><strong>Native ZK Support:</strong> Built specifically for zero-knowledge proof generation</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span><strong>Verifiable Computation:</strong> Every computation can be cryptographically verified</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span><strong>STARK Proofs:</strong> Scalable, transparent, and post-quantum secure</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span><strong>Memory Safety:</strong> Prevents common smart contract vulnerabilities</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-cosmic-cyan mb-3">Starknet Advantages</h4>
-                    <ul className="space-y-3 text-gray-300">
-                      <li className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span><strong>Massive Scalability:</strong> 100,000+ TPS with low fees</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span><strong>Privacy by Default:</strong> Private computation without revealing data</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span><strong>Ethereum Security:</strong> Inherits Ethereum's security guarantees</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span><strong>Developer Experience:</strong> Rich tooling and Cairo ecosystem</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Smart Contract Architecture */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white">Smart Contract Architecture</h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-cosmic-cyan mb-2">Core Contracts</h4>
-                      <ul className="space-y-2 text-gray-300 text-sm">
-                        <li><strong>CIRO Token:</strong> ERC-20 with governance features</li>
-                        <li><strong>CDC Pool:</strong> Worker staking and validation</li>
-                        <li><strong>Job Manager:</strong> Compute marketplace logic</li>
-                        <li><strong>Governance Treasury:</strong> DAO with timelock</li>
-                      </ul>
-                    </div>
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-cosmic-cyan mb-2">Vesting System</h4>
-                      <ul className="space-y-2 text-gray-300 text-sm">
-                        <li><strong>Linear Vesting:</strong> Team and investor schedules</li>
-                        <li><strong>Milestone Vesting:</strong> Performance-based releases</li>
-                        <li><strong>Treasury Timelock:</strong> Governance-controlled delays</li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-cosmic-cyan mb-2">Economic Mechanisms</h4>
-                      <ul className="space-y-2 text-gray-300 text-sm">
-                        <li><strong>Burn Manager:</strong> Automated token burning</li>
-                        <li><strong>Fee Distribution:</strong> Revenue sharing logic</li>
-                        <li><strong>Penalty System:</strong> Slashing for misbehavior</li>
-                      </ul>
-                    </div>
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-cosmic-cyan mb-2">Security Features</h4>
-                      <ul className="space-y-2 text-gray-300 text-sm">
-                        <li><strong>Role-Based Access:</strong> Granular permissions</li>
-                        <li><strong>Emergency Pause:</strong> Circuit breaker mechanisms</li>
-                        <li><strong>Upgrade Governance:</strong> Community-controlled upgrades</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ZK-ML Integration */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white">ZK-ML Integration</h3>
-                <div className="space-y-4">
-                  <p className="text-gray-300 leading-relaxed">
-                    CIRO Network leverages Cairo's native zero-knowledge capabilities to enable verifiable AI computation. 
-                    This is crucial for enterprise adoption where computation integrity is paramount.
-                  </p>
-                  <MermaidDiagram
-                    chart={`graph TD
-    CLIENT[Client Submits Job]
-    WORKER[Worker Executes AI Model]
-    PROOF[Generate ZK Proof]
-    VERIFY[Verify Proof On-Chain]
-    REWARD[Distribute Rewards]
-    
-    CLIENT --> WORKER
-    WORKER --> PROOF
-    PROOF --> VERIFY
-    VERIFY --> REWARD
-    
-    subgraph CAIRO[Cairo VM]
-        PROOF
-    end
-    
-    subgraph STARKNET[Starknet L2]
-        VERIFY
-        REWARD
-    end
-    
-    classDef client fill:#059669,stroke:#10b981,stroke-width:2px,color:#fff
-    classDef worker fill:#7c3aed,stroke:#8b5cf6,stroke-width:2px,color:#fff
-    classDef zk fill:#dc2626,stroke:#ef4444,stroke-width:2px,color:#fff
-    
-    class CLIENT client
-    class WORKER worker
-    class PROOF,VERIFY,REWARD zk`}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Multichain Tab */}
-          {activeTab === 'multichain' && (
-            <div className="space-y-8">
-              {/* Multichain Strategy */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white flex items-center gap-3">
-                  <GitBranch className="w-6 h-6 text-cosmic-cyan" />
-                  Multichain Strategy
-                </h3>
-                <div className="space-y-6">
-                  <p className="text-gray-300 leading-relaxed">
-                    While CIRO Network is built on Starknet for its superior ZK capabilities, we recognize the importance 
-                    of multichain interoperability for maximum ecosystem reach and liquidity.
-                  </p>
-                  
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-cosmic-cyan mb-3">Phase 1: Starknet Native</h4>
-                      <ul className="space-y-2 text-gray-300 text-sm">
-                        <li>• Primary deployment on Starknet mainnet</li>
-                        <li>• Full ZK-ML capabilities</li>
-                        <li>• Native governance and staking</li>
-                        <li>• Optimal gas efficiency for compute jobs</li>
-                      </ul>
-                    </div>
-                    
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-green-400 mb-3">Phase 2: Ethereum Bridge</h4>
-                      <ul className="space-y-2 text-gray-300 text-sm">
-                        <li>• Official Starknet ↔ Ethereum bridge</li>
-                        <li>• Wrapped CIRO tokens on Ethereum</li>
-                        <li>• Access to Ethereum DeFi ecosystem</li>
-                        <li>• Enhanced liquidity options</li>
-                      </ul>
-                    </div>
-                    
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-purple-400 mb-3">Phase 3: Strategic Expansions</h4>
-                      <ul className="space-y-2 text-gray-300 text-sm">
-                        <li>• Polygon deployment for lower fees</li>
-                        <li>• Arbitrum for Ethereum L2 coverage</li>
-                        <li>• Cross-chain governance mechanisms</li>
-                        <li>• Unified compute job routing</li>
-                      </ul>
-                    </div>
-                    
-                    <div className="bg-gray-800 rounded-lg p-4">
-                      <h4 className="font-semibold text-orange-400 mb-3">Phase 4: Ecosystem Integration</h4>
-                      <ul className="space-y-2 text-gray-300 text-sm">
-                        <li>• Cross-chain compute orchestration</li>
-                        <li>• Universal worker registration</li>
-                        <li>• Multi-chain liquidity aggregation</li>
-                        <li>• Seamless user experience</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Technical Implementation */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white">Technical Implementation</h3>
-                <MermaidDiagram
-                  chart={`graph TB
-    subgraph STARKNET[Starknet - Primary Chain]
-        CIRO_NATIVE[CIRO Token Native]
-        CDC_POOL[CDC Pool]
-        JOB_MGR[Job Manager]
-        GOVERNANCE[Governance]
-    end
-    
-    subgraph ETHEREUM[Ethereum Mainnet]
-        BRIDGE_ETH[Starknet Bridge]
-        CIRO_WRAPPED[Wrapped CIRO]
-        DEFI[DeFi Integrations]
-    end
-    
-    subgraph POLYGON[Polygon]
-        BRIDGE_POLY[Polygon Bridge]
-        CIRO_POLY[CIRO Polygon]
-        CHEAP_OPS[Low-Cost Operations]
-    end
-    
-    subgraph ARBITRUM[Arbitrum]
-        BRIDGE_ARB[Arbitrum Bridge]
-        CIRO_ARB[CIRO Arbitrum]
-        L2_DEFI[L2 DeFi]
-    end
-    
-    CIRO_NATIVE --> BRIDGE_ETH
-    BRIDGE_ETH --> CIRO_WRAPPED
-    CIRO_WRAPPED --> DEFI
-    
-    CIRO_NATIVE --> BRIDGE_POLY
-    BRIDGE_POLY --> CIRO_POLY
-    
-    CIRO_NATIVE --> BRIDGE_ARB
-    BRIDGE_ARB --> CIRO_ARB
-    
-    classDef primary fill:#00d4ff,stroke:#00d4ff,stroke-width:2px,color:#000
-    classDef secondary fill:#7c3aed,stroke:#8b5cf6,stroke-width:2px,color:#fff
-    classDef bridge fill:#059669,stroke:#10b981,stroke-width:2px,color:#fff
-    
-    class CIRO_NATIVE,CDC_POOL,JOB_MGR,GOVERNANCE primary
-    class CIRO_WRAPPED,CIRO_POLY,CIRO_ARB secondary
-    class BRIDGE_ETH,BRIDGE_POLY,BRIDGE_ARB bridge`}
-                />
-              </div>
-
-              {/* Why Start with Starknet */}
-              <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                <h3 className="text-xl font-semibold mb-6 text-white">Why Start with Starknet?</h3>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-cosmic-cyan rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Shield className="w-8 h-8 text-black" />
-                    </div>
-                    <h4 className="font-semibold text-white mb-2">ZK-Native</h4>
-                    <p className="text-gray-400 text-sm">
-                      Built for zero-knowledge proofs from the ground up, 
-                      essential for verifiable AI computation.
-                    </p>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <TrendingUp className="w-8 h-8 text-black" />
-                    </div>
-                    <h4 className="font-semibold text-white mb-2">Scalability</h4>
-                    <p className="text-gray-400 text-sm">
-                      Massive throughput with minimal fees, 
-                      perfect for high-frequency compute jobs.
-                    </p>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-purple-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Lock className="w-8 h-8 text-black" />
-                    </div>
-                    <h4 className="font-semibold text-white mb-2">Privacy</h4>
-                    <p className="text-gray-400 text-sm">
-                      Computation privacy without revealing 
-                      sensitive data or model parameters.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Partnership Inquiry Form Modal */}
-      <PartnershipInquiryForm 
-        isOpen={isPartnershipFormOpen}
-        onClose={() => setIsPartnershipFormOpen(false)}
-      />
+      {/* Pricing Structure */}
+      <section className="py-16 px-6 bg-gray-900/20">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold mb-12 text-center">
+            <span className="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+              💰 Fundraising Structure
+            </span>
+          </h2>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full bg-black/40 border border-gray-700 rounded-xl overflow-hidden">
+              <thead className="bg-gray-800">
+                <tr>
+                  <th className="px-6 py-4 text-left text-white font-bold">Round</th>
+                  <th className="px-6 py-4 text-left text-white font-bold">Tokens</th>
+                  <th className="px-6 py-4 text-left text-white font-bold">Price</th>
+                  <th className="px-6 py-4 text-left text-white font-bold">Raise Amount</th>
+                  <th className="px-6 py-4 text-left text-white font-bold">FDV</th>
+                  <th className="px-6 py-4 text-left text-white font-bold">Timeline</th>
+                  <th className="px-6 py-4 text-left text-white font-bold">Vesting</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {
+                    round: "Seed",
+                    tokens: "50M",
+                    price: "$0.01",
+                    raise: "$500K",
+                    fdv: "$10M",
+                    timeline: "Month 0-3",
+                    vesting: "6-mo cliff &rarr; 18-mo linear",
+                    multiplier: "1x"
+                  },
+                  {
+                    round: "Private",
+                    tokens: "75M",
+                    price: "$0.05",
+                    raise: "$3.75M",
+                    fdv: "$50M",
+                    timeline: "Month 6-12",
+                    vesting: "12-mo cliff &rarr; 24-mo linear",
+                    multiplier: "5x"
+                  },
+                  {
+                    round: "Strategic",
+                    tokens: "50M",
+                    price: "$0.10",
+                    raise: "$5M",
+                    fdv: "$100M",
+                    timeline: "Month 12-15",
+                    vesting: "3-mo cliff &rarr; 12-mo linear",
+                    multiplier: "2x"
+                  },
+                  {
+                    round: "Public",
+                    tokens: "50M",
+                    price: "$0.20",
+                    raise: "$10M",
+                    fdv: "$200M",
+                    timeline: "Month 15-18 (TGE)",
+                    vesting: "25% TGE, 6-mo linear",
+                    multiplier: "2x"
+                  }
+                ].map((round, index) => (
+                  <tr key={index} className="border-t border-gray-700 hover:bg-gray-800/30">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-white font-bold">{round.round}</span>
+                        <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+                          {round.multiplier}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-300">{round.tokens}</td>
+                    <td className="px-6 py-4 text-green-400 font-bold">{round.price}</td>
+                    <td className="px-6 py-4 text-yellow-400 font-bold">{round.raise}</td>
+                    <td className="px-6 py-4 text-purple-400 font-bold">{round.fdv}</td>
+                    <td className="px-6 py-4 text-gray-300 text-sm">{round.timeline}</td>
+                    <td className="px-6 py-4 text-gray-300 text-sm">{round.vesting}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="mt-8 text-center">
+            <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-6 max-w-2xl mx-auto">
+              <h4 className="text-green-400 font-bold text-lg mb-2">Total Funds Raised: $19.25M</h4>
+              <p className="text-green-300 text-sm">
+                Smooth progression curve (1x &rarr; 5x &rarr; 2x &rarr; 2x) provides manageable steps for investors 
+                while maintaining sustainable growth trajectory.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      {/* Compute Provider Form Modal */}
-      <ComputeProviderForm 
-        isOpen={isComputeProviderFormOpen}
-        onClose={() => setIsComputeProviderFormOpen(false)}
-      />
+      {/* Burn Mechanics */}
+      <section className="py-16 px-6">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold mb-12 text-center">
+            <span className="bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
+              🔥 Advanced Burn Mechanics
+            </span>
+          </h2>
+          
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Mathematical Models */}
+            <div className="bg-black/40 border border-gray-700 rounded-xl p-8">
+              <h3 className="text-2xl font-bold mb-6 text-red-400">🧮 Mathematical Framework</h3>
+              
+              <div className="space-y-6">
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <h4 className="text-white font-bold mb-2">Dynamic Supply Evolution</h4>
+                  <code className="text-cyan-400 text-sm bg-black/50 p-2 rounded block">
+                    S(t+1) = S(t) × (1 + r_inf(t)) - B(t)
+                  </code>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Where r_inf(t) is adaptive inflation rate based on network security requirements
+                  </p>
+                </div>
+                
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <h4 className="text-white font-bold mb-2">Adaptive Inflation Rate</h4>
+                  <code className="text-cyan-400 text-sm bg-black/50 p-2 rounded block">
+                    r_inf(t) = max(r_min, SecurityBudget_USD / (S(t) × P(t)))
+                  </code>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Inflation adjusts to maintain $2M minimum security budget
+                  </p>
+                </div>
+                
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <h4 className="text-white font-bold mb-2">Revenue Burn Function</h4>
+                  <code className="text-cyan-400 text-sm bg-black/50 p-2 rounded block">
+                    B_revenue(t) = min(R(t) × burn_rate, max_burn_per_period)
+                  </code>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Percentage of network revenue automatically burned with safety caps
+                  </p>
+                </div>
+                
+                <div className="bg-gray-800/50 p-4 rounded-lg">
+                  <h4 className="text-white font-bold mb-2">Buyback Burn Mechanism</h4>
+                  <code className="text-cyan-400 text-sm bg-black/50 p-2 rounded block">
+                    B_buyback(t) = Treasury_ETH(t) / P_CIRO(t)
+                  </code>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Treasury ETH converted to CIRO and permanently burned
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Burn Implementation */}
+            <div className="bg-black/40 border border-gray-700 rounded-xl p-8">
+              <h3 className="text-2xl font-bold mb-6 text-orange-400">⚙️ Implementation Details</h3>
+              
+              <div className="space-y-4">
+                <div className="border border-gray-600 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2 flex items-center">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                    Weekly Dutch Auctions
+                  </h4>
+                  <p className="text-gray-300 text-sm">
+                    Minimize market impact through time-distributed burn execution via professional market makers
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2 flex items-center">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                    70% Revenue Pipeline
+                  </h4>
+                  <p className="text-gray-300 text-sm">
+                    Automatic STRK/USD &rarr; CIRO &rarr; burn pipeline ensures consistent deflationary pressure
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2 flex items-center">
+                    <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                    Protocol-Owned Liquidity
+                  </h4>
+                  <p className="text-gray-300 text-sm">
+                    $4M POL target provides 8-week burn buffer with 1% maximum slippage protection
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2 flex items-center">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    Circuit Breakers
+                  </h4>
+                  <p className="text-gray-300 text-sm">
+                    Dynamic auction throttling if &gt;60% daily volatility (no trading halts - just slower burns)
+                  </p>
+                </div>
+                
+                <div className="border border-gray-600 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2 flex items-center">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    Governance Controls
+                  </h4>
+                  <p className="text-gray-300 text-sm">
+                    Maximum &plusmn;15% burn rate changes per 30-day epoch with emergency override capabilities
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-6 bg-red-900/20 border border-red-600/30 rounded-lg p-4">
+                <h4 className="text-red-400 font-bold mb-2">🎯 Burn Source Priority</h4>
+                <p className="text-red-300 text-sm">
+                  All scheduled burns draw EXCLUSIVELY from Foundation/Treasury pool (180M tokens). 
+                  This protects circulating supply while maintaining deflationary pressure.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Governance Framework */}
+      <section className="py-16 px-6 bg-gray-900/20">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold mb-12 text-center">
+            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              🗳️ Governance Framework
+            </span>
+          </h2>
+          
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Emergency Multisig */}
+            <div className="bg-black/40 border border-gray-700 rounded-xl p-6">
+              <h3 className="text-xl font-bold mb-4 text-purple-400">Emergency Multisig Council</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Staker-Elected Seats</span>
+                  <span className="text-white font-bold">3/7</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">External Guardians</span>
+                  <span className="text-white font-bold">3/7</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Core Team Rep</span>
+                  <span className="text-white font-bold">1/7</span>
+                </div>
+                <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded">
+                  <p className="text-yellow-400 text-xs">
+                    Emergency powers only for Level-3+ incidents (security threats, exploits)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Proposal Types */}
+            <div className="bg-black/40 border border-gray-700 rounded-xl p-6">
+              <h3 className="text-xl font-bold mb-4 text-pink-400">Proposal Thresholds</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Treasury Allocation</span>
+                  <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs">67%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Protocol Upgrades</span>
+                  <span className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs">75%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Parameter Changes</span>
+                  <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">60%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Emergency Actions</span>
+                  <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-xs">90%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Voting Power */}
+            <div className="bg-black/40 border border-gray-700 rounded-xl p-6">
+              <h3 className="text-xl font-bold mb-4 text-cyan-400">Voting Power Structure</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Base Power</span>
+                  <span className="text-white">1 CIRO = 1 vote</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Long-term Holders</span>
+                  <span className="text-yellow-400">1.5x multiplier</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Active Participants</span>
+                  <span className="text-green-400">2x multiplier</span>
+                </div>
+                <div className="mt-4 p-3 bg-blue-900/20 border border-blue-600/30 rounded">
+                  <p className="text-blue-400 text-xs">
+                    Delegation supported • Timelock for execution • Annual multisig review
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Return Projections */}
+      <section className="py-16 px-6">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold mb-12 text-center">
+            <span className="bg-gradient-to-r from-green-400 to-yellow-400 bg-clip-text text-transparent">
+              📈 Return Projections & Benchmarks
+            </span>
+          </h2>
+          
+          <div className="grid lg:grid-cols-3 gap-8 mb-12">
+            {[
+              {
+                scenario: "Conservative",
+                multiplier: "50x-75x",
+                timeline: "3-5 years",
+                price: "$1.00 - $1.50",
+                description: "Based on Render Network's proven performance trajectory",
+                color: "from-green-400 to-green-600"
+              },
+              {
+                scenario: "Aggressive",
+                multiplier: "100x-150x",
+                timeline: "2-4 years",
+                price: "$2.00 - $3.00",
+                description: "Market leadership in verifiable AI compute sector",
+                color: "from-yellow-400 to-orange-500"
+              },
+              {
+                scenario: "Moonshot",
+                multiplier: "200x+",
+                timeline: "5+ years",
+                price: "$4.00+",
+                description: "Dominant infrastructure for global AI economy",
+                color: "from-purple-400 to-pink-500"
+              }
+            ].map((projection, index) => (
+              <div key={index} className="bg-black/40 border border-gray-700 rounded-xl p-6 hover:border-gray-500 transition-colors">
+                <div className={`bg-gradient-to-r ${projection.color} text-white text-center py-2 rounded-lg mb-4`}>
+                  <h3 className="text-lg font-bold">{projection.scenario}</h3>
+                </div>
+                <div className="text-center mb-4">
+                  <div className="text-3xl font-bold text-white mb-2">{projection.multiplier}</div>
+                  <div className="text-gray-400 text-sm">{projection.timeline}</div>
+                </div>
+                <div className="text-center mb-4">
+                  <div className="text-xl font-bold text-yellow-400">{projection.price}</div>
+                  <div className="text-gray-500 text-xs">Target Price Range</div>
+                </div>
+                <p className="text-gray-300 text-sm text-center">{projection.description}</p>
+              </div>
+            ))}
+          </div>
+          
+          <div className="bg-blue-900/20 border border-blue-600/30 rounded-xl p-8">
+            <h3 className="text-2xl font-bold mb-4 text-blue-400 text-center">📊 Competitive Benchmarks</h3>
+            <div className="grid md:grid-cols-3 gap-6 text-center">
+              <div>
+                <h4 className="text-white font-bold mb-2">Render Network (RNDR)</h4>
+                <p className="text-green-400 text-xl font-bold">59x - 247x</p>
+                <p className="text-gray-400 text-sm">Proven DePIN performance</p>
+              </div>
+              <div>
+                <h4 className="text-white font-bold mb-2">Akash Network (AKT)</h4>
+                <p className="text-yellow-400 text-xl font-bold">12x - 85x</p>
+                <p className="text-gray-400 text-sm">Decentralized compute</p>
+              </div>
+              <div>
+                <h4 className="text-white font-bold mb-2">CIRO Target</h4>
+                <p className="text-purple-400 text-xl font-bold">50x - 200x</p>
+                <p className="text-gray-400 text-sm">Verifiable AI compute</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Security & Compliance */}
+      <section className="py-16 px-6 bg-gray-900/20">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-bold mb-12 text-center">
+            <span className="bg-gradient-to-r from-red-400 to-purple-400 bg-clip-text text-transparent">
+              🛡️ Security & Compliance
+            </span>
+          </h2>
+          
+          <div className="grid lg:grid-cols-2 gap-12">
+            <div className="bg-black/40 border border-gray-700 rounded-xl p-8">
+              <h3 className="text-2xl font-bold mb-6 text-red-400">🔒 Security Guarantees</h3>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="text-white font-bold">$2M Annual Security Budget</h4>
+                    <p className="text-gray-400 text-sm">Guaranteed minimum with auto-rebalancing mechanisms</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="text-white font-bold">5-Level Threat Response</h4>
+                    <p className="text-gray-400 text-sm">Comprehensive emergency response system with escalation protocols</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="text-white font-bold">Advanced Monitoring</h4>
+                    <p className="text-gray-400 text-sm">Circuit breaker mechanisms and real-time threat detection</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="text-white font-bold">Smart Contract Audits</h4>
+                    <p className="text-gray-400 text-sm">Multiple professional audits and formal verification</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-black/40 border border-gray-700 rounded-xl p-8">
+              <h3 className="text-2xl font-bold mb-6 text-purple-400">⚖️ Regulatory Compliance</h3>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="text-white font-bold">Governance-Controlled Supply</h4>
+                    <p className="text-gray-400 text-sm">Prevents "unlimited discretion" regulatory concerns</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="text-white font-bold">Safety-Limited Parameters</h4>
+                    <p className="text-gray-400 text-sm">Maximum &plusmn;10%/&plusmn;15% change caps per epoch</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="text-white font-bold">Decentralization Framework</h4>
+                    <p className="text-gray-400 text-sm">Progressive decentralization with external guardians</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="text-white font-bold">Whale-Friendly Structure</h4>
+                    <p className="text-gray-400 text-sm">Institutional participation frameworks and compliance</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Join the Future of Verifiable AI
+            </span>
+          </h2>
+          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            CIRO Network represents a paradigm shift in AI infrastructure. 
+            With production-ready smart contracts and market-tested tokenomics, 
+            we're building the foundation for trustless artificial intelligence.
+          </p>
+          
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-6">
+              <h3 className="text-green-400 font-bold mb-2">✅ Contracts Deployed</h3>
+              <p className="text-gray-300 text-sm">All 6 core contracts live on Starknet Sepolia testnet</p>
+            </div>
+            <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-6">
+              <h3 className="text-blue-400 font-bold mb-2">🔒 Security Audited</h3>
+              <p className="text-gray-300 text-sm">Professional audits and comprehensive testing completed</p>
+            </div>
+            <div className="bg-purple-900/20 border border-purple-600/30 rounded-lg p-6">
+              <h3 className="text-purple-400 font-bold mb-2">🚀 Mainnet Ready</h3>
+              <p className="text-gray-300 text-sm">Production deployment ready with 95% completion</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-4">
+            <a 
+              href="/manifesto" 
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-lg font-bold hover:shadow-lg transition-all duration-300"
+            >
+              Read Full Manifesto
+            </a>
+            <a 
+              href="https://sepolia.starkscan.co/contract/0x03c0f7574905d7cbc2cca18d6c090265fa35b572d8e9dc62efeb5339908720d8" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gray-800 border border-gray-600 text-white px-8 py-3 rounded-lg font-bold hover:border-gray-400 transition-all duration-300"
+            >
+              View Live Contracts
+            </a>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
