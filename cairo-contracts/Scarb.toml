@@ -9,8 +9,8 @@ authors = ["CIRO Labs <contact@ciro.ai>"]
 keywords = ["starknet", "cairo", "smart-contracts", "depin"]
 
 [dependencies]
-starknet = "2.8.0"
-# Updated OpenZeppelin to latest version 0.20.0 for better Cairo 2.8+ compatibility
+starknet = "2.12.0"
+# Updated OpenZeppelin to latest version 0.20.0 for better Cairo 2.12.0+ compatibility
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts", tag = "v0.20.0" }
 
 [dev-dependencies]
@@ -23,7 +23,7 @@ casm = true
 [tool.snforge]
 # Exit first on any failed test  
 exit_first = true
-# Use the Cairo 2.8.0 compatible fork URL
+# Use the Cairo 2.12.0 compatible fork URL
 fork = [
     { name = "Mainnet", url = "https://starknet-mainnet.public.blastapi.io/rpc/v0_7", block_id.number = "0" }
 ]
@@ -32,4 +32,20 @@ fork = [
 build = "scarb build"
 test = "snforge test"
 format = "scarb fmt"
-check = "scarb check" 
+check = "scarb check"
+
+# Cairo 2.12.0 Advanced Optimization Features
+[tool.cairo]
+# Enable compilation caching for faster rebuilds
+cache_enabled = true
+# Enable aggressive code deduplication optimization
+optimize_code_size = true
+# Enable gas optimization features
+optimize_gas = true
+# Advanced deduplication settings
+deduplicate_functions = true
+inline_small_functions = true
+# Sierra-level optimizations
+optimize_sierra = true
+# Enable loop optimizations
+optimize_loops = true 

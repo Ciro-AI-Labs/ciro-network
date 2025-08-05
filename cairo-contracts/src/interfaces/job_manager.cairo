@@ -199,4 +199,29 @@ pub trait IJobManager<TContractState> {
 
     /// Register a worker with their address
     fn register_worker(ref self: TContractState, worker_id: WorkerId, worker_address: ContractAddress);
+
+    // Cairo 2.12.0: Gas Reserve Functions for Compute Job Optimization
+    
+    /// Estimate gas requirement for a job based on job specification
+    fn estimate_job_gas_requirement(self: @TContractState, job_spec: JobSpec) -> u256;
+
+    /// Reserve gas for job execution to prevent failures
+    fn reserve_gas_for_job(ref self: TContractState, job_id: JobId, estimated_gas: u256);
+
+    /// Optimize gas allocation based on worker efficiency
+    fn optimize_worker_gas_allocation(
+        self: @TContractState, 
+        worker_id: WorkerId, 
+        job_type: JobType
+    ) -> u256;
+
+    /// Update base gas cost for a specific model
+    fn update_model_gas_cost(
+        ref self: TContractState, 
+        model_id: ModelId, 
+        base_gas_cost: u256
+    );
+
+    /// Get gas efficiency metrics for a job (estimated, reserved, actual)
+    fn get_job_gas_efficiency(self: @TContractState, job_id: JobId) -> (u256, u256, u256);
 } 

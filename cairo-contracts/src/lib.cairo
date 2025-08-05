@@ -24,6 +24,8 @@ pub mod utils {
     pub mod interactions;
     pub mod governance;
     pub mod upgradability;
+    // Cairo 2.12.0: Code deduplication utilities
+    pub mod common;
 }
 
 pub mod vesting {

@@ -1,7 +1,6 @@
 //! Reputation Manager Implementation for CIRO Network
 //! Minimal implementation for deployment testing
 
-use starknet::ContractAddress;
 use ciro_contracts::interfaces::reputation_manager::{
     ReputationScore, ReputationReason, ReputationThreshold
 };

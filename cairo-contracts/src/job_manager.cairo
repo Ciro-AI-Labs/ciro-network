@@ -156,6 +156,12 @@ mod JobManager {
         job_result_hashes: Map<felt252, felt252>,
         job_gas_used: Map<felt252, u256>,
         
+        // Cairo 2.12.0: Gas Reserve Management for Compute Jobs
+        job_gas_estimates: Map<felt252, u256>,      // Estimated gas per job
+        job_gas_reserved: Map<felt252, u256>,       // Reserved gas per job
+        worker_gas_efficiency: Map<felt252, u256>,  // Gas efficiency per worker
+        model_base_gas_cost: Map<felt252, u256>,    // Base gas cost per model type
+        
         // Job indexing for queries - using felt252 keys
         client_jobs: Map<(ContractAddress, u64), felt252>,
         client_job_count: Map<ContractAddress, u64>,
@@ -217,8 +223,10 @@ mod JobManager {
             let job_id = JobId { value: self.next_job_id.read() };
             self.next_job_id.write(self.next_job_id.read() + 1);
             
-            // Convert job ID to felt252 key for storage
-            let job_key: felt252 = job_id.value.try_into().unwrap();
+            // Cairo 2.12.0: Using let-else pattern for cleaner error handling
+            let Some(job_key) = job_id.value.try_into() else {
+                panic!("Invalid job ID conversion");
+            };
             
                     // Store job information
         self.job_types.write(job_key, job_spec.job_type);
@@ -232,8 +240,12 @@ mod JobManager {
         self.job_payments.write(job_key, payment);
         self.job_timestamps.write(job_key, (current_time, 0, 0)); // (created, assigned, completed)
         
-        // Initialize job state as Queued
-        self.job_states.write(job_key, JobState::Queued);
+                    // Initialize job state as Queued
+            self.job_states.write(job_key, JobState::Queued);
+            
+            // Cairo 2.12.0: Estimate and reserve gas for job execution
+            let estimated_gas = self.estimate_job_gas_requirement(job_spec);
+            self.reserve_gas_for_job(job_id, estimated_gas);
             
             // Update counters
             self.total_jobs.write(self.total_jobs.read() + 1);
@@ -281,18 +293,26 @@ mod JobManager {
             let caller = get_caller_address();
             assert!(caller == self.admin.read(), "Not authorized");
             
-            let job_key: felt252 = job_id.value.try_into().unwrap();
+            // Cairo 2.12.0: Combined let-else for type conversion and state validation
+            let Some(job_key) = job_id.value.try_into() else {
+                panic!("Invalid job ID conversion");
+            };
+            
             let current_state = self.job_states.read(job_key);
-            assert!(current_state == JobState::Queued, "Job not available for assignment");
+            let JobState::Queued = current_state else {
+                panic!("Job not available for assignment");
+            };
             
             // Update job state to Processing
             self.job_states.write(job_key, JobState::Processing);
             let (created_at, _, completed_at) = self.job_timestamps.read(job_key);
             self.job_timestamps.write(job_key, (created_at, get_block_timestamp(), completed_at));
             
-            // Get worker address from worker_id
+            // Cairo 2.12.0: Using let-else for worker validation
             let worker_address = self.worker_addresses.read(worker_id.value);
-            assert!(!worker_address.is_zero(), "Worker not registered");
+            let true = !worker_address.is_zero() else {
+                panic!("Worker not registered");
+            };
             self.job_workers.write(job_key, worker_address);
             
             self.emit(JobAssigned {
@@ -307,13 +327,21 @@ mod JobManager {
             result: JobResult
         ) {
             let caller = get_caller_address();
-            let job_key: felt252 = job_id.value.try_into().unwrap();
-            let current_state = self.job_states.read(job_key);
             
-            assert!(current_state == JobState::Processing, "Job not in processing state");
+            // Cairo 2.12.0: Let-else patterns for cleaner error handling
+            let Some(job_key) = job_id.value.try_into() else {
+                panic!("Invalid job ID conversion");
+            };
+            
+            let current_state = self.job_states.read(job_key);
+            let JobState::Processing = current_state else {
+                panic!("Job not in processing state");
+            };
             
             let worker_address = self.job_workers.read(job_key);
-            assert!(worker_address == caller, "Not assigned worker");
+            let true = (worker_address == caller) else {
+                panic!("Not assigned worker");
+            };
             
             // Store job result data
             self.job_result_hashes.write(job_key, result.output_data_hash);
@@ -324,8 +352,9 @@ mod JobManager {
             let (created_at, assigned_at, _) = self.job_timestamps.read(job_key);
             self.job_timestamps.write(job_key, (created_at, assigned_at, result.execution_time));
             
-            // Update worker stats
+            // Update worker stats including gas efficiency
             self._update_worker_stats(result.worker_id, result.execution_time);
+            self._update_worker_gas_efficiency(result.worker_id, job_id, result.gas_used);
             
             // Decrement active jobs counter
             self.active_jobs.write(self.active_jobs.read() - 1);
@@ -337,10 +366,15 @@ mod JobManager {
         }
 
         fn distribute_rewards(ref self: ContractState, job_id: JobId) {
-            let job_key: felt252 = job_id.value.try_into().unwrap();
-            let job_state = self.job_states.read(job_key);
+            // Cairo 2.12.0: Clean let-else patterns for reward distribution
+            let Some(job_key) = job_id.value.try_into() else {
+                panic!("Invalid job ID conversion");
+            };
             
-            assert!(job_state == JobState::Completed, "Job not completed");
+            let job_state = self.job_states.read(job_key);
+            let JobState::Completed = job_state else {
+                panic!("Job not completed");
+            };
             
             let payment_amount = self.job_payments.read(job_key);
             let worker_address = self.job_workers.read(job_key);
@@ -510,7 +544,109 @@ mod JobManager {
                     total_earnings: 0
                 };
                 self.worker_stats.write(worker_id.value, initial_stats);
+                
+                // Cairo 2.12.0: Initialize gas efficiency for new worker
+                self.worker_gas_efficiency.write(worker_id.value, 1000000); // Default 1M gas units
             }
+        }
+
+        // Cairo 2.12.0: Gas Reserve Functions for Compute Job Optimization
+        
+        fn estimate_job_gas_requirement(self: @ContractState, job_spec: JobSpec) -> u256 {
+            let Some(model_key) = job_spec.model_id.value.try_into() else {
+                panic!("Invalid model ID conversion");
+            };
+            let base_gas = self.model_base_gas_cost.read(model_key);
+            
+            // If no base cost set, use defaults based on job type
+            let base_estimate = if base_gas == 0 {
+                match job_spec.job_type {
+                    JobType::AIInference => 500000,      // 500K gas for AI inference
+                    JobType::ProofGeneration => 2000000, // 2M gas for proof generation  
+                    JobType::AITraining => 5000000,      // 5M gas for AI training
+                    JobType::ProofVerification => 300000, // 300K gas for proof verification
+                    _ => 1000000,                         // 1M gas default
+                }
+            } else {
+                base_gas
+            };
+            
+            // Apply complexity multiplier based on expected output format
+            let complexity_multiplier = if job_spec.expected_output_format == 'large_output' {
+                2
+            } else if job_spec.expected_output_format == 'complex_analysis' {
+                3
+            } else {
+                1
+            };
+            
+            base_estimate * complexity_multiplier.into()
+        }
+
+        fn reserve_gas_for_job(ref self: ContractState, job_id: JobId, estimated_gas: u256) {
+            let Some(job_key) = job_id.value.try_into() else {
+                panic!("Invalid job ID conversion");
+            };
+            
+            // Reserve 20% more gas than estimated to handle variations
+            let reserved_gas = estimated_gas + (estimated_gas * 20 / 100);
+            
+            self.job_gas_estimates.write(job_key, estimated_gas);
+            self.job_gas_reserved.write(job_key, reserved_gas);
+        }
+
+        fn optimize_worker_gas_allocation(
+            self: @ContractState, 
+            worker_id: WorkerId, 
+            job_type: JobType
+        ) -> u256 {
+            let worker_efficiency = self.worker_gas_efficiency.read(worker_id.value);
+            
+            // Calculate optimized gas based on worker's historical efficiency
+            let base_allocation = match job_type {
+                JobType::AIInference => 500000,
+                JobType::ProofGeneration => 2000000,
+                JobType::AITraining => 5000000,
+                JobType::ProofVerification => 300000,
+                _ => 1000000,
+            };
+            
+            // Adjust based on worker efficiency (higher efficiency = less gas needed)
+            if worker_efficiency > 1200000 {
+                // High efficiency worker gets 15% less gas allocation
+                base_allocation * 85 / 100
+            } else if worker_efficiency < 800000 {
+                // Low efficiency worker gets 25% more gas allocation
+                base_allocation * 125 / 100
+            } else {
+                base_allocation
+            }
+        }
+
+        fn update_model_gas_cost(
+            ref self: ContractState, 
+            model_id: ModelId, 
+            base_gas_cost: u256
+        ) {
+            let caller = get_caller_address();
+            assert!(caller == self.admin.read(), "Not authorized");
+            
+            let Some(model_key) = model_id.value.try_into() else {
+                panic!("Invalid model ID conversion");
+            };
+            self.model_base_gas_cost.write(model_key, base_gas_cost);
+        }
+
+        fn get_job_gas_efficiency(self: @ContractState, job_id: JobId) -> (u256, u256, u256) {
+            let Some(job_key) = job_id.value.try_into() else {
+                panic!("Invalid job ID conversion");
+            };
+            
+            let estimated = self.job_gas_estimates.read(job_key);
+            let reserved = self.job_gas_reserved.read(job_key);
+            let actual = self.job_gas_used.read(job_key);
+            
+            (estimated, reserved, actual)
         }
     }
 
@@ -538,6 +674,44 @@ mod JobManager {
             stats.success_rate = 100;
             
             self.worker_stats.write(worker_key, stats);
+        }
+
+        // Cairo 2.12.0: Enhanced worker stats with gas efficiency tracking
+        fn _update_worker_gas_efficiency(
+            ref self: ContractState, 
+            worker_id: WorkerId, 
+            job_id: JobId,
+            actual_gas_used: u256
+        ) {
+            let Some(job_key) = job_id.value.try_into() else {
+                return;
+            };
+            
+            let estimated_gas = self.job_gas_estimates.read(job_key);
+            if estimated_gas == 0 {
+                return; // No estimate available, skip efficiency update
+            }
+            
+            let worker_key = worker_id.value;
+            let current_efficiency = self.worker_gas_efficiency.read(worker_key);
+            
+            // Calculate efficiency: lower actual usage = higher efficiency
+            let job_efficiency = if actual_gas_used <= estimated_gas {
+                // Worker used less or equal gas than estimated - reward efficiency
+                estimated_gas * 100 / actual_gas_used
+            } else {
+                // Worker used more gas than estimated - penalize
+                estimated_gas * 80 / actual_gas_used
+            };
+            
+            // Update worker's overall gas efficiency (moving average)
+            let new_efficiency = if current_efficiency == 0 {
+                job_efficiency
+            } else {
+                (current_efficiency * 8 + job_efficiency * 2) / 10 // 80/20 weighted average
+            };
+            
+            self.worker_gas_efficiency.write(worker_key, new_efficiency);
         }
         
         fn _check_not_paused(self: @ContractState) {
