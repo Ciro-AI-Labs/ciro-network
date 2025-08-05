@@ -789,6 +789,8 @@ mod tests {
                 deadline: None,
                 client_address: "test-client".to_string(),
                 callback_url: None,
+                data: vec![1, 2, 3],
+                max_duration_secs: 3600,
             },
             client_id: "test-client".to_string(),
             callback_url: None,

@@ -37,6 +37,8 @@ mod tests {
             deadline: Some(chrono::Utc::now() + chrono::Duration::hours(1)),
             client_address: "0x123456789abcdef".to_string(),
             callback_url: Some("http://callback.example.com".to_string()),
+            data: vec![1, 2, 3],
+            max_duration_secs: 3600,
         }
     }
 

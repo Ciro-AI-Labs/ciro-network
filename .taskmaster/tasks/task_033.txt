@@ -1,0 +1,93 @@
+# Task ID: 33
+# Title: Fix Treasury Timelock Contract OpenZeppelin Compatibility Issues
+# Status: pending
+# Dependencies: 2, 5, 26
+# Priority: high
+# Description: Debug and resolve OpenZeppelin compatibility issues in the treasury timelock contract to re-enable secure multi-signature treasury management for CIRO Network governance.
+# Details:
+This task involves fixing the disabled treasury timelock contract in `src/vesting/treasury_timelock.cairo` by resolving OpenZeppelin compatibility issues:
+
+1. **Analyze Current Implementation**:
+   - Review the existing treasury timelock contract implementation
+   - Identify specific OpenZeppelin compatibility issues causing the disablement
+   - Document dependency versions and import conflicts
+
+2. **Update OpenZeppelin Dependencies**:
+   - Update to the latest compatible OpenZeppelin contracts for Cairo (likely 0.7.0 or newer)
+   - Update Scarb.toml to specify correct dependency versions
+   - Resolve any breaking changes in the OpenZeppelin interfaces
+
+3. **Fix Import Issues**:
+   - Update import paths to match the new OpenZeppelin contract structure
+   - Example:
+   ```cairo
+   // Old imports
+   use openzeppelin::access::ownable::OwnableComponent;
+   
+   // New imports may need to be updated to
+   use openzeppelin::access::ownable::ownable::OwnableComponent;
+   // or
+   use openzeppelin::access::ownable::interface::IOwnable;
+   ```
+
+4. **Resolve Component Conflicts**:
+   - Fix any component conflicts between the timelock contract and OpenZeppelin libraries
+   - Update storage variable declarations if needed
+   - Ensure proper inheritance and component integration
+
+5. **Update Multi-Signature Implementation**:
+   - Verify multi-signature functionality works with the updated OpenZeppelin contracts
+   - Implement any required changes to the multi-sig verification logic
+   - Ensure threshold signature verification is compatible with current libraries
+
+6. **Re-enable in Library**:
+   - Uncomment or re-enable the treasury timelock contract in `src/lib.cairo:31`
+   - Ensure proper module exports and visibility
+
+7. **Documentation Updates**:
+   - Update documentation to reflect the changes made
+   - Document the OpenZeppelin version compatibility
+   - Add usage examples for the treasury timelock contract
+
+8. **Security Considerations**:
+   - Ensure the timelock delay mechanism is properly implemented
+   - Verify access controls for administrative functions
+   - Check for potential reentrancy vulnerabilities in the updated implementation
+
+# Test Strategy:
+1. **Unit Tests for OpenZeppelin Integration**:
+   - Test all timelock functions with the updated OpenZeppelin dependencies
+   - Verify proper inheritance and component integration
+   - Test with mock contracts to ensure compatibility
+
+2. **Multi-Signature Functionality Tests**:
+   - Test the creation of multi-signature proposals
+   - Test signature verification with multiple signers
+   - Test threshold requirements (e.g., 2-of-3, 3-of-5 signatures)
+   - Test rejection of invalid signatures
+
+3. **Timelock Functionality Tests**:
+   - Test proposal creation with proper time delays
+   - Test execution of proposals after timelock period
+   - Test cancellation of pending proposals
+   - Test rejection of premature execution attempts
+
+4. **Integration Tests**:
+   - Test integration with other CIRO Network governance components
+   - Verify treasury operations through the timelock contract
+   - Test with actual ERC20 token transfers
+
+5. **Security Tests**:
+   - Test access control restrictions
+   - Verify only authorized signers can create and execute proposals
+   - Test against potential reentrancy attacks
+   - Verify timelock periods cannot be bypassed
+
+6. **Deployment Tests**:
+   - Deploy to Starknet testnet and verify functionality
+   - Test with actual multi-signature wallets
+   - Verify contract verification on Starkscan
+
+7. **Regression Tests**:
+   - Ensure fixes don't break existing functionality
+   - Verify compatibility with other contracts in the system

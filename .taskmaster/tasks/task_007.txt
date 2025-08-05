@@ -45,13 +45,13 @@ enum JobPriority {
 6. Verify metrics collection
 
 # Subtasks:
-## 1. Database Integration - PostgreSQL Schema [pending]
+## 1. Database Integration - PostgreSQL Schema [done]
 ### Dependencies: None
 ### Description: Implement PostgreSQL schema for job persistence and worker state management
 ### Details:
 Set up PostgreSQL database with tables for jobs, workers, tasks, and system state. Include proper indexing for performance and migrations for schema evolution.
 
-## 2. Blockchain Integration - Smart Contract Connection [pending]
+## 2. Blockchain Integration - Smart Contract Connection [done]
 ### Dependencies: None
 ### Description: Connect coordinator to deployed smart contracts (JobMgr, CDC Pool, Paymaster)
 ### Details:

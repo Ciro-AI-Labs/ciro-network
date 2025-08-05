@@ -196,4 +196,7 @@ pub trait IJobManager<TContractState> {
 
     /// Admin: Emergency withdraw
     fn emergency_withdraw(ref self: TContractState, token: ContractAddress, amount: u256);
+
+    /// Register a worker with their address
+    fn register_worker(ref self: TContractState, worker_id: WorkerId, worker_address: ContractAddress);
 } 

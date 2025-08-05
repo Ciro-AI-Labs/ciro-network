@@ -1,0 +1,107 @@
+# Task ID: 40
+# Title: Gas and Storage Optimization for Smart Contracts
+# Status: pending
+# Dependencies: 2, 3, 4, 26
+# Priority: medium
+# Description: Implement comprehensive gas and storage optimizations across all smart contracts to improve cost efficiency and network scalability, focusing on packed storage structures, optimized event emission, and efficient data structures.
+# Details:
+1. Conduct a thorough gas usage analysis of all existing smart contracts:
+   - Use Starknet-specific gas profiling tools to identify hotspots
+   - Create baseline metrics for current gas consumption patterns
+   - Document storage layout and usage patterns
+
+2. Implement storage packing optimizations:
+   - Reorganize storage variables to maximize slot utilization
+   - Convert multiple `felt252` variables to packed bit structures where appropriate
+   - Implement the following storage packing pattern for JobMgr:
+   ```cairo
+   struct PackedJobData {
+       status: u8,  // Using minimal bits for status enum
+       model_id: u32,
+       worker_id: u32,
+       timestamp: u64,
+       // Other fields packed efficiently
+   }
+   ```
+
+3. Optimize loops and iterations:
+   - Replace unbounded loops with bounded iterations where possible
+   - Implement early exit conditions for search operations
+   - Cache repeated calculations outside of loops
+   - Use efficient array operations that minimize gas costs
+
+4. Optimize event emissions:
+   - Reduce number of emitted events where possible
+   - Optimize event parameter encoding
+   - Consider indexed vs non-indexed fields for efficient filtering
+
+5. Implement memory usage optimizations:
+   - Minimize temporary variable creation
+   - Reuse memory allocations where possible
+   - Use appropriate data types to minimize memory footprint
+
+6. Optimize CDC Pool contract:
+   - Implement batch processing for reward distributions
+   - Optimize worker capability storage
+   - Implement efficient slashing mechanisms
+
+7. Optimize CIRO Token contract:
+   - Implement efficient burn mechanisms
+   - Optimize token transfer operations
+   - Implement gas-efficient governance mechanisms
+
+8. Implement efficient data structures:
+   - Replace linear searches with mapping-based lookups
+   - Use bit manipulation for flags and small enums
+   - Implement gas-efficient collection operations
+
+9. Document all optimizations:
+   - Create before/after gas usage comparisons
+   - Document optimization patterns for future development
+   - Create gas usage guidelines for the project
+
+10. Create automated gas usage testing:
+    - Implement gas usage assertions in tests
+    - Create gas usage benchmarks
+    - Implement CI/CD checks for gas regression
+
+# Test Strategy:
+1. Establish baseline gas measurements for all contract functions before optimization:
+   - Record gas usage for all public functions with various input sizes
+   - Document storage costs for different contract states
+   - Create gas usage profiles for common user flows
+
+2. Implement comprehensive unit tests for optimized functions:
+   - Ensure functional equivalence before and after optimization
+   - Test edge cases to verify correctness is maintained
+   - Achieve 95%+ test coverage for optimized code
+
+3. Create gas usage comparison tests:
+   - Implement automated tests that compare gas usage before and after optimization
+   - Set minimum gas reduction thresholds (target 20-30% reduction)
+   - Test with realistic workloads and data sizes
+
+4. Perform storage slot analysis:
+   - Verify storage slot usage is optimized
+   - Test storage read/write operations for gas efficiency
+   - Validate storage layout matches design
+
+5. Conduct integration testing:
+   - Test optimized contracts with other system components
+   - Verify system behavior remains unchanged
+   - Test contract interactions for gas efficiency
+
+6. Deploy to Starknet testnet:
+   - Measure real-world gas costs on testnet
+   - Compare with baseline measurements
+   - Identify any testnet-specific optimizations
+
+7. Perform security review of optimizations:
+   - Ensure optimizations don't introduce vulnerabilities
+   - Verify storage layout changes don't break access controls
+   - Check for potential overflow/underflow issues in packed structures
+
+8. Document final gas usage metrics:
+   - Create detailed gas usage reports for all functions
+   - Document storage costs
+   - Provide gas usage guidelines for contract interactions

@@ -414,11 +414,7 @@ mod CDCPool {
             let max_worker_id: u256 = self.next_worker_id.read().into();
             
             // In a real implementation, this would be more sophisticated
-            loop {
-                if worker_id_u256 >= max_worker_id {
-                    break;
-                }
-                
+            while worker_id_u256 != max_worker_id {
                 let worker_id_felt: felt252 = worker_id_u256.try_into().unwrap();
                 let status = self.worker_status.read(worker_id_felt);
                 if status == WorkerStatus::Active {
@@ -471,11 +467,7 @@ mod CDCPool {
             let mut worker_id_u256: u256 = 1;
             let max_worker_id: u256 = self.next_worker_id.read().into();
             
-            loop {
-                if worker_id_u256 >= max_worker_id || found >= max_results {
-                    break;
-                }
-                
+            while worker_id_u256 != max_worker_id && found != max_results {
                 let worker_id_felt: felt252 = worker_id_u256.try_into().unwrap();
                 let status = self.worker_status.read(worker_id_felt);
                 if status == WorkerStatus::Active {
@@ -535,8 +527,10 @@ mod CDCPool {
             let score_impact: u64 = (performance_score.into() + quality_score.into()) / 2;
             let new_reputation = if score_impact > 50 {
                 current_reputation + 1
-            } else {
-                if current_reputation > 0 { current_reputation - 1 } else { 0 }
+            } else if current_reputation > 0 { 
+                current_reputation - 1 
+            } else { 
+                0 
             };
             
             self.worker_reputation.write(worker_key, new_reputation);
@@ -727,11 +721,7 @@ mod CDCPool {
             let mut worker_id_u256: u256 = 1;
             let max_worker_id: u256 = self.next_worker_id.read().into();
             
-            loop {
-                if worker_id_u256 >= max_worker_id || found >= max_results {
-                    break;
-                }
-                
+            while worker_id_u256 != max_worker_id && found != max_results {
                 let worker_id_felt: felt252 = worker_id_u256.try_into().unwrap();
                 let status = self.worker_status.read(worker_id_felt);
                 let reputation = self.worker_reputation.read(worker_id_felt);
@@ -769,11 +759,7 @@ mod CDCPool {
             let mut worker_id_u256: u256 = 1;
             let max_worker_id: u256 = self.next_worker_id.read().into();
             
-            loop {
-                if worker_id_u256 >= max_worker_id || found >= limit {
-                    break;
-                }
-                
+            while worker_id_u256 != max_worker_id && found != limit {
                 let worker_id_felt: felt252 = worker_id_u256.try_into().unwrap();
                 let status = self.worker_status.read(worker_id_felt);
                 if status == WorkerStatus::Active {

@@ -120,3 +120,6 @@ tmp/
 
 # Private docs (already added but ensuring it's here)
 private-docs/
+
+# Backup directories
+CIRO_Network_Backup/

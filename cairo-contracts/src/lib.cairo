@@ -1,21 +1,23 @@
 // CIRO Network Smart Contracts
 // Main library file for Cairo 2.x smart contracts
 
-mod cdc_pool;
-mod ciro_token;
-mod job_manager;
+pub mod cdc_pool;
+pub mod ciro_token;
+pub mod job_manager;
+pub mod reputation_manager;
+pub mod simple_events;
 
-mod interfaces {
+pub mod interfaces {
     pub mod cdc_pool;
     pub mod ciro_token;
     pub mod job_manager;
     pub mod proof_verifier;
+    pub mod reputation_manager;
     // TODO: Create these interface files when needed
-    // mod reputation_manager;
     // mod task_allocator;
 }
 
-mod utils {
+pub mod utils {
     pub mod constants;
     pub mod types;
     pub mod security;
@@ -24,14 +26,14 @@ mod utils {
     pub mod upgradability;
 }
 
-mod vesting {
+pub mod vesting {
     pub mod linear_vesting_with_cliff;
     pub mod milestone_vesting;
     pub mod burn_manager;
-    // pub mod treasury_timelock;  // Temporarily disabled due to OpenZeppelin issues
+    pub mod treasury_timelock;
 }
 
-mod governance {
+pub mod governance {
     pub mod governance_treasury;
 }
 

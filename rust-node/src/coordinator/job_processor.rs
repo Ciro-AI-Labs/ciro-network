@@ -618,10 +618,13 @@ mod tests {
         
         let request = JobRequest {
             job_type: JobType::Render3D,
-            data: vec![1, 2, 3],
+            priority: 5,
             max_cost: 1000,
-            max_duration_secs: 3600,
+            deadline: None,
             client_address: "0x123".to_string(),
+            callback_url: None,
+            data: vec![1, 2, 3],
+            max_duration_secs: 3600,
         };
         
         let job_id = processor.submit_job(request).await.unwrap();

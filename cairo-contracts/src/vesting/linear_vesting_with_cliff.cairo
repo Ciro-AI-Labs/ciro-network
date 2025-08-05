@@ -324,7 +324,7 @@ pub mod LinearVestingWithCliff {
             let count = self.beneficiary_schedules.read(beneficiary);
             
             let mut i = 0;
-            while i < count {
+            while i != count {
                 let schedule_id = self.beneficiary_schedule_ids.read((beneficiary, i));
                 schedule_ids.append(schedule_id);
                 i += 1;

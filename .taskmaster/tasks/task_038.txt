@@ -1,0 +1,171 @@
+# Task ID: 38
+# Title: Complete Storage Utilities Batch Operations for Performance Optimization
+# Status: pending
+# Dependencies: 32, 35, 37, 24
+# Priority: medium
+# Description: Implement missing batch processing functionality in src/utils/storage.cairo to enable efficient bulk operations for job management, worker updates, and reduce transaction costs through batching.
+# Details:
+This task involves implementing the missing batch processing functionality in the storage utilities module to optimize gas usage and improve performance:
+
+1. **Batch Job Processing Implementation (lines 318-322)**:
+   - Implement the batch job processing function that allows multiple job operations to be executed in a single transaction
+   - Replace the placeholder code with proper implementation that handles job status updates in bulk
+   - Ensure proper error handling for batch operations
+   - Example implementation:
+   ```cairo
+   fn process_jobs_batch(job_ids: Array<felt252>, statuses: Array<JobStatus>) -> Result<(), StorageError> {
+       // Validate input arrays have matching lengths
+       assert(job_ids.len() == statuses.len(), "Input arrays must have matching lengths");
+       
+       // Process each job in the batch
+       let mut i: u32 = 0;
+       while i < job_ids.len() {
+           let job_id = *job_ids.at(i);
+           let status = *statuses.at(i);
+           self.update_job_status(job_id, status)?;
+           i += 1;
+       }
+       
+       // Emit batch processing event
+       self.emit(JobsBatchProcessed { count: job_ids.len() });
+       Result::Ok(())
+   }
+   ```
+
+2. **Batch Worker Updates Implementation (lines 334-337)**:
+   - Implement the batch worker update function that allows multiple worker statuses to be updated in a single transaction
+   - Replace the placeholder code with proper implementation that handles worker availability and capability updates in bulk
+   - Include validation to ensure data consistency
+   - Example implementation:
+   ```cairo
+   fn update_workers_batch(worker_ids: Array<felt252>, statuses: Array<WorkerStatus>) -> Result<(), StorageError> {
+       // Validate input arrays have matching lengths
+       assert(worker_ids.len() == statuses.len(), "Input arrays must have matching lengths");
+       
+       // Update each worker in the batch
+       let mut i: u32 = 0;
+       while i < worker_ids.len() {
+           let worker_id = *worker_ids.at(i);
+           let status = *statuses.at(i);
+           self.update_worker_status(worker_id, status)?;
+           i += 1;
+       }
+       
+       // Emit batch update event
+       self.emit(WorkersBatchUpdated { count: worker_ids.len() });
+       Result::Ok(())
+   }
+   ```
+
+3. **Gas Optimization for Bulk Operations**:
+   - Implement storage packing techniques to reduce gas costs
+   - Use efficient data structures for batch operations
+   - Implement proper event aggregation for batch operations
+   - Add gas optimization for reading operations by implementing bulk reads
+   - Example implementation for bulk reads:
+   ```cairo
+   fn get_jobs_batch(job_ids: Array<felt252>) -> Result<Array<Job>, StorageError> {
+       let mut jobs = ArrayTrait::new();
+       
+       // Fetch all jobs in a single read operation where possible
+       let mut i: u32 = 0;
+       while i < job_ids.len() {
+           let job_id = *job_ids.at(i);
+           match self.get_job(job_id) {
+               Result::Ok(job) => jobs.append(job),
+               Result::Err(e) => return Result::Err(e),
+           }
+           i += 1;
+       }
+       
+       Result::Ok(jobs)
+   }
+   ```
+
+4. **Integration with Existing Storage Utilities**:
+   - Ensure batch operations properly integrate with existing storage utility functions
+   - Update any dependent functions to use batch operations where appropriate
+   - Maintain backward compatibility with single-item operations
+
+5. **Documentation and Usage Examples**:
+   - Add comprehensive documentation for the new batch operations
+   - Include usage examples in code comments
+   - Document gas savings compared to individual operations
+
+# Test Strategy:
+The testing strategy will verify the correctness, performance, and gas optimization of the batch operations:
+
+1. **Unit Tests for Batch Job Processing**:
+   - Test with various batch sizes (1, 10, 50, 100 jobs)
+   - Test with valid and invalid job IDs
+   - Test with different job status combinations
+   - Verify all jobs are properly updated
+   - Test error handling when one job in the batch fails
+   - Example test:
+   ```cairo
+   #[test]
+   fn test_process_jobs_batch() {
+       // Setup test environment
+       let mut storage = setup_test_storage();
+       
+       // Create test jobs
+       let job_ids = create_test_jobs(10);
+       let statuses = array![JobStatus::Completed, JobStatus::Failed, ...];
+       
+       // Execute batch operation
+       let result = storage.process_jobs_batch(job_ids, statuses);
+       assert(result.is_ok(), "Batch processing should succeed");
+       
+       // Verify each job has the correct status
+       for i in 0..job_ids.len() {
+           let job = storage.get_job(*job_ids.at(i)).unwrap();
+           assert(job.status == *statuses.at(i), "Job status should be updated");
+       }
+   }
+   ```
+
+2. **Unit Tests for Batch Worker Updates**:
+   - Test with various batch sizes (1, 10, 50, 100 workers)
+   - Test with valid and invalid worker IDs
+   - Test with different worker status combinations
+   - Verify all workers are properly updated
+   - Test error handling when one worker update in the batch fails
+
+3. **Gas Optimization Tests**:
+   - Measure gas consumption for individual operations vs. batch operations
+   - Create benchmark tests comparing gas usage for different batch sizes
+   - Verify gas savings meet expected thresholds (at least 40% reduction for batches of 10+ items)
+   - Example test:
+   ```cairo
+   #[test]
+   fn test_gas_optimization() {
+       // Setup test environment
+       let mut storage = setup_test_storage();
+       
+       // Measure gas for individual operations
+       let individual_gas = measure_gas_for_individual_updates(storage, 10);
+       
+       // Measure gas for batch operation
+       let batch_gas = measure_gas_for_batch_update(storage, 10);
+       
+       // Verify gas savings
+       assert(batch_gas < individual_gas * 60 / 100, "Should save at least 40% gas");
+   }
+   ```
+
+4. **Integration Tests**:
+   - Test integration with Job Manager contract
+   - Test integration with Worker Registry contract
+   - Verify batch operations work correctly with other system components
+   - Test end-to-end workflows using batch operations
+
+5. **Performance Tests**:
+   - Measure execution time for batch operations vs. individual operations
+   - Test with large batches to identify optimal batch sizes
+   - Verify performance improvements meet expected thresholds
+
+6. **Edge Case Tests**:
+   - Test with empty batches
+   - Test with maximum allowed batch size
+   - Test with duplicate IDs in a batch
+   - Test error recovery and partial batch processing

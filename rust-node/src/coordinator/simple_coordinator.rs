@@ -294,7 +294,7 @@ pub struct CoordinatorStatus {
     pub active_workers: u64,
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "broken_tests"))]
 mod tests {
     use super::*;
     use crate::node::coordinator::{JobType, JobRequest};

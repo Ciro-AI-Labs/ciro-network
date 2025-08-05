@@ -21,7 +21,7 @@ pub struct Proposal {
     pub quorum_reached: bool,
 }
 
-#[derive(Drop, Serde, starknet::Store, Copy)]
+#[derive(Drop, Serde, starknet::Store, Copy, PartialEq)]
 #[allow(starknet::store_no_default_variant)]
 pub enum ProposalType {
     Parameter, // Change protocol parameters

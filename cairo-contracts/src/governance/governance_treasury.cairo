@@ -198,10 +198,7 @@ pub mod GovernanceTreasury {
         self.council_count.write(member_count);
         
         let mut i = 0;
-        loop {
-            if i >= initial_council.len() {
-                break;
-            }
+        while i != initial_council.len() {
             let member = *initial_council.at(i);
             self.council_members.write(member, true);
             self.emergency_council.write(member, true);

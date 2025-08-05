@@ -1,0 +1,156 @@
+# Task ID: 32
+# Title: Complete Job Manager Placeholder Implementations
+# Status: pending
+# Dependencies: 3, 4
+# Priority: high
+# Description: Fix critical broken functionality in the Job Manager by implementing proper replacements for hardcoded placeholders that are currently blocking job assignment and result submission functionality.
+# Details:
+This task involves replacing hardcoded placeholders in the Job Manager implementation with proper functionality:
+
+1. **Worker ID to Address Conversion (Line 278)**:
+   - Remove the hardcoded address `0x1234` and implement proper worker ID to address conversion
+   - Integrate with the Worker Registry to fetch the actual worker address based on worker ID
+   - Implement error handling for non-existent worker IDs
+   - Example implementation:
+   ```cairo
+   fn get_worker_address(worker_id: felt252) -> ContractAddress {
+       // Query the CDC Pool contract for the worker's registered address
+       let cdc_pool = ICDCPoolDispatcher { contract_address: self.cdc_pool_address };
+       let worker_address = cdc_pool.get_worker_address(worker_id);
+       assert(!worker_address.is_zero(), 'Worker ID not registered');
+       worker_address
+   }
+   ```
+
+2. **Result Hash Calculation (Line 381)**:
+   - Implement proper cryptographic hashing for job results
+   - Use Pedersen hash or Poseidon hash depending on gas efficiency requirements
+   - Include all relevant job data in the hash calculation
+   - Example implementation:
+   ```cairo
+   fn calculate_result_hash(job_id: u256, result: Array<felt252>) -> felt252 {
+       // Create a buffer with job_id and result data
+       let mut hash_input = ArrayTrait::new();
+       
+       // Add job_id bytes to input
+       hash_input.append(job_id.low);
+       hash_input.append(job_id.high);
+       
+       // Add all result elements
+       let mut i: u32 = 0;
+       loop {
+           if i >= result.len() {
+               break;
+           }
+           hash_input.append(*result.at(i));
+           i += 1;
+       };
+       
+       // Calculate and return the hash
+       poseidon_hash_span(hash_input.span())
+   }
+   ```
+
+3. **Worker Statistics Implementation (Line 406)**:
+   - Replace dummy worker statistics with actual data from storage
+   - Implement tracking for completed jobs, success rate, and average completion time
+   - Add storage variables to track worker performance metrics
+   - Example implementation:
+   ```cairo
+   #[storage]
+   struct WorkerStats {
+       completed_jobs: LegacyMap<felt252, u64>,
+       successful_jobs: LegacyMap<felt252, u64>,
+       total_processing_time: LegacyMap<felt252, u64>,
+   }
+   
+   fn get_worker_stats(worker_id: felt252) -> WorkerStatistics {
+       let completed = self.completed_jobs.read(worker_id);
+       let successful = self.successful_jobs.read(worker_id);
+       let total_time = self.total_processing_time.read(worker_id);
+       
+       let success_rate = if completed == 0 {
+           0
+       } else {
+           (successful * 100) / completed
+       };
+       
+       let avg_time = if completed == 0 {
+           0
+       } else {
+           total_time / completed
+       };
+       
+       WorkerStatistics {
+           completed_jobs: completed,
+           success_rate: success_rate,
+           avg_completion_time: avg_time,
+       }
+   }
+   ```
+
+4. **Configuration Value Getter (Line 419)**:
+   - Complete the implementation of the configuration value getter
+   - Add proper storage for configuration parameters
+   - Implement default values for missing configuration
+   - Example implementation:
+   ```cairo
+   #[storage]
+   struct ConfigStorage {
+       config_values: LegacyMap<felt252, felt252>,
+       config_initialized: LegacyMap<felt252, bool>,
+   }
+   
+   fn get_config_value(key: felt252, default_value: felt252) -> felt252 {
+       if self.config_initialized.read(key) {
+           self.config_values.read(key)
+       } else {
+           default_value
+       }
+   }
+   ```
+
+5. **Integration Testing**:
+   - Ensure all implementations work together correctly
+   - Update any dependent functions that rely on these implementations
+   - Verify that job assignment and result submission flows work end-to-end
+
+# Test Strategy:
+1. **Unit Tests for Worker ID to Address Conversion**:
+   - Test conversion with valid worker IDs
+   - Test error handling with non-existent worker IDs
+   - Test integration with CDC Pool contract using mock responses
+   - Verify proper error messages are displayed
+
+2. **Unit Tests for Result Hash Calculation**:
+   - Test hash calculation with various input sizes
+   - Verify deterministic output for identical inputs
+   - Test with edge cases (empty results, maximum size inputs)
+   - Benchmark gas usage for different result sizes
+
+3. **Unit Tests for Worker Statistics**:
+   - Test statistics calculation with various worker histories
+   - Verify correct calculation of success rates and averages
+   - Test with new workers (zero completed jobs)
+   - Test with workers having different performance profiles
+
+4. **Unit Tests for Configuration Value Getter**:
+   - Test retrieval of existing configuration values
+   - Test default value fallback for uninitialized settings
+   - Test with various configuration keys and values
+   - Verify thread safety and concurrent access patterns
+
+5. **Integration Tests**:
+   - Test complete job lifecycle with the new implementations
+   - Verify job assignment works correctly with real worker addresses
+   - Test result submission and verification flow
+   - Verify proper storage and retrieval of worker statistics
+
+6. **Regression Tests**:
+   - Ensure existing functionality continues to work
+   - Verify no performance degradation in critical paths
+   - Test backward compatibility with existing data
+
+7. **Deployment Verification**:
+   - Deploy to testnet and verify all functions work as expected
+   - Test with real worker nodes to ensure compatibility

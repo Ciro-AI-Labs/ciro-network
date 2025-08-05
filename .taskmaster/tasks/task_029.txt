@@ -1,0 +1,125 @@
+# Task ID: 29
+# Title: Reputation Manager Module Implementation
+# Status: pending
+# Dependencies: 3, 4
+# Priority: high
+# Description: Implement a centralized reputation management system for worker ranking and job allocation in the CIRO Network smart contracts, including scoring algorithms, access controls, and history tracking.
+# Details:
+1. Implement the ReputationManager contract with the following functions:
+   - `initialize_reputation(worker_id: felt252) -> bool`
+   - `update_reputation(worker_id: felt252, score_delta: i32, reason: felt252) -> bool`
+   - `get_reputation(worker_id: felt252) -> ReputationScore`
+   - `get_reputation_history(worker_id: felt252) -> Array<ReputationEvent>`
+   - `check_reputation_threshold(worker_id: felt252, threshold: u32) -> bool`
+   - `get_worker_rank(worker_id: felt252) -> u32`
+   - `get_top_workers(count: u32) -> Array<WorkerRank>`
+
+2. Implement core data structures:
+```cairo
+struct ReputationScore {
+    score: u32,
+    level: u8,
+    last_updated: u64,
+    total_jobs_completed: u32,
+    successful_jobs: u32,
+}
+
+struct ReputationEvent {
+    timestamp: u64,
+    score_delta: i32,
+    reason: felt252,
+    job_id: Option<u256>,
+}
+
+struct WorkerRank {
+    worker_id: felt252,
+    score: u32,
+    level: u8,
+}
+```
+
+3. Implement reputation scoring algorithm:
+   - Base score starts at 100 for new workers
+   - Successful job completion: +1 to +5 points based on job complexity
+   - Failed job: -5 to -20 points based on job importance
+   - Slashed worker: -50 points
+   - Disputed results: -10 points
+   - Implement decay function for inactive workers
+   - Define reputation levels (1-5) based on score thresholds
+
+4. Implement reputation-based access controls:
+   - Create permission checks for job types based on reputation level
+   - Implement minimum reputation thresholds for high-value jobs
+   - Add reputation checks to CDC Pool for worker registration
+
+5. Integrate with CDC Pool contract:
+   - Add reputation initialization on worker registration
+   - Update worker reputation on successful job completion
+   - Update reputation on slashing events
+
+6. Integrate with JobMgr contract:
+   - Update reputation on job completion
+   - Use reputation for job allocation priority
+   - Consider reputation in dispute resolution
+
+7. Implement events for reputation changes:
+```cairo
+#[event]
+fn ReputationUpdated(worker_id: felt252, old_score: u32, new_score: u32, reason: felt252) {}
+
+#[event]
+fn ReputationLevelChanged(worker_id: felt252, old_level: u8, new_level: u8) {}
+```
+
+8. Uncomment and implement the ReputationManager interface in src/lib.cairo:14
+
+9. Add security measures:
+   - Only allow authorized contracts (JobMgr, CDC Pool) to update reputation
+   - Implement rate limiting for reputation updates
+   - Add admin functions for dispute resolution
+
+10. Create comprehensive documentation for the reputation system:
+    - Scoring algorithm details
+    - Integration points with other contracts
+    - Reputation level benefits and requirements
+
+# Test Strategy:
+1. Unit tests for all ReputationManager functions with 90%+ coverage:
+   - Test initialization of reputation for new workers
+   - Test reputation updates with various score deltas
+   - Test reputation threshold checking
+   - Test worker ranking functionality
+   - Test reputation history tracking
+
+2. Test reputation scoring algorithm:
+   - Verify correct score calculation for different scenarios
+   - Test edge cases (minimum/maximum scores)
+   - Test score decay for inactive workers
+   - Verify level transitions based on score thresholds
+
+3. Test integration with CDC Pool contract:
+   - Verify reputation initialization on worker registration
+   - Test reputation updates on slashing events
+   - Test reputation checks for worker capabilities
+
+4. Test integration with JobMgr contract:
+   - Verify reputation updates on job completion
+   - Test reputation-based job allocation
+   - Test reputation impact in dispute scenarios
+
+5. Security tests:
+   - Verify only authorized contracts can update reputation
+   - Test rate limiting for reputation updates
+   - Verify admin functions for dispute resolution
+
+6. Deploy to Starknet testnet and conduct integration tests:
+   - Test with multiple workers and jobs
+   - Verify reputation changes reflect in worker rankings
+   - Test reputation-based access controls
+
+7. Performance testing:
+   - Benchmark gas costs for reputation updates
+   - Test with large numbers of workers and reputation events
+   - Optimize storage patterns for reputation history
+
+8. Conduct formal verification of critical reputation functions

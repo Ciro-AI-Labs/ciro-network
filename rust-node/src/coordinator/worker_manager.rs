@@ -11,11 +11,12 @@ use tokio::sync::{mpsc, RwLock, Mutex};
 use tokio::time::{Duration, Instant};
 use tracing::{info, debug, error};
 
-use crate::types::WorkerId;
+use crate::types::{WorkerId, NodeId};
 use crate::node::coordinator::{WorkerInfo, WorkerCapabilities, ComputeRequirements};
 use crate::storage::Database;
 use crate::network::NetworkCoordinator;
 use crate::coordinator::config::WorkerManagerConfig;
+use crate::blockchain::{StarknetClient, JobManagerContract};
 
 /// Worker manager events
 #[derive(Debug, Clone)]
@@ -582,8 +583,15 @@ mod tests {
     async fn test_worker_manager_creation() {
         let config = WorkerManagerConfig::default();
         let database = Arc::new(Database::new("postgresql://localhost/ciro_test").await.unwrap());
+        let starknet_client = Arc::new(StarknetClient::new("https://starknet-sepolia.public.blastapi.io".to_string()).unwrap());
+        let job_manager_contract = Arc::new(JobManagerContract::new_from_address(
+            starknet_client.clone(),
+            "0x00bf025663b8a7c7e43393f082b10afe66bd9ddb06fb5e521e3adbcf693094bd",
+        ).unwrap());
         let network_coordinator = Arc::new(NetworkCoordinator::new(
             crate::network::NetworkConfig::default(),
+            starknet_client,
+            job_manager_contract,
         ).unwrap());
         
         let manager = WorkerManager::new(
@@ -599,8 +607,15 @@ mod tests {
     async fn test_worker_registration() {
         let config = WorkerManagerConfig::default();
         let database = Arc::new(Database::new("postgresql://localhost/ciro_test").await.unwrap());
+        let starknet_client = Arc::new(StarknetClient::new("https://starknet-sepolia.public.blastapi.io".to_string()).unwrap());
+        let job_manager_contract = Arc::new(JobManagerContract::new_from_address(
+            starknet_client.clone(),
+            "0x00bf025663b8a7c7e43393f082b10afe66bd9ddb06fb5e521e3adbcf693094bd",
+        ).unwrap());
         let network_coordinator = Arc::new(NetworkCoordinator::new(
             crate::network::NetworkConfig::default(),
+            starknet_client,
+            job_manager_contract,
         ).unwrap());
         
         let manager = WorkerManager::new(
@@ -610,10 +625,27 @@ mod tests {
         );
         
         let worker_info = WorkerInfo {
+            worker_id: WorkerId::new(),
             node_id: NodeId::new(),
-            capabilities: WorkerCapabilities::default(),
-            location: "us-east-1".to_string(),
-            contact_info: "worker@example.com".to_string(),
+            capabilities: WorkerCapabilities {
+                gpu_memory: 8192,
+                cpu_cores: 8,
+                ram_gb: 32,
+                supported_job_types: vec!["AIInference".to_string()],
+                docker_enabled: true,
+                max_parallel_tasks: 4,
+                supported_frameworks: vec!["TensorFlow".to_string(), "PyTorch".to_string()],
+                ai_accelerators: vec!["CUDA".to_string()],
+                specialized_hardware: vec![],
+                model_cache_size_gb: 10,
+                max_model_size_gb: 5,
+                supports_fp16: true,
+                supports_int8: true,
+                cuda_compute_capability: Some("8.6".to_string()),
+            },
+            current_load: 0.0,
+            reputation: 1.0,
+            last_seen: chrono::Utc::now(),
         };
         
         let worker_id = manager.register_worker(worker_info).await.unwrap();

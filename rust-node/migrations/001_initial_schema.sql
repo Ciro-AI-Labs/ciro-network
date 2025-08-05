@@ -203,4 +203,22 @@ CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_system_state_updated_at BEFORE UPDATE ON system_state
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column(); 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Events table: Store blockchain events from monitored contracts
+CREATE TABLE IF NOT EXISTS events (
+    id SERIAL PRIMARY KEY,
+    contract_address VARCHAR(66) NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    block_number BIGINT NOT NULL,
+    timestamp BIGINT NOT NULL,
+    data JSONB NOT NULL DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for efficient querying
+CREATE INDEX IF NOT EXISTS idx_events_contract_address ON events (contract_address);
+CREATE INDEX IF NOT EXISTS idx_events_event_type ON events (event_type);
+CREATE INDEX IF NOT EXISTS idx_events_block_number ON events (block_number);
+CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events (timestamp);
+CREATE INDEX IF NOT EXISTS idx_events_created_at ON events (created_at); 

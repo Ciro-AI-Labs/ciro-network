@@ -14,8 +14,8 @@ starknet = "2.8.0"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts", tag = "v0.20.0" }
 
 [dev-dependencies]
-# Updated snforge_std to meet the recommended version requirement ^0.45.0
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.45.0" }
+# Updated snforge_std to meet the recommended version requirement ^0.47.0
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.47.0" }
 
 [[target.starknet-contract]]
 casm = true

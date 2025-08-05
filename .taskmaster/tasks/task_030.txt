@@ -1,0 +1,190 @@
+# Task ID: 30
+# Title: Task Allocator Module Implementation
+# Status: pending
+# Dependencies: 3, 4, 9, 29
+# Priority: high
+# Description: Implement the Task Allocator Module for intelligent job-to-worker assignment in CIRO Network, handling advanced allocation algorithms beyond basic CDC Pool allocation.
+# Details:
+1. Implement the TaskAllocator module with the following components:
+
+   a. Worker capability matching:
+   ```rust
+   struct CapabilityMatcher {
+       min_requirements: HashMap<String, u32>,
+       preferred_requirements: HashMap<String, u32>,
+   }
+   
+   impl CapabilityMatcher {
+       fn match_worker(&self, worker: &Worker) -> MatchScore {...}
+   }
+   ```
+
+   b. Load balancing algorithms:
+   ```rust
+   enum LoadBalancingStrategy {
+       RoundRobin,
+       LeastConnections,
+       WeightedResponse,
+       Adaptive,
+   }
+   
+   struct LoadBalancer {
+       strategy: LoadBalancingStrategy,
+       worker_loads: HashMap<String, WorkerLoad>,
+   }
+   ```
+
+   c. Priority-based job assignment:
+   ```rust
+   struct JobPrioritizer {
+       priority_levels: Vec<PriorityLevel>,
+       aging_factor: f32,
+   }
+   
+   impl JobPrioritizer {
+       fn calculate_priority(&self, job: &Job) -> u32 {...}
+       fn update_waiting_jobs(&mut self) {...}
+   }
+   ```
+
+   d. Geographic optimization for latency:
+   ```rust
+   struct GeoOptimizer {
+       regions: HashMap<Region, Vec<String>>,
+       latency_matrix: HashMap<(Region, Region), u32>,
+   }
+   
+   impl GeoOptimizer {
+       fn optimize_for_latency(&self, job: &Job, workers: &[Worker]) -> Vec<Worker> {...}
+   }
+   ```
+
+   e. Reputation-weighted allocation:
+   ```rust
+   struct ReputationWeighter {
+       min_reputation: u32,
+       reputation_weight: f32,
+   }
+   
+   impl ReputationWeighter {
+       fn apply_reputation_weights(&self, workers: &mut [ScoredWorker]) {...}
+   }
+   ```
+
+2. Implement the main TaskAllocator struct:
+   ```rust
+   struct TaskAllocator {
+       capability_matcher: CapabilityMatcher,
+       load_balancer: LoadBalancer,
+       job_prioritizer: JobPrioritizer,
+       geo_optimizer: GeoOptimizer,
+       reputation_weighter: ReputationWeighter,
+       allocation_history: VecDeque<AllocationRecord>,
+   }
+   
+   impl TaskAllocator {
+       fn allocate_job(&mut self, job: &Job, available_workers: &[Worker]) -> Option<String> {...}
+       fn record_allocation(&mut self, job_id: &str, worker_id: &str) {...}
+       fn record_completion(&mut self, job_id: &str, success: bool) {...}
+       fn get_allocation_metrics(&self) -> AllocationMetrics {...}
+   }
+   ```
+
+3. Integrate with JobMgr and CDC Pool contracts:
+   - Create contract interaction layer for on-chain allocation decisions
+   - Implement event listeners for job submission and worker status changes
+   - Create transaction builders for allocation decisions
+
+4. Implement allocation strategies:
+   - Standard allocation for regular jobs
+   - Batch allocation for multiple similar jobs
+   - Emergency allocation for high-priority jobs
+   - Fallback allocation for when optimal workers are unavailable
+
+5. Add configuration and tuning parameters:
+   - Configurable weights for different allocation factors
+   - Tunable thresholds for load balancing
+   - Adjustable reputation impact on allocation
+
+6. Implement metrics collection and reporting:
+   - Allocation success rate
+   - Average allocation time
+   - Worker utilization metrics
+   - Geographic distribution metrics
+
+7. Add the following to src/lib.cairo (uncomment and implement line 15):
+   ```cairo
+   mod task_allocator {
+       use core::array::ArrayTrait;
+       use core::option::OptionTrait;
+       use starknet::ContractAddress;
+       
+       #[derive(Drop, Serde)]
+       struct AllocationParams {
+           job_id: u256,
+           model_id: felt252,
+           priority: u8,
+           region: felt252,
+           min_reputation: u32,
+       }
+       
+       #[derive(Drop, Serde)]
+       struct AllocationResult {
+           worker_id: felt252,
+           expected_completion_time: u64,
+           allocation_score: u32,
+       }
+       
+       #[starknet::interface]
+       trait ITaskAllocator<TContractState> {
+           fn allocate_job(
+               self: @TContractState, 
+               params: AllocationParams
+           ) -> Option<AllocationResult>;
+           
+           fn get_worker_load(self: @TContractState, worker_id: felt252) -> u32;
+           fn update_worker_metrics(ref self: TContractState, worker_id: felt252, metrics: WorkerMetrics);
+           fn get_allocation_stats(self: @TContractState) -> AllocationStats;
+       }
+       
+       // Implementation will go here
+   }
+   ```
+
+# Test Strategy:
+1. Unit tests for allocation components:
+   - Test capability matching with various worker profiles
+   - Test load balancing algorithms under different load scenarios
+   - Test priority-based job assignment with competing jobs
+   - Test geographic optimization with simulated regions
+   - Test reputation-weighted allocation with different reputation scores
+
+2. Integration tests:
+   - Test integration with JobMgr contract using mock contract interface
+   - Test integration with CDC Pool contract using mock contract interface
+   - Test end-to-end allocation flow from job submission to worker assignment
+   - Test concurrent allocation scenarios with multiple jobs
+
+3. Performance tests:
+   - Benchmark allocation speed with varying numbers of workers (10, 100, 1000)
+   - Test allocation under high load (1000+ pending jobs)
+   - Measure memory usage during allocation operations
+   - Test allocation latency for high-priority jobs
+
+4. Simulation tests:
+   - Create simulation environment with virtual workers and jobs
+   - Run long-term simulations (1000+ allocations) to measure efficiency
+   - Test different allocation parameter configurations
+   - Simulate network conditions and worker failures
+
+5. Contract integration tests:
+   - Deploy test contracts to Starknet testnet
+   - Test on-chain allocation decisions
+   - Verify gas costs for allocation operations
+   - Test contract event handling
+
+6. Edge case tests:
+   - Test allocation with no suitable workers available
+   - Test allocation with all workers at capacity
+   - Test recovery from failed allocations
+   - Test reallocation of abandoned jobs

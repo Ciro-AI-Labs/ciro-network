@@ -50,6 +50,9 @@ pub use network::p2p::P2PNetwork;
 // Re-export blockchain integration
 pub use blockchain::client::StarknetClient;
 
+// Re-export storage
+pub use storage::database_simple::SimpleDatabase;
+
 /// Version information
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const NAME: &str = env!("CARGO_PKG_NAME");

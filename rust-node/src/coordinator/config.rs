@@ -46,6 +46,7 @@ pub struct CoordinatorConfig {
 
 /// Environment configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(PartialEq)]
 pub enum Environment {
     Development,
     Staging,

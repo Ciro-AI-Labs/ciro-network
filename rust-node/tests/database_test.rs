@@ -19,6 +19,8 @@ mod tests {
             deadline: Some(chrono::Utc::now() + chrono::Duration::hours(1)),
             client_address: "0x123".to_string(),
             callback_url: Some("http://callback.example.com".to_string()),
+            data: vec![1, 2, 3],
+            max_duration_secs: 3600,
         };
         
         JobState {
@@ -34,6 +36,7 @@ mod tests {
     fn create_test_worker_info() -> WorkerInfo {
         WorkerInfo {
             worker_id: WorkerId::new(),
+            node_id: NodeId::new(),
             capabilities: WorkerCapabilities {
                 gpu_memory: 8192,
                 cpu_cores: 8,

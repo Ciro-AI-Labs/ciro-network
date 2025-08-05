@@ -208,7 +208,7 @@ pub mod MilestoneVesting {
             // Validate milestone amounts sum to total
             let mut total_milestone_amount = 0;
             let mut i = 0;
-            while i < milestones.len() {
+            while i != milestones.len() {
                 let (_, amount, _) = *milestones.at(i);
                 total_milestone_amount += amount;
                 i += 1;
@@ -229,7 +229,7 @@ pub mod MilestoneVesting {
             
             // Create milestones
             let mut milestone_index = 0;
-            while milestone_index < milestones.len() {
+            while milestone_index != milestones.len() {
                 let (description, amount, deadline) = *milestones.at(milestone_index);
                 assert(deadline > current_time, 'Deadline must be in future');
                 
@@ -396,7 +396,7 @@ pub mod MilestoneVesting {
             let mut milestones = ArrayTrait::new();
             
             let mut i = 0;
-            while i < schedule.milestone_count {
+            while i != schedule.milestone_count {
                 let milestone = self.milestones.read((schedule_id, i));
                 milestones.append(milestone);
                 i += 1;
@@ -410,7 +410,7 @@ pub mod MilestoneVesting {
             let mut completed = 0;
             
             let mut i = 0;
-            while i < schedule.milestone_count {
+            while i != schedule.milestone_count {
                 let milestone = self.milestones.read((schedule_id, i));
                 if milestone.completed {
                     completed += 1;
@@ -426,7 +426,7 @@ pub mod MilestoneVesting {
             let mut releasable = 0;
             
             let mut i = 0;
-            while i < schedule.milestone_count {
+            while i != schedule.milestone_count {
                 let milestone = self.milestones.read((schedule_id, i));
                 if milestone.completed {
                     releasable += milestone.target_amount;
@@ -450,7 +450,7 @@ pub mod MilestoneVesting {
             let count = self.beneficiary_schedules.read(beneficiary);
             
             let mut i = 0;
-            while i < count {
+            while i != count {
                 let schedule_id = self.beneficiary_schedule_ids.read((beneficiary, i));
                 schedule_ids.append(schedule_id);
                 i += 1;
@@ -615,7 +615,7 @@ pub fn validate_milestones(
     let mut total_milestone_amount = 0;
     let mut i = 0;
     
-    while i < milestones.len() {
+    while i != milestones.len() {
         let (_, amount, deadline) = *milestones.at(i);
         
         if amount == 0 || deadline <= current_time {

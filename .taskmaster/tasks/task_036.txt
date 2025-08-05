@@ -1,0 +1,192 @@
+# Task ID: 36
+# Title: Comprehensive Testing Suite for CIRO Network Smart Contracts
+# Status: pending
+# Dependencies: 3, 4, 26, 29, 30, 31, 32, 33, 34, 35
+# Priority: high
+# Description: Implement a complete testing suite for all CIRO Network smart contracts with full coverage including unit, integration, performance, security, and end-to-end tests.
+# Details:
+This task involves creating a comprehensive testing framework for all CIRO Network smart contracts, focusing on complete test coverage and robust verification:
+
+1. **Test Environment Setup**:
+   - Configure a dedicated testing environment using Starknet-devnet and Cairo test framework
+   - Set up CI/CD pipeline integration for automated test execution
+   - Implement test fixtures and helper functions for common testing scenarios
+   - Create mock contracts for external dependencies
+
+2. **Unit Tests Implementation**:
+   - Implement unit tests for all functions in the following contracts:
+     - JobMgr (job submission, escrow, result attestation)
+     - CDC Pool (worker registration, staking, rewards)
+     - CIRO Token (ERC20 functionality, burn mechanisms, governance)
+     - Reputation Manager (scoring, history tracking, thresholds)
+     - Task Allocator (job assignment algorithms)
+     - Event Indexer (event management, subscriptions)
+     - Proof Verifier (verification logic, challenges)
+     - Treasury Timelock (governance controls, time locks)
+   - Target minimum 95% code coverage for all contracts
+   - Test both success and failure paths for all functions
+
+3. **Integration Tests Implementation**:
+   - Test cross-contract interactions:
+     - JobMgr and CDC Pool for worker assignment
+     - Reputation Manager and Task Allocator for reputation-based assignment
+     - CIRO Token and Treasury for fee collection and distribution
+     - Event Indexer with all contracts for proper event emission
+   - Test complete workflows from job submission to completion and payment
+   - Test upgrade patterns and proxy implementations
+
+4. **Performance Testing**:
+   - Implement gas optimization tests to ensure efficient contract execution
+   - Test batch operations for scalability (multiple job submissions, worker registrations)
+   - Benchmark contract execution times under various load conditions
+   - Test contract behavior under network congestion scenarios
+
+5. **Security Testing**:
+   - Implement tests for common attack vectors:
+     - Reentrancy attacks
+     - Front-running vulnerabilities
+     - Integer overflow/underflow
+     - Access control bypasses
+     - Denial of service attacks
+   - Test contract behavior under malicious inputs
+   - Verify proper access controls for all privileged functions
+   - Test economic security (e.g., slashing mechanisms, stake requirements)
+
+6. **End-to-End Testing**:
+   - Implement tests for complete user workflows:
+     - Job submission, worker assignment, execution, verification, and payment
+     - Worker registration, staking, reputation building, and reward claiming
+     - Governance proposal creation, voting, and execution
+     - Dispute resolution and challenge mechanisms
+   - Test contract interactions with off-chain components
+
+7. **Test Documentation**:
+   - Document all test cases with clear descriptions of what is being tested
+   - Create a test coverage report showing coverage by contract and function
+   - Document any known limitations or edge cases not covered by tests
+
+8. **Test Maintenance Plan**:
+   - Implement a process for updating tests when contracts are modified
+   - Create guidelines for writing tests for new contracts or features
+   - Set up monitoring for test quality and coverage metrics
+
+**Implementation Example for JobMgr Unit Tests**:
+```cairo
+#[test]
+fn test_submit_job() {
+    // Setup
+    let (contract_address, deployer) = deploy_jobmgr();
+    let model_id = register_test_model(contract_address, deployer);
+    let inputs = array![1, 2, 3];
+    let payment = 100;
+    
+    // Execute
+    let job_id = submit_job(contract_address, model_id, inputs, payment);
+    
+    // Verify
+    let job = get_job(contract_address, job_id);
+    assert(job.model_id == model_id, 'Wrong model ID');
+    assert(job.status == JobStatus::Pending, 'Wrong status');
+    assert(job.payment == payment, 'Wrong payment amount');
+}
+
+#[test]
+fn test_submit_result() {
+    // Setup job submission
+    let (contract_address, deployer) = deploy_jobmgr();
+    let model_id = register_test_model(contract_address, deployer);
+    let worker_id = register_test_worker(contract_address);
+    let job_id = submit_test_job(contract_address, model_id);
+    let result_hash = 0x1234;
+    
+    // Generate worker signature
+    let signature = sign_result(worker_id, job_id, result_hash);
+    
+    // Execute
+    submit_result(contract_address, job_id, result_hash, signature);
+    
+    // Verify
+    let job = get_job(contract_address, job_id);
+    assert(job.status == JobStatus::Completed, 'Wrong status');
+    assert(job.result_hash == result_hash, 'Wrong result hash');
+}
+```
+
+**Implementation Example for Integration Tests**:
+```cairo
+#[test]
+fn test_job_assignment_with_reputation() {
+    // Deploy contracts
+    let (jobmgr_address, _) = deploy_jobmgr();
+    let (cdc_pool_address, _) = deploy_cdc_pool();
+    let (reputation_address, _) = deploy_reputation_manager();
+    let (task_allocator_address, _) = deploy_task_allocator();
+    
+    // Register workers with different reputation scores
+    let worker1 = register_worker(cdc_pool_address, capabilities1);
+    let worker2 = register_worker(cdc_pool_address, capabilities2);
+    set_reputation(reputation_address, worker1, 80);
+    set_reputation(reputation_address, worker2, 50);
+    
+    // Submit job
+    let job_id = submit_job(jobmgr_address, model_id, inputs, payment);
+    
+    // Trigger allocation
+    allocate_job(task_allocator_address, job_id);
+    
+    // Verify high-reputation worker was selected
+    let job = get_job(jobmgr_address, job_id);
+    assert(job.assigned_worker == worker1, 'Wrong worker assigned');
+}
+```
+
+# Test Strategy:
+The testing strategy will verify the completeness and effectiveness of the test suite:
+
+1. **Code Coverage Verification**:
+   - Use Cairo test coverage tools to verify minimum 95% code coverage across all contracts
+   - Review uncovered code paths and add tests to address gaps
+   - Generate coverage reports as artifacts for review
+
+2. **Unit Test Verification**:
+   - Verify each contract function has dedicated tests for both success and failure paths
+   - Run unit tests in isolation to confirm they test specific functionality
+   - Verify test assertions properly validate expected outcomes
+   - Check that all error conditions and require statements are tested
+
+3. **Integration Test Verification**:
+   - Deploy contracts to a local Starknet devnet environment
+   - Execute integration tests to verify correct cross-contract interactions
+   - Validate that events are properly emitted and captured
+   - Verify complete workflows execute as expected
+
+4. **Performance Test Verification**:
+   - Measure gas consumption for all contract functions
+   - Compare against established baselines to identify regressions
+   - Verify batch operations scale efficiently
+   - Document performance characteristics for reference
+
+5. **Security Test Verification**:
+   - Review security tests with security experts
+   - Verify all identified attack vectors are properly tested
+   - Conduct manual review of critical security functions
+   - Consider engaging external security auditors to validate test approach
+
+6. **End-to-End Test Verification**:
+   - Execute complete workflow tests on Starknet testnet
+   - Verify all components interact correctly in a production-like environment
+   - Test with realistic data volumes and patterns
+   - Validate results match expected outcomes
+
+7. **Test Suite Maintenance**:
+   - Verify tests run successfully in CI/CD pipeline
+   - Confirm test suite execution time is reasonable
+   - Check that test failures provide clear error messages
+   - Ensure tests are properly documented for future maintenance
+
+8. **Acceptance Criteria**:
+   - All tests pass consistently in the CI/CD pipeline
+   - Code coverage meets or exceeds 95% target
+   - Security tests verify resistance to all identified attack vectors
+   - Performance tests confirm contracts meet efficiency requirements
+   - Documentation is complete and accurate

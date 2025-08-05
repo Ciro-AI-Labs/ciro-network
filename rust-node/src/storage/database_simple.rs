@@ -5,6 +5,7 @@
 
 use crate::node::coordinator::{JobState, WorkerInfo, TaskStatus};
 use crate::storage::models::*;
+use crate::blockchain::events::CiroEvent;
 use anyhow::{Result, Context};
 use sqlx::{PgPool, Row};
 use std::collections::HashMap;
@@ -210,6 +211,123 @@ impl SimpleDatabase {
     pub async fn close(&self) {
         self.pool.close().await;
         info!("Database connection pool closed");
+    }
+
+    // ==================== EVENT STORAGE METHODS ====================
+
+    /// Store a blockchain event in the database
+    pub async fn store_event(&self, event: &CiroEvent) -> Result<()> {
+        sqlx::query(
+            "INSERT INTO events (contract_address, event_type, block_number, timestamp, data) 
+             VALUES ($1, $2, $3, $4, $5)"
+        )
+        .bind(&event.contract_address)
+        .bind(&event.event_type)
+        .bind(event.block_number as i64)
+        .bind(event.timestamp as i64)
+        .bind(&event.data)
+        .execute(&self.pool)
+        .await
+        .context("Failed to store event in database")?;
+
+        Ok(())
+    }
+
+    /// Get recent events with optional limit
+    pub async fn get_recent_events(&self, limit: i64) -> Result<Vec<CiroEvent>> {
+        let rows = sqlx::query(
+            "SELECT contract_address, event_type, block_number, timestamp, data 
+             FROM events 
+             ORDER BY created_at DESC 
+             LIMIT $1"
+        )
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
+        .context("Failed to fetch recent events")?;
+
+        let mut events = Vec::new();
+        for row in rows {
+            events.push(CiroEvent {
+                contract_address: row.get("contract_address"),
+                event_type: row.get("event_type"),
+                block_number: row.get::<i64, _>("block_number") as u64,
+                timestamp: row.get::<i64, _>("timestamp") as u64,
+                data: row.get("data"),
+            });
+        }
+
+        Ok(events)
+    }
+
+    /// Get events for a specific contract
+    pub async fn get_contract_events(&self, contract_address: &str, limit: i64) -> Result<Vec<CiroEvent>> {
+        let rows = sqlx::query(
+            "SELECT contract_address, event_type, block_number, timestamp, data 
+             FROM events 
+             WHERE contract_address = $1 
+             ORDER BY created_at DESC 
+             LIMIT $2"
+        )
+        .bind(contract_address)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await
+        .context("Failed to fetch contract events")?;
+
+        let mut events = Vec::new();
+        for row in rows {
+            events.push(CiroEvent {
+                contract_address: row.get("contract_address"),
+                event_type: row.get("event_type"),
+                block_number: row.get::<i64, _>("block_number") as u64,
+                timestamp: row.get::<i64, _>("timestamp") as u64,
+                data: row.get("data"),
+            });
+        }
+
+        Ok(events)
+    }
+
+    /// Get event statistics for the dashboard
+    pub async fn get_event_stats(&self) -> Result<(i64, HashMap<String, i64>, HashMap<String, i64>)> {
+        // Total events
+        let total_events: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM events")
+            .fetch_one(&self.pool)
+            .await
+            .context("Failed to get total events count")?;
+
+        // Events by type
+        let type_rows = sqlx::query(
+            "SELECT event_type, COUNT(*) as count FROM events GROUP BY event_type"
+        )
+        .fetch_all(&self.pool)
+        .await
+        .context("Failed to get events by type")?;
+
+        let mut events_by_type = HashMap::new();
+        for row in type_rows {
+            let event_type: String = row.get("event_type");
+            let count: i64 = row.get("count");
+            events_by_type.insert(event_type, count);
+        }
+
+        // Events by contract
+        let contract_rows = sqlx::query(
+            "SELECT contract_address, COUNT(*) as count FROM events GROUP BY contract_address"
+        )
+        .fetch_all(&self.pool)
+        .await
+        .context("Failed to get events by contract")?;
+
+        let mut events_by_contract = HashMap::new();
+        for row in contract_rows {
+            let contract_address: String = row.get("contract_address");
+            let count: i64 = row.get("count");
+            events_by_contract.insert(contract_address, count);
+        }
+
+        Ok((total_events, events_by_type, events_by_contract))
     }
 }
 

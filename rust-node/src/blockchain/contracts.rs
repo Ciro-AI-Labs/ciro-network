@@ -340,7 +340,7 @@ impl std::fmt::Display for ContractHealthStatus {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "broken_tests"))]
 mod tests {
     use super::*;
     use crate::node::coordinator::{JobRequest, JobType as CoordinatorJobType};

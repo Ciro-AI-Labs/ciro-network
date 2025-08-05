@@ -1,0 +1,155 @@
+# Task ID: 34
+# Title: Proof Verifier Contract Implementation
+# Status: pending
+# Dependencies: 3, 4, 13, 14
+# Priority: high
+# Description: Implement the Proof Verifier smart contract in Cairo for ZK proof verification, supporting multiple proof types, priority levels, and worker reputation integration based on the interface in src/interfaces/proof_verifier.cairo.
+# Details:
+1. Implement the Proof Verifier contract based on the interface in src/interfaces/proof_verifier.cairo (332 lines), with the following components:
+
+2. Implement core verification functions:
+   - `verify_proof(proof_id: u256, proof_data: Array<felt252>, worker_signature: Array<felt252>) -> bool`
+   - `submit_proof_job(proof_type: ProofType, inputs: Array<felt252>, priority: u8, deadline: u64) -> proof_id: u256`
+   - `get_proof_status(proof_id: u256) -> ProofStatus`
+   - `challenge_proof(proof_id: u256, counter_proof: Array<felt252>) -> bool`
+   - `claim_verification_reward(proof_id: u256)`
+
+3. Implement the following proof job types:
+```cairo
+enum ProofType {
+    StarknetBatch: u8,
+    ZKMLInference: u8,
+    CrossChainBridge: u8,
+    ApplicationSpecific: u8,
+}
+```
+
+4. Implement priority levels for time-critical operations:
+```cairo
+struct PriorityConfig {
+    level: u8,
+    reward_multiplier: u16,
+    max_verification_time: u64,
+}
+```
+
+5. Integrate with worker reputation system:
+```cairo
+struct WorkerReputation {
+    worker_id: felt252,
+    successful_verifications: u64,
+    challenged_verifications: u64,
+    average_verification_time: u64,
+    reputation_score: u16,
+}
+
+fn update_worker_reputation(worker_id: felt252, proof_id: u256, success: bool) {
+    // Update worker reputation based on verification success/failure
+}
+```
+
+6. Implement proof verification algorithms for each proof type:
+   - Starknet batch proofs: Verify STARK proofs for batched Starknet transactions
+   - ZKML inference verification: Verify ML model inference correctness
+   - Cross-chain bridge proofs: Verify state transitions across different blockchains
+   - Application-specific proofs: Extensible framework for custom proof verification
+
+7. Implement proof job queue and assignment logic:
+```cairo
+struct ProofJob {
+    id: u256,
+    proof_type: ProofType,
+    inputs: Array<felt252>,
+    priority: u8,
+    deadline: u64,
+    status: ProofStatus,
+    assigned_worker: Option<felt252>,
+    submission_time: u64,
+    verification_time: Option<u64>,
+}
+
+fn assign_proof_job(job_id: u256, worker_id: felt252) {
+    // Assign proof job to worker based on reputation and capabilities
+}
+```
+
+8. Implement reward distribution based on proof complexity and priority:
+```cairo
+fn calculate_reward(proof_id: u256) -> u256 {
+    // Calculate reward based on proof type, priority, and verification time
+}
+```
+
+9. Add events for proof lifecycle:
+```cairo
+#[event]
+fn ProofJobSubmitted(proof_id: u256, proof_type: ProofType, priority: u8, deadline: u64) {}
+
+#[event]
+fn ProofVerified(proof_id: u256, worker_id: felt252, verification_time: u64) {}
+
+#[event]
+fn ProofChallenged(proof_id: u256, challenger: felt252, success: bool) {}
+
+#[event]
+fn RewardClaimed(proof_id: u256, worker_id: felt252, amount: u256) {}
+```
+
+10. Implement security measures:
+    - Proof timeout handling
+    - Slashing for incorrect verifications
+    - Dispute resolution mechanism
+    - Rate limiting for proof submissions
+
+11. Optimize gas usage for on-chain verification operations
+    - Batch verification where possible
+    - Efficient storage patterns
+    - Minimize state changes
+
+# Test Strategy:
+1. Unit tests for all contract functions with 95%+ coverage:
+   - Test each verification function with valid and invalid inputs
+   - Test proof job submission with different types and priorities
+   - Test challenge mechanism with valid and invalid challenges
+   - Test reward calculation and distribution
+
+2. Test specific proof type verification:
+   - Test Starknet batch proof verification with sample proofs
+   - Test ZKML inference verification with different model outputs
+   - Test cross-chain bridge proofs with mock bridge states
+   - Test application-specific proofs with custom verification logic
+
+3. Integration tests with other contracts:
+   - Test integration with CDC Pool contract for worker reputation
+   - Test integration with JobMgr contract for job assignment
+   - Test with mock ERC20 tokens for reward distribution
+
+4. Security testing:
+   - Test timeout handling for proof verification
+   - Test slashing mechanism for incorrect verifications
+   - Test dispute resolution with various scenarios
+   - Perform formal verification of critical functions
+
+5. Performance testing:
+   - Benchmark gas costs for different proof types
+   - Test with varying proof sizes and complexities
+   - Measure verification time for different proof types
+   - Test system under high load conditions
+
+6. Deploy to Starknet testnet:
+   - Deploy contract to testnet and verify functionality
+   - Test with real-world proof examples
+   - Conduct end-to-end verification flows
+   - Validate event emissions and state changes
+
+7. Conduct security audit:
+   - Review for potential vulnerabilities
+   - Check for reentrancy issues
+   - Verify access control mechanisms
+   - Test for edge cases in proof verification
+
+8. Documentation and verification:
+   - Document all functions and their expected behavior
+   - Create test scenarios for each proof type
+   - Document gas optimization techniques
+   - Verify interface compliance with src/interfaces/proof_verifier.cairo

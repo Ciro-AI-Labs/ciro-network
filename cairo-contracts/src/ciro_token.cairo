@@ -581,7 +581,7 @@ pub mod CIROToken {
             let threshold = self.large_transfer_threshold.read();
             if amount >= threshold {
                 // Large transfers must use the initiate_large_transfer function
-                panic(array!['Use initiate_large_transfer']);
+                assert(false, 'Use initiate_large_transfer');
             }
             
             // Check rate limits for regular transfers
@@ -849,7 +849,7 @@ pub mod CIROToken {
             // Calculate successful proposals (simplified)
             let mut successful_proposals = 0;
             let mut i = 1;
-            while i <= total_proposals {
+            while i != total_proposals + 1 {
                 let proposal = self.governance_proposals.read(i);
                 if proposal.status == ProposalStatus::Executed && proposal.votes_for > proposal.votes_against {
                     successful_proposals += 1;
@@ -928,7 +928,7 @@ pub mod CIROToken {
             assert(caller_voting_power >= voting_power, 'Insufficient voting power');
             
             // Record vote
-            assert(self.voted_proposals.read((caller, proposal_id)) == false, 'Already voted');
+            assert(!self.voted_proposals.read((caller, proposal_id)), 'Already voted');
             self.voted_proposals.write((caller, proposal_id), true);
             
             // Update proposal vote counts
@@ -1123,7 +1123,7 @@ pub mod CIROToken {
             let mut i = offset;
             let end = if offset + limit > total_burns { total_burns } else { offset + limit };
             
-            while i < end {
+            while i != end {
                 result.append(self.burn_history.read(i));
                 i += 1;
             };
@@ -1381,7 +1381,7 @@ pub mod CIROToken {
             let mut i = 0;
             
             // Calculate total amount first
-            while i < amounts.len() {
+            while i != amounts.len() {
                 total_amount += *amounts.at(i);
                 i += 1;
             };
@@ -1392,7 +1392,7 @@ pub mod CIROToken {
             
             // Execute transfers
             i = 0;
-            while i < recipients.len() {
+            while i != recipients.len() {
                 let recipient = *recipients.at(i);
                 let amount = *amounts.at(i);
                 
@@ -1435,8 +1435,11 @@ pub mod CIROToken {
             
             // Trigger security review if threshold exceeded
             let threshold = self.security_alert_threshold.read();
-            if report_id + 1 >= threshold {
-                self.last_security_review.write(get_block_timestamp());
+            if threshold > 0 {
+                let next_report_id = report_id + 1;
+                if threshold <= next_report_id {
+                    self.last_security_review.write(get_block_timestamp());
+                }
             }
         }
 
@@ -1708,6 +1711,10 @@ pub mod CIROToken {
             self.security_score.write(100); // Perfect security score initially
             self.audit_findings_count.write(0);
             self.last_audit_timestamp.write(get_block_timestamp());
+            
+            // Initialize large transfer threshold - 10,000 tokens (1% of initial circulation)
+            // This allows normal transfers while flagging large movements that need extra security
+            self.large_transfer_threshold.write(10_000_000_000_000_000_000_000); // 10,000 CIRO tokens
         }
 
         fn _check_and_update_rate_limit(ref self: ContractState, amount: u256) {

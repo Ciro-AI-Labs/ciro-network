@@ -5,6 +5,7 @@ pub mod job_manager;
 pub mod cdc_pool;
 pub mod paymaster;
 pub mod ciro_token;
+pub mod reputation_manager;
 
 // Re-export commonly used types from job_manager
 pub use job_manager::{IJobManager, JobId, ModelId, WorkerId, JobStatus, JobSpec, JobResult, ModelRequirements};
@@ -23,4 +24,9 @@ pub use paymaster::{
 // Re-export commonly used types from ciro_token
 pub use ciro_token::{
     ICIROToken, GovernanceProposal, BurnEvent, SecurityBudget
+};
+
+// Re-export commonly used types from reputation_manager
+pub use reputation_manager::{
+    IReputationManager, ReputationScore, ReputationEvent, ReputationReason, ReputationThreshold
 }; 
