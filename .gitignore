@@ -27,6 +27,7 @@ build/
 
 # Debug logs
 logs/
+**/logs/**
 *.log
 
 # Runtime data
@@ -123,3 +124,35 @@ private-docs/
 
 # Backup directories
 CIRO_Network_Backup/
+
+# ---- CIRO sensitive files (added 2025-08-12) ----
+# Keystores
+**/*keystore*.json
+**/keystores/**
+# Account configs (addresses ok, but avoid accidental commits)
+**/*account*.json
+**/testnet_deployer.json
+**/temp_account.json
+# Raw private keys and certs
+**/*.pem
+**/*.key
+**/*.p12
+# Local env
+.env
+**/.env
+*.env
+# Backups
+/CIRO_Network_Backup/**
+/cairo-contracts/CIRO_Network_Backup/**
+# Specific known files
+/cairo-contracts/fresh_deployer_key
+/cairo-contracts/testnet_keystore.json
+/cairo-contracts/airdrop/keystores/**
+/cairo-contracts/airdrop/generated/**
+# Admin accounts (contains keystores and generated configs)
+/cairo-contracts/admin_accounts/**
+# Cursor MCP config may contain API keys
+.cursor/mcp.json
+# Local psql history
+.psql_history
+# ---------------------------------------------

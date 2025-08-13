@@ -1,0 +1,10 @@
+{
+  "rpc_url": "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_8/GUBwFqKhSgn4mwVbN6Sbn",
+  "ciro_token": "0x0662c81332894247404fff35313f84d0d832b5eeaaaa6f58e6d32c4dd66d279a",
+  "cdc_pool": "0x05f73c551dbfda890090c8ee89858992dfeea9794a63ad83e6b1706e9836aeba",
+  "job_manager": "0x00bf025663b8a7c7e43393f082b10afe66bd9ddb06fb5e521e3adbcf693094bd",
+  "reputation_manager": "0x02f0ce7e13e113e91f3a4669f742e7470f2bdfb3c7146aff1d449fddf92b7dc0",
+  "linear_vesting": "0x06d2e5684aa4e3fbf3cec0a2594f5dfb7f085e08b8c3debf65ac2e546f49f96c",
+  "milestone_vesting": "0x0475fa46216ed145be825177db2e565ea4abb6d974466ebeaedaf7e3b6d07675",
+  "burn_manager": "0x0362a11c3ec6bd17e169d53c5affe5358b0825233cbbeb0043f5d00ffdc6eb3a"
+}

@@ -149,6 +149,17 @@ All contributors are encouraged to:
 - **Monitoring**: 24/7 security monitoring and alerting
 - **Backup Security**: Encrypted backups with tested recovery procedures
 
+### Operational Backups and Keys
+
+- Sensitive artifacts (keystores and account configs) are excluded from Git via `.gitignore` and backed up locally.
+- Use `scripts/backup_artifacts.sh` to snapshot:
+  - `contracts.json` with canonical contract addresses
+  - deployment JSONs and logs in `cairo-contracts/`
+  - keystores and account files under `cairo-contracts/` and `admin_accounts/`
+  - airdrop artifacts (recipients, generated accounts, keystores)
+- Backups are stored under `CIRO_Network_Backup/<timestamp>/`. Keep an external offline copy as needed.
+- For rotation: create a new admin account, update on-chain admin via timelock/admin function, update `contracts.json`, re-run the backup script.
+
 ### Smart Contract Security
 
 - **Audit Requirements**: All smart contracts undergo security audits
