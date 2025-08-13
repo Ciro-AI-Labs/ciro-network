@@ -179,6 +179,28 @@
             border-radius: 5px;
             font-size: 0.9em;
         }
+
+        /* Ensure long hex/data content wraps instead of overflowing */
+        .events-table td:nth-child(5) {
+            max-width: 480px;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .keys-data {
+            display: block;
+            max-width: 100%;
+            white-space: pre-wrap; /* preserve JSON formatting, allow wrapping */
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #666;
+            background: #f8f9fa;
+            padding: 8px 10px;
+            border-radius: 6px;
+        }
         
         .loading {
             text-align: center;
@@ -276,10 +298,15 @@
             <div class="filters">
                 <select class="filter-input" id="contract-filter">
                     <option value="">All Contracts</option>
+                    <option value="ciro_token">CIRO Token</option>
+                    <option value="cdc_pool">CDC Pool</option>
+                    <option value="job_manager">Job Manager</option>
                     <option value="treasury_timelock">Treasury Timelock</option>
                     <option value="reputation_manager">Reputation Manager</option>
-                    <option value="job_manager">Job Manager</option>
-                    <option value="cdc_pool">CDC Pool</option>
+                    <option value="simple_events">SimpleEvents</option>
+                    <option value="linear_vesting">Linear Vesting</option>
+                    <option value="milestone_vesting">Milestone Vesting</option>
+                    <option value="burn_manager">Burn Manager</option>
                 </select>
                 
                 <select class="filter-input" id="event-type-filter">
@@ -290,7 +317,8 @@
                     <option value="emergency_pause">Emergency Pause</option>
                 </select>
                 
-                <input type="number" class="filter-input" id="limit-input" placeholder="Limit" value="50">
+                <input type="number" class="filter-input" id="limit-input" placeholder="Limit" value="50" min="1" max="200">
+                <input type="number" class="filter-input" id="page-input" placeholder="Page" value="1" min="1">
                 
                 <button class="refresh-btn" onclick="loadEvents()">🔄 Refresh</button>
             </div>
@@ -325,10 +353,9 @@
                 
                 document.getElementById('total-events').textContent = stats.total_events.toLocaleString();
                 
-                // Use a more realistic current block number based on the indexer logs
-                const currentBlock = Math.floor(Date.now() / 10000) + 1357000; // Approximate current block
-                document.getElementById('total-blocks').textContent = currentBlock.toLocaleString();
-                document.getElementById('last-block').textContent = currentBlock.toLocaleString();
+                // Use values returned by the API
+                document.getElementById('total-blocks').textContent = stats.total_blocks.toLocaleString();
+                document.getElementById('last-block').textContent = stats.last_block.toLocaleString();
                 document.getElementById('indexer-status').textContent = 'Running';
                 
             } catch (error) {
@@ -362,16 +389,21 @@
             }
         }
         
+        let currentPage = 1;
         async function loadEvents() {
             try {
                 const contract = document.getElementById('contract-filter').value;
                 const eventType = document.getElementById('event-type-filter').value;
                 const limit = document.getElementById('limit-input').value || 50;
+                const page = document.getElementById('page-input').value || 1;
+                currentPage = parseInt(page, 10);
+                const offset = (currentPage - 1) * limit;
                 
                 const params = new URLSearchParams();
                 if (contract) params.append('contract', contract);
                 if (eventType) params.append('event_type', eventType);
                 params.append('limit', limit);
+                params.append('offset', offset);
                 
                 const response = await fetch(`/api/events?${params}`);
                 const events = await response.json();
@@ -399,8 +431,8 @@
                             <th>Event Type</th>
                             <th>Contract</th>
                             <th>Block</th>
-                            <th>Time</th>
-                            <th>Details</th>
+                            <th>Timestamp</th>
+                            <th>Keys/Data</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -408,21 +440,37 @@
                             <tr>
                                 <td><span class="event-type">${event.event_type}</span></td>
                                 <td>
-                                    <div class="contract-name">${event.contract_name || 'Unknown'}</div>
-                                    <small style="color: #666;">${event.contract_address.substring(0, 10)}...</small>
+                                    <div class="contract-name">${event.contract_address.substring(0, 12)}...</div>
+                                    <small style="color: #666;">${event.contract_address}</small>
                                 </td>
                                 <td><span class="block-number">${event.block_number.toLocaleString()}</span></td>
-                                <td>${event.event_time}</td>
-                                <td>
-                                    <small style="color: #666;">ID: ${event.id.substring(0, 8)}...</small>
-                                </td>
+                                <td>${new Date(event.timestamp * 1000).toLocaleString()}</td>
+                                <td><span class="keys-data">${JSON.stringify(event.data)}</span></td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:12px;">
+                    <button class="refresh-btn" id="prev-page">⬅ Prev</button>
+                    <div style="align-self:center; color:#666;">Page ${currentPage}</div>
+                    <button class="refresh-btn" id="next-page">Next ➡</button>
+                </div>
             `;
             
             document.getElementById('events-content').innerHTML = table;
+
+            document.getElementById('prev-page').onclick = () => {
+                const pageInput = document.getElementById('page-input');
+                const p = Math.max(1, (parseInt(pageInput.value || '1', 10) - 1));
+                pageInput.value = p;
+                loadEvents();
+            };
+            document.getElementById('next-page').onclick = () => {
+                const pageInput = document.getElementById('page-input');
+                const p = (parseInt(pageInput.value || '1', 10) + 1);
+                pageInput.value = p;
+                loadEvents();
+            };
         }
         
         // Manual refresh
@@ -435,6 +483,7 @@
         document.getElementById('contract-filter').addEventListener('change', loadEvents);
         document.getElementById('event-type-filter').addEventListener('change', loadEvents);
         document.getElementById('limit-input').addEventListener('change', loadEvents);
+        document.getElementById('page-input').addEventListener('change', loadEvents);
     </script>
 </body>
 </html>

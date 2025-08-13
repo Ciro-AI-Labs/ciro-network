@@ -467,13 +467,13 @@ export default function HomePage() {
       title: 'The Manifesto',
       description: 'Technical protocol specification',
       icon: FileText,
-      href: '/manifesto'
+      href: '/protected?next=%2Fmanifesto'
     },
     {
       title: 'Tokenomics',
       description: 'Token economics and distribution',
       icon: Coins,
-      href: '/tokenomics'
+      href: '/protected?next=%2Ftokenomics'
     }
   ]
 
@@ -808,7 +808,7 @@ export default function HomePage() {
                 className="flex flex-wrap gap-3"
               >
                 <a 
-                  href="/manifesto"
+                  href="/protected?next=%2Fmanifesto"
                   className="inline-flex items-center gap-2 cosmic-glass px-4 py-2 rounded-full text-sm hover:bg-cosmic-cyan/10 transition-colors cursor-pointer"
                 >
                   <div className="w-2 h-2 bg-aurora-green rounded-full animate-pulse"></div>
@@ -816,7 +816,7 @@ export default function HomePage() {
                   <ArrowUpRight className="w-4 h-4 text-cosmic-cyan" />
                 </a>
                 <a 
-                  href="/tokenomics"
+                  href="/protected?next=%2Ftokenomics"
                   className="inline-flex items-center gap-2 cosmic-glass px-4 py-2 rounded-full text-sm hover:bg-purple-500/10 transition-colors cursor-pointer"
                 >
                   <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
@@ -1726,7 +1726,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
               className="cosmic-glass p-8 rounded-xl border border-green-500/30 group cursor-pointer"
-              onClick={() => window.location.href = '/tokenomics'}
+              onClick={() => window.location.href = '/protected?next=%2Ftokenomics'}
             >
               <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-500 rounded-xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform">
                 <Coins className="w-8 h-8 text-white" />
@@ -1740,8 +1740,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tokenomics Section - $CIRO Token Power & Governance */}
-      <section id="tokenomics" className="py-20 relative">
+      {/* Tokenomics Section removed from landing page (private) */}
+      {/* <section id="tokenomics" className="py-20 relative"> */}
         <div className="math-grid absolute inset-0 opacity-10"></div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4">
@@ -1849,7 +1849,7 @@ export default function HomePage() {
             >
               <div className="text-center mb-8">
                 <h4 className="text-2xl font-bold mb-2 text-blue-400">🚀 Live Smart Contracts</h4>
-                <p className="text-white/70">Production-ready contracts deployed on Starknet Sepolia testnet</p>
+                <p className="text-white/70">Production-ready contracts with a multi-chain roadmap</p>
               </div>
               
               <div className="grid md:grid-cols-3 gap-6">
@@ -1889,7 +1889,7 @@ export default function HomePage() {
               
               <div className="mt-6 text-center">
                 <a 
-                  href="/tokenomics" 
+                  href="/protected?next=%2Ftokenomics" 
                   className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300"
                 >
                   View Complete Tokenomics
@@ -2328,10 +2328,10 @@ export default function HomePage() {
             </div>
           </motion.div>
         </div>
-      </section>
+      {/* </section> */}
 
-      {/* Built on Starknet Section - Multichain & Bitcoin Settlements */}
-      <section id="starknet" className="py-20 relative">
+      {/* Multichain Architecture Section */}
+      <section id="architecture" className="py-20 relative">
         <div className="math-grid absolute inset-0 opacity-10"></div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4">
@@ -2343,14 +2343,14 @@ export default function HomePage() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-fractal">
-              Built on Starknet
+              Built for Multi-Chain
             </h2>
             <p className="text-xl text-white/70 max-w-3xl mx-auto">
               Leveraging the most advanced Layer 2 scaling solution with multichain interoperability and Bitcoin settlements for the future of decentralized AI compute.
             </p>
           </motion.div>
 
-          {/* Starknet Advantages */}
+          {/* Multi-Chain Advantages */}
           <div className="mb-20">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -2358,7 +2358,7 @@ export default function HomePage() {
               transition={{ duration: 0.8 }}
               className="text-center mb-12"
             >
-              <h3 className="text-3xl font-bold mb-4 text-cosmic-cyan">Why Starknet?</h3>
+              <h3 className="text-3xl font-bold mb-4 text-cosmic-cyan">Why Multi-Chain?</h3>
               <p className="text-lg text-white/70">
                 The most advanced Layer 2 scaling solution for enterprise-grade applications
               </p>

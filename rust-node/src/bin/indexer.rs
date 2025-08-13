@@ -3,6 +3,9 @@
 //! Standalone service for indexing blockchain events from CIRO Network smart contracts.
 
 use anyhow::Result;
+use serde::Deserialize;
+use std::path::Path;
+use std::fs;
 use clap::Parser;
 use std::sync::Arc;
 use tokio::signal;
@@ -66,13 +69,29 @@ struct Args {
     /// SimpleEvents test contract address
     #[arg(long, default_value = "0x0000000000000000000000000000000000000000000000000000000000000000")]
     simple_events: String,
+
+    /// Linear Vesting contract address
+    #[arg(long, default_value = "0x0000000000000000000000000000000000000000000000000000000000000000")]
+    linear_vesting: String,
+
+    /// Milestone Vesting contract address
+    #[arg(long, default_value = "0x0000000000000000000000000000000000000000000000000000000000000000")]
+    milestone_vesting: String,
+
+    /// Burn Manager contract address
+    #[arg(long, default_value = "0x0000000000000000000000000000000000000000000000000000000000000000")]
+    burn_manager: String,
+
+    /// Optional path to contracts deployment JSON (will override individual addresses if present)
+    #[arg(long)]
+    contracts_file: Option<String>,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize logging
     tracing_subscriber::fmt()
-        .with_env_filter("info,ciro_node=debug")
+        .with_env_filter("info,ciro_node=debug,ciro_worker=debug")
         .init();
 
     let args = Args::parse();
@@ -105,6 +124,40 @@ async fn main() -> Result<()> {
         }
     }
 
+    // Ensure schema exists
+    if let Err(e) = database.initialize().await {
+        error!("❌ Failed to initialize database schema: {}", e);
+        return Err(e);
+    }
+
+    // Optionally load addresses from contracts file
+    #[derive(Deserialize)]
+    struct ReputationManagerEntry { contract_address: String }
+    #[derive(Deserialize)]
+    struct ContractsFile { reputation_manager: ReputationManagerEntry }
+
+    let mut reputation_manager_addr = args.reputation_manager.clone();
+    if let Some(path) = args.contracts_file.clone().or_else(|| {
+        let default_path = "../cairo-contracts/reputation_manager_deployment.json".to_string();
+        if Path::new(&default_path).exists() { Some(default_path) } else { None }
+    }) {
+        match fs::read_to_string(&path) {
+            Ok(contents) => {
+                if let Ok(parsed) = serde_json::from_str::<ContractsFile>(&contents) {
+                    if !parsed.reputation_manager.contract_address.is_empty() {
+                        reputation_manager_addr = parsed.reputation_manager.contract_address;
+                        info!("Loaded Reputation Manager address from {}", path);
+                    }
+                } else {
+                    info!("Contracts file found but could not be parsed; using CLI defaults: {}", path);
+                }
+            }
+            Err(_) => {
+                info!("Contracts file not readable; using CLI defaults: {}", path);
+            }
+        }
+    }
+
     // Parse contract addresses
     let contracts = ContractAddresses {
         job_manager: parse_address(&args.job_manager)?,
@@ -112,8 +165,11 @@ async fn main() -> Result<()> {
         treasury_timelock: parse_address(&args.treasury_timelock)?,
         ciro_token: parse_address(&args.ciro_token)?,
         governance_treasury: parse_address(&args.governance_treasury)?,
-        reputation_manager: parse_address(&args.reputation_manager)?,
+        reputation_manager: parse_address(&reputation_manager_addr)?,
         simple_events: parse_address(&args.simple_events)?,
+        linear_vesting: parse_address(&args.linear_vesting)?,
+        milestone_vesting: parse_address(&args.milestone_vesting)?,
+        burn_manager: parse_address(&args.burn_manager)?,
     };
 
     info!("Monitoring contracts:");

@@ -2191,7 +2191,7 @@ export default function ManifestoPage() {
           </div>
         </section>
 
-        {/* Enhanced Tokenomics Section */}
+        {/* Enhanced Tokenomics Section (protected via middleware) */}
         <section id="tokenomics" className="mb-20 scroll-mt-24">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-gradient-to-r from-cosmic-cyan to-blue-500 rounded-lg flex items-center justify-center">
@@ -2204,7 +2204,7 @@ export default function ManifestoPage() {
             <p className="text-lg text-gray-200 leading-relaxed mb-4">
               <strong className="text-cosmic-cyan">CIRO Tokenomics v4.1</strong> implements a research-based hybrid architecture designed for 
               sustainable 50x-200x returns through governance-controlled supply management, revenue-token linkage, and advanced burn mechanics. 
-              Our production-ready smart contracts are live on Starknet Sepolia testnet, ready for mainnet deployment.
+              Our production-ready smart contracts follow a multi-chain roadmap and are ready for mainnet deployment.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <span className="bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-sm border border-green-500/30">
@@ -2223,7 +2223,7 @@ export default function ManifestoPage() {
           <div className="mb-12">
             <h3 className="text-2xl font-semibold mb-6 text-cosmic-cyan">🚀 Live Smart Contracts</h3>
             <p className="text-gray-300 mb-6 text-sm">
-              Successfully deployed on <strong>Starknet Sepolia Testnet</strong> - Ready for mainnet launch
+              Successfully tested on testnets with a multi-chain strategy - Ready for mainnet launch
             </p>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

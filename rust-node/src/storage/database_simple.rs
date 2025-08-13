@@ -28,17 +28,48 @@ impl SimpleDatabase {
         Ok(Self { pool })
     }
 
-    /// Initialize database schema by running migrations
+    /// Initialize minimal database schema required for the indexer (events table only)
     pub async fn initialize(&self) -> Result<()> {
         info!("Initializing database schema...");
-        
-        // Run the migration SQL
-        let migration_sql = include_str!("../../migrations/001_initial_schema.sql");
-        sqlx::query(migration_sql)
+
+        // Ensure UUID extension exists (safe if missing; no-op otherwise)
+        sqlx::query(r#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp";"#)
             .execute(&self.pool)
             .await
-            .context("Failed to run database migrations")?;
-        
+            .context("Failed to ensure uuid-ossp extension")?;
+
+        // Create only the events table needed by the indexer
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS events (
+                id SERIAL PRIMARY KEY,
+                contract_address VARCHAR(66) NOT NULL,
+                event_type VARCHAR(100) NOT NULL,
+                block_number BIGINT NOT NULL,
+                timestamp BIGINT NOT NULL,
+                data JSONB NOT NULL DEFAULT '{}',
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+            "#,
+        )
+        .execute(&self.pool)
+        .await
+        .context("Failed to create events table")?;
+
+        // Indexes to speed up queries
+        for stmt in [
+            "CREATE INDEX IF NOT EXISTS idx_events_contract_address ON events (contract_address);",
+            "CREATE INDEX IF NOT EXISTS idx_events_event_type ON events (event_type);",
+            "CREATE INDEX IF NOT EXISTS idx_events_block_number ON events (block_number);",
+            "CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events (timestamp);",
+            "CREATE INDEX IF NOT EXISTS idx_events_created_at ON events (created_at);",
+        ] {
+            sqlx::query(stmt)
+                .execute(&self.pool)
+                .await
+                .with_context(|| format!("Failed to create index with statement: {}", stmt))?;
+        }
+
         info!("Database schema initialized successfully");
         Ok(())
     }
@@ -260,6 +291,111 @@ impl SimpleDatabase {
         Ok(events)
     }
 
+    /// Get events with optional contract and event type filters
+    pub async fn get_events_filtered(
+        &self,
+        contract: Option<&str>,
+        event_type: Option<&str>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<CiroEvent>> {
+        // Normalize a provided hex address to compare independent of left padding
+        // We compare on lowercase hex without the 0x prefix and with leading zeros trimmed
+        let norm = |addr: &str| -> String {
+            let s = addr.trim().to_lowercase();
+            let s = s.strip_prefix("0x").unwrap_or(&s).to_string();
+            let trimmed = s.trim_start_matches('0');
+            if trimmed.is_empty() { "0".to_string() } else { trimmed.to_string() }
+        };
+
+        let rows = match (contract, event_type) {
+            (Some(addr), Some(ev_type)) => {
+                sqlx::query(
+                    "SELECT contract_address, event_type, block_number, timestamp, data \
+                     FROM events \
+                      WHERE ltrim(replace(lower(contract_address), '0x',''),'0') = $1 AND event_type = $2 \
+                      ORDER BY created_at DESC \
+                      LIMIT $3 OFFSET $4",
+                )
+                .bind(norm(addr))
+                .bind(ev_type)
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await
+                .context("Failed to fetch filtered events (contract + type)")?
+            }
+            (Some(addr), None) => {
+                sqlx::query(
+                    "SELECT contract_address, event_type, block_number, timestamp, data \
+                     FROM events \
+                      WHERE ltrim(replace(lower(contract_address), '0x',''),'0') = $1 \
+                      ORDER BY created_at DESC \
+                      LIMIT $2 OFFSET $3",
+                )
+                .bind(norm(addr))
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await
+                .context("Failed to fetch filtered events (contract only)")?
+            }
+            (None, Some(ev_type)) => {
+                sqlx::query(
+                    "SELECT contract_address, event_type, block_number, timestamp, data \
+                     FROM events \
+                     WHERE event_type = $1 \
+                      ORDER BY created_at DESC \
+                      LIMIT $2 OFFSET $3",
+                )
+                .bind(ev_type)
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await
+                .context("Failed to fetch filtered events (type only)")?
+            }
+            (None, None) => {
+                let rows = sqlx::query(
+                    "SELECT contract_address, event_type, block_number, timestamp, data \
+                     FROM events \
+                     ORDER BY created_at DESC \
+                     LIMIT $1 OFFSET $2"
+                )
+                .bind(limit)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await
+                .context("Failed to fetch recent events with pagination")?;
+
+                let mut events = Vec::new();
+                for row in rows {
+                    events.push(CiroEvent {
+                        contract_address: row.get("contract_address"),
+                        event_type: row.get("event_type"),
+                        block_number: row.get::<i64, _>("block_number") as u64,
+                        timestamp: row.get::<i64, _>("timestamp") as u64,
+                        data: row.get("data"),
+                    });
+                }
+                return Ok(events);
+            }
+        };
+
+        let mut events = Vec::new();
+        for row in rows {
+            events.push(CiroEvent {
+                contract_address: row.get("contract_address"),
+                event_type: row.get("event_type"),
+                block_number: row.get::<i64, _>("block_number") as u64,
+                timestamp: row.get::<i64, _>("timestamp") as u64,
+                data: row.get("data"),
+            });
+        }
+
+        Ok(events)
+    }
+
     /// Get events for a specific contract
     pub async fn get_contract_events(&self, contract_address: &str, limit: i64) -> Result<Vec<CiroEvent>> {
         let rows = sqlx::query(
@@ -328,6 +464,25 @@ impl SimpleDatabase {
         }
 
         Ok((total_events, events_by_type, events_by_contract))
+    }
+
+    /// Get simple block stats for dashboard metrics: (last_block, total_distinct_blocks)
+    pub async fn get_block_stats(&self) -> Result<(i64, i64)> {
+        // Last (max) block number we've seen in events
+        let last_block: Option<i64> = sqlx::query_scalar("SELECT MAX(block_number) FROM events")
+            .fetch_one(&self.pool)
+            .await
+            .context("Failed to get last block number")?;
+
+        let last_block = last_block.unwrap_or(0);
+
+        // Count of distinct blocks that have at least one event
+        let total_blocks: i64 = sqlx::query_scalar("SELECT COUNT(DISTINCT block_number) FROM events")
+            .fetch_one(&self.pool)
+            .await
+            .context("Failed to get total distinct blocks")?;
+
+        Ok((last_block, total_blocks))
     }
 }
 

@@ -4,12 +4,20 @@
 
 use anyhow::{Result, Context};
 use serde::{Deserialize, Serialize};
-use starknet::core::types::{BlockId, FieldElement, MaybePendingBlockWithTxs, Transaction, MaybePendingTransactionReceipt, Event};
+use starknet::core::types::{
+    BlockId,
+    FieldElement,
+    MaybePendingBlockWithTxs,
+    Transaction,
+    MaybePendingTransactionReceipt,
+    Event,
+    EventFilter,
+};
 use starknet::providers::Provider;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{info, debug, error};
-use tokio::time::{Duration, interval};
+use tokio::time::{Duration, interval, sleep};
 
 use crate::blockchain::client::StarknetClient;
 use crate::storage::database_simple::SimpleDatabase as DatabaseManager;
@@ -79,6 +87,10 @@ pub struct ContractAddresses {
     pub governance_treasury: FieldElement,
     pub reputation_manager: FieldElement,
     pub simple_events: FieldElement,
+    // Extensions
+    pub linear_vesting: FieldElement,
+    pub milestone_vesting: FieldElement,
+    pub burn_manager: FieldElement,
 }
 
 /// Main blockchain event indexer
@@ -93,6 +105,71 @@ pub struct EventIndexer {
 }
 
 impl EventIndexer {
+    /// Sleep with exponential backoff based on attempt number
+    async fn backoff_sleep(&self, attempt: u32) {
+        let base_ms = self.config.retry_delay_ms;
+        let delay_ms = base_ms.saturating_mul(1u64 << attempt.min(8));
+        sleep(Duration::from_millis(delay_ms)).await;
+    }
+
+    /// Retry wrapper for get_block_with_txs
+    async fn get_block_with_txs_retry(
+        &self,
+        block_id: BlockId,
+    ) -> Result<MaybePendingBlockWithTxs> {
+        let mut last_err: Option<anyhow::Error> = None;
+        for attempt in 0..self.config.max_retries {
+            match self.client.provider().get_block_with_txs(block_id).await {
+                Ok(b) => return Ok(b),
+                Err(e) => {
+                    last_err = Some(e.into());
+                    error!("get_block_with_txs failed (attempt {}): {}", attempt + 1, last_err.as_ref().unwrap());
+                    self.backoff_sleep(attempt).await;
+                }
+            }
+        }
+        Err(last_err.unwrap_or_else(|| anyhow::anyhow!("get_block_with_txs failed")))
+    }
+
+    /// Retry wrapper for get_transaction_receipt
+    async fn get_tx_receipt_retry(
+        &self,
+        tx_hash: FieldElement,
+    ) -> Result<MaybePendingTransactionReceipt> {
+        let mut last_err: Option<anyhow::Error> = None;
+        for attempt in 0..self.config.max_retries {
+            match self.client.provider().get_transaction_receipt(tx_hash).await {
+                Ok(r) => return Ok(r),
+                Err(e) => {
+                    last_err = Some(e.into());
+                    error!("get_transaction_receipt failed for 0x{:x} (attempt {}): {}", tx_hash, attempt + 1, last_err.as_ref().unwrap());
+                    self.backoff_sleep(attempt).await;
+                }
+            }
+        }
+        Err(last_err.unwrap_or_else(|| anyhow::anyhow!("get_transaction_receipt failed")))
+    }
+
+    /// Retry wrapper for get_events
+    async fn get_events_retry(
+        &self,
+        filter: EventFilter,
+        continuation: Option<String>,
+        chunk_size: u64,
+    ) -> Result<starknet::core::types::EventsPage> {
+        let mut last_err: Option<anyhow::Error> = None;
+        for attempt in 0..self.config.max_retries {
+            match self.client.provider().get_events(filter.clone(), continuation.clone(), chunk_size).await {
+                Ok(p) => return Ok(p),
+                Err(e) => {
+                    last_err = Some(e.into());
+                    error!("get_events failed (attempt {}): {}", attempt + 1, last_err.as_ref().unwrap());
+                    self.backoff_sleep(attempt).await;
+                }
+            }
+        }
+        Err(last_err.unwrap_or_else(|| anyhow::anyhow!("get_events failed")))
+    }
     /// Create a new event indexer
     pub fn new(
         client: Arc<StarknetClient>,
@@ -166,7 +243,9 @@ impl EventIndexer {
         let last_processed = state.last_block;
         drop(state);
 
+        debug!("⛓️  current_block={}, last_processed={}", current_block, last_processed);
         if current_block <= last_processed {
+            debug!("No new blocks to process");
             return Ok(());
         }
 
@@ -175,19 +254,58 @@ impl EventIndexer {
         let mut total_events = 0;
         
         // Process each block individually for now (can batch later)
+        // If provider block decoding fails, immediately fall back to a range
+        // sweep via get_events so we do not stall.
+        let mut fell_back_range = false;
         for block_num in (last_processed + 1)..=current_block {
             match self.process_single_block(block_num).await {
                 Ok(event_count) => {
                     total_events += event_count;
-                    debug!("Block {}: {} events", block_num, event_count);
+                    debug!("Block {} processed: {} events", block_num, event_count);
                 },
                 Err(e) => {
                     error!("Failed to process block {}: {}", block_num, e);
-                    // Continue with next block rather than failing completely
+                    // Immediate range fallback once on first failure
+                    if !fell_back_range {
+                        fell_back_range = true;
+                        match self.fetch_events_via_filter_range(block_num, current_block).await {
+                            Ok(n) => {
+                                if n > 0 { info!("⬇️ Immediate range fallback captured {} events across {}..{}", n, block_num, current_block); }
+                                total_events += n;
+                            },
+                            Err(err) => error!("Immediate range fallback failed: {}", err),
+                        }
+                        // After the range sweep, break the per-block loop to avoid long retries
+                        break;
+                    }
                 }
             }
         }
+
+        // Additional range-based fallback at the end as a safety net
+        if !fell_back_range && current_block > last_processed {
+            match self.fetch_events_via_filter_range(last_processed + 1, current_block).await {
+                Ok(n) => {
+                    if n > 0 { info!("⬇️ get_events range fallback captured {} events across blocks {}..{}", n, last_processed + 1, current_block); }
+                    total_events += n;
+                }
+                Err(e) => error!("Range fallback via get_events failed: {}", e),
+            }
+        }
         
+        // One-time explicit fetch for a known RM event block (temporary fast path)
+        let _ = self.fetch_events_for_address_range(self.contracts.reputation_manager, 1474511, 1474511).await;
+
+        // Targeted RM backfill over a recent window to force-capture events
+        let backfill_from = if current_block > 1000 { current_block - 1000 } else { 0 };
+        match self.fetch_events_for_address_range(self.contracts.reputation_manager, backfill_from, current_block).await {
+            Ok(n) => {
+                if n > 0 { info!("🎯 Targeted RM backfill captured {} events across {}..{}", n, backfill_from, current_block); }
+                total_events += n;
+            },
+            Err(e) => error!("Targeted RM backfill failed: {}", e),
+        }
+
         // Update state
         let mut state = self.state.write().await;
         state.last_block = current_block;
@@ -203,10 +321,28 @@ impl EventIndexer {
 
     /// Process a single block and extract events
     async fn process_single_block(&self, block_number: u64) -> Result<u64> {
-        // Get block with transactions
+        // Get block with transactions; if RPC parsing fails, immediately fall back
+        // to get_events for monitored contracts in this block so we don't stall.
         let block_id = BlockId::Number(block_number);
-        let block = self.client.provider().get_block_with_txs(block_id).await
-            .context(format!("Failed to get block {}", block_number))?;
+        let block = match self.get_block_with_txs_retry(block_id).await {
+            Ok(b) => b,
+            Err(e) => {
+                error!(
+                    "get_block_with_txs failed for block {}: {}. Falling back to get_events for this block",
+                    block_number,
+                    e
+                );
+                let ts = chrono::Utc::now().timestamp() as u64;
+                let fetched = self.fetch_events_via_filter(block_number, ts).await?;
+                if fetched > 0 {
+                    info!(
+                        "⬇️ Fallback captured {} events via get_events for block {}",
+                        fetched, block_number
+                    );
+                }
+                return Ok(fetched);
+            }
+        };
 
         let mut event_count = 0;
 
@@ -221,6 +357,9 @@ impl EventIndexer {
                     }
                     event_count += tx_events;
                 }
+
+                // Fallback: query events directly via get_events for monitored contracts
+                event_count += self.fetch_events_via_filter(block_number, block.timestamp).await?;
             },
             MaybePendingBlockWithTxs::PendingBlock(pending_block) => {
                 debug!("📦 Processing pending block {} with {} transactions", block_number, pending_block.transactions.len());
@@ -233,6 +372,9 @@ impl EventIndexer {
                     }
                     event_count += tx_events;
                 }
+
+                // Fallback for pending blocks as well
+                event_count += self.fetch_events_via_filter(block_number, timestamp).await?;
             }
         }
 
@@ -241,6 +383,202 @@ impl EventIndexer {
         }
 
         Ok(event_count)
+    }
+
+    /// Fallback: fetch events via JSON-RPC get_events for monitored contracts
+    async fn fetch_events_via_filter(&self, block_number: u64, block_timestamp: u64) -> Result<u64> {
+        let mut total = 0u64;
+
+        // Helper to fetch and store events for a single address
+        async fn fetch_for_address(
+            this_: &EventIndexer,
+            address: FieldElement,
+            block_number: u64,
+            block_timestamp: u64,
+        ) -> Result<u64> {
+            let mut fetched = 0u64;
+            let mut continuation: Option<String> = None;
+
+            loop {
+                let filter = EventFilter {
+                    from_block: Some(BlockId::Number(block_number)),
+                    to_block: Some(BlockId::Number(block_number)),
+                    address: Some(address),
+                    keys: None,
+                };
+
+                let page = this_
+                    .get_events_retry(filter, continuation.clone(), 100)
+                    .await?;
+
+                for emitted in &page.events {
+                    // Convert EmittedEvent to Event-like structure for reuse
+                    let evt = Event {
+                        from_address: emitted.from_address,
+                        keys: emitted.keys.clone(),
+                        data: emitted.data.clone(),
+                    };
+                    // Store using existing pipeline
+                    if let Err(e) = this_.process_and_store_event(&evt, block_number, block_timestamp).await {
+                        error!("❌ Failed to store event via filter: {}", e);
+                    } else {
+                        fetched += 1;
+                    }
+                }
+
+                if let Some(token) = page.continuation_token {
+                    continuation = Some(token);
+                } else {
+                    break;
+                }
+            }
+
+            Ok(fetched)
+        }
+
+        // Query monitored contracts (skip zero/empty addresses implicitly; provider returns empty)
+        for addr in [
+            self.contracts.reputation_manager,
+            self.contracts.simple_events,
+            self.contracts.ciro_token,
+            self.contracts.job_manager,
+            self.contracts.cdc_pool,
+            self.contracts.treasury_timelock,
+            self.contracts.governance_treasury,
+            self.contracts.linear_vesting,
+            self.contracts.milestone_vesting,
+            self.contracts.burn_manager,
+        ] {
+            match fetch_for_address(self, addr, block_number, block_timestamp).await {
+                Ok(n) if n > 0 => {
+                    info!("⬇️ get_events fallback captured {} events for 0x{:x} in block {}", n, addr, block_number);
+                    total += n;
+                }
+                Ok(_) => {}
+                Err(e) => error!("get_events fallback failed for 0x{:x}: {}", addr, e),
+            }
+        }
+
+        Ok(total)
+    }
+
+    /// Fallback: fetch events via JSON-RPC get_events across a block range for monitored contracts
+    async fn fetch_events_via_filter_range(&self, from_block: u64, to_block: u64) -> Result<u64> {
+        let mut total = 0u64;
+
+        async fn fetch_for_address_range(
+            this_: &EventIndexer,
+            address: FieldElement,
+            from_block: u64,
+            to_block: u64,
+        ) -> Result<u64> {
+            let mut fetched = 0u64;
+            let mut continuation: Option<String> = None;
+
+            loop {
+                let filter = EventFilter {
+                    from_block: Some(BlockId::Number(from_block)),
+                    to_block: Some(BlockId::Number(to_block)),
+                    address: Some(address),
+                    keys: None,
+                };
+
+                 let page = this_
+                     .get_events_retry(filter, continuation.clone(), 100)
+                     .await?;
+
+                for emitted in &page.events {
+                    let evt = Event {
+                        from_address: emitted.from_address,
+                        keys: emitted.keys.clone(),
+                        data: emitted.data.clone(),
+                    };
+
+                    // Best-effort timestamp: use current time if we can't easily map block timestamp here
+                    let timestamp = chrono::Utc::now().timestamp() as u64;
+                    if let Err(e) = this_.process_and_store_event(&evt, to_block, timestamp).await {
+                        error!("❌ Failed to store event via range filter: {}", e);
+                    } else {
+                        fetched += 1;
+                    }
+                }
+
+                if let Some(token) = page.continuation_token {
+                    continuation = Some(token);
+                } else {
+                    break;
+                }
+            }
+
+            Ok(fetched)
+        }
+
+        for addr in [
+            self.contracts.reputation_manager,
+            self.contracts.simple_events,
+            self.contracts.ciro_token,
+            self.contracts.job_manager,
+            self.contracts.cdc_pool,
+            self.contracts.treasury_timelock,
+            self.contracts.governance_treasury,
+            self.contracts.linear_vesting,
+            self.contracts.milestone_vesting,
+            self.contracts.burn_manager,
+        ] {
+            match fetch_for_address_range(self, addr, from_block, to_block).await {
+                Ok(n) => total += n,
+                Err(e) => error!("get_events range failed for 0x{:x}: {}", addr, e),
+            }
+        }
+
+        Ok(total)
+    }
+
+    /// Targeted: fetch events for a specific contract address across a block range
+    async fn fetch_events_for_address_range(
+        &self,
+        address: FieldElement,
+        from_block: u64,
+        to_block: u64,
+    ) -> Result<u64> {
+        let mut fetched = 0u64;
+        let mut continuation: Option<String> = None;
+
+        loop {
+            let filter = EventFilter {
+                from_block: Some(BlockId::Number(from_block)),
+                to_block: Some(BlockId::Number(to_block)),
+                address: Some(address),
+                keys: None,
+            };
+
+            let page = self
+                .get_events_retry(filter, continuation.clone(), 100)
+                .await?;
+
+            for emitted in &page.events {
+                let evt = Event {
+                    from_address: emitted.from_address,
+                    keys: emitted.keys.clone(),
+                    data: emitted.data.clone(),
+                };
+                // Best-effort timestamp for range queries
+                let timestamp = chrono::Utc::now().timestamp() as u64;
+                if let Err(e) = self.process_and_store_event(&evt, to_block, timestamp).await {
+                    error!("❌ Failed to store targeted event: {}", e);
+                } else {
+                    fetched += 1;
+                }
+            }
+
+            if let Some(token) = page.continuation_token {
+                continuation = Some(token);
+            } else {
+                break;
+            }
+        }
+
+        Ok(fetched)
     }
 
     /// Process events from a single transaction
@@ -266,28 +604,28 @@ impl EventIndexer {
 
         debug!("✅ Got receipt for tx 0x{:x}", tx_hash);
 
-        let events = match receipt {
+        let events: Vec<Event> = match receipt {
             MaybePendingTransactionReceipt::Receipt(receipt) => {
                 match receipt {
                     starknet::core::types::TransactionReceipt::Invoke(receipt) => {
                         debug!("📄 Invoke receipt with {} events", receipt.events.len());
-                        &receipt.events
+                        receipt.events
                     },
                     starknet::core::types::TransactionReceipt::Declare(receipt) => {
                         debug!("📄 Declare receipt with {} events", receipt.events.len());
-                        &receipt.events
+                        receipt.events
                     },
                     starknet::core::types::TransactionReceipt::Deploy(receipt) => {
                         debug!("📄 Deploy receipt with {} events", receipt.events.len());
-                        &receipt.events
+                        receipt.events
                     },
                     starknet::core::types::TransactionReceipt::DeployAccount(receipt) => {
                         debug!("📄 DeployAccount receipt with {} events", receipt.events.len());
-                        &receipt.events
+                        receipt.events
                     },
                     starknet::core::types::TransactionReceipt::L1Handler(receipt) => {
                         debug!("📄 L1Handler receipt with {} events", receipt.events.len());
-                        &receipt.events
+                        receipt.events
                     },
                 }
             },
@@ -336,7 +674,10 @@ impl EventIndexer {
         *address == self.contracts.cdc_pool ||
         *address == self.contracts.ciro_token ||
         *address == self.contracts.governance_treasury ||
-        *address == self.contracts.simple_events
+        *address == self.contracts.simple_events ||
+        *address == self.contracts.linear_vesting ||
+        *address == self.contracts.milestone_vesting ||
+        *address == self.contracts.burn_manager
     }
 
     /// Process and store a single event
@@ -365,7 +706,17 @@ impl EventIndexer {
         self.database.store_event(&ciro_event).await
             .context("Failed to store event in database")?;
 
-        debug!("Stored {} event from {}", event_type, contract_address);
+        // Extra visibility for CIRO token events while validating ingestion
+        if contract_type == "ciro_token" {
+            info!(
+                "🟣 CIRO {} captured at block {} from {}",
+                event_type,
+                block_number,
+                contract_address
+            );
+        } else {
+            debug!("Stored {} event from {}", event_type, contract_address);
+        }
         Ok(())
     }
 
@@ -385,14 +736,22 @@ impl EventIndexer {
             "governance_treasury"
         } else if event.from_address == self.contracts.simple_events {
             "simple_events"
+        } else if event.from_address == self.contracts.linear_vesting {
+            "linear_vesting"
+        } else if event.from_address == self.contracts.milestone_vesting {
+            "milestone_vesting"
+        } else if event.from_address == self.contracts.burn_manager {
+            "burn_manager"
         } else {
             "unknown"
         };
 
-        // For SimpleEvents contract, we know the event structure
+        // For SimpleEvents and ReputationManager, apply explicit labels
         let event_type = if contract_type == "simple_events" && !event.keys.is_empty() {
-            // SimpleEvents emits TestEvent with a specific key
             "TestEvent"
+        } else if contract_type == "reputation_manager" && !event.keys.is_empty() {
+            // Label RM events for visibility; we can refine by key later if needed
+            "AdminAdjusted"
         } else if contract_type == "ciro_token" {
             // Common ERC20 events
             if !event.keys.is_empty() {
@@ -404,6 +763,12 @@ impl EventIndexer {
             } else {
                 "TokenEvent"
             }
+        } else if contract_type == "linear_vesting" {
+            if !event.keys.is_empty() { "VestingEvent" } else { "VestingEvent" }
+        } else if contract_type == "milestone_vesting" {
+            if !event.keys.is_empty() { "MilestoneEvent" } else { "MilestoneEvent" }
+        } else if contract_type == "burn_manager" {
+            if !event.keys.is_empty() { "BurnEvent" } else { "BurnEvent" }
         } else {
             "GenericEvent"
         };

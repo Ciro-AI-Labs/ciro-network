@@ -39,7 +39,7 @@ export default function TokenomicsPage() {
             </span>
           </h2>
           <p className="text-center text-gray-300 mb-12 text-lg">
-            Successfully deployed on <strong>Starknet Sepolia Testnet</strong> - Ready for mainnet launch
+            Successfully tested on testnets with a multi-chain roadmap - Ready for mainnet launch
           </p>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -121,7 +121,7 @@ export default function TokenomicsPage() {
           
           <div className="mt-12 text-center">
             <p className="text-gray-400 text-sm mb-4">
-              🔗 View contracts on <a href="https://sepolia.starkscan.co" className="text-blue-400 hover:underline">Starknet Sepolia Explorer</a>
+              🔗 View smart contracts on supported explorers (multi-chain roadmap)
             </p>
             <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4 max-w-2xl mx-auto">
               <p className="text-yellow-400 text-sm">
@@ -685,7 +685,7 @@ export default function TokenomicsPage() {
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-6">
               <h3 className="text-green-400 font-bold mb-2">✅ Contracts Deployed</h3>
-              <p className="text-gray-300 text-sm">All 6 core contracts live on Starknet Sepolia testnet</p>
+              <p className="text-gray-300 text-sm">All 6 core contracts tested and ready with a multi-chain strategy</p>
             </div>
             <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-6">
               <h3 className="text-blue-400 font-bold mb-2">🔒 Security Audited</h3>

@@ -155,7 +155,7 @@ export default function ComingSoonPage() {
               <a href="/" className="text-white/80 hover:text-cosmic-cyan transition-colors duration-300 font-medium">
                 Home
               </a>
-              <a href="/tokenomics" className="text-white/80 hover:text-cosmic-cyan transition-colors duration-300 font-medium">
+              <a href="/protected?next=%2Ftokenomics" className="text-white/80 hover:text-cosmic-cyan transition-colors duration-300 font-medium">
                 Tokenomics
               </a>
               <a href="/manifesto" className="text-white/80 hover:text-cosmic-cyan transition-colors duration-300 font-medium">
@@ -265,7 +265,7 @@ export default function ComingSoonPage() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
               <a 
-                href="/tokenomics"
+                href="/protected?next=%2Ftokenomics"
                 className="cosmic-glass px-8 py-4 rounded-lg text-lg font-semibold flex items-center justify-center gap-3 hover:bg-cosmic-cyan/10 transition-colors"
               >
                 <span>📊 View Tokenomics</span>

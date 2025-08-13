@@ -51,6 +51,20 @@ pub mod ReputationManager {
         lowest_score: u32,
     }
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    pub enum Event {
+        AdminAdjusted: AdminAdjusted,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct AdminAdjusted {
+        pub worker_id: felt252,
+        pub new_score: u32,
+        pub reason: felt252,
+        pub timestamp: u64,
+    }
+
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -153,6 +167,14 @@ pub mod ReputationManager {
             if new_score < lowest {
                 self.lowest_score.write(new_score);
             }
+
+            // Emit event
+            self.emit(Event::AdminAdjusted(AdminAdjusted {
+                worker_id,
+                new_score,
+                reason,
+                timestamp: get_block_timestamp(),
+            }));
         }
     }
 }

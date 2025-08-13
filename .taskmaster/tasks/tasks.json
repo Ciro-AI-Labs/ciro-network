@@ -1037,7 +1037,7 @@
         "id": 29,
         "title": "Reputation Manager Module Implementation",
         "description": "Implement a centralized reputation management system for worker ranking and job allocation in the CIRO Network smart contracts, including scoring algorithms, access controls, and history tracking.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           3,
           4
@@ -1050,7 +1050,7 @@
             "id": 1,
             "title": "Troubleshoot deployment failure",
             "description": "Investigate and resolve the deployment failure that occurred at the declaration step",
-            "status": "in-progress",
+            "status": "done",
             "dependencies": [],
             "details": "",
             "testStrategy": ""
@@ -1338,7 +1338,7 @@
     ],
     "metadata": {
       "created": "2025-07-06T02:38:40.998Z",
-      "updated": "2025-08-04T03:57:02.005Z",
+      "updated": "2025-08-07T22:40:54.359Z",
       "description": "Tasks for master context"
     }
   },
