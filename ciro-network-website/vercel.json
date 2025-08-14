@@ -5,7 +5,7 @@
   "installCommand": "npm install",
   "devCommand": "npm run dev",
   "env": {
-    "NEXT_PUBLIC_SITE_URL": "https://ciro-network.com"
+    "NEXT_PUBLIC_SITE_URL": "https://ciro.network"
   },
   "headers": [
     {
@@ -29,8 +29,16 @@
   "redirects": [
     {
       "source": "/docs",
-      "destination": "https://docs.ciro-network.com",
+      "destination": "https://docs.ciro.network",
       "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        { "type": "host", "value": "www.ciro.network" }
+      ],
+      "destination": "https://ciro.network/:path*",
+      "permanent": true
     }
   ]
 } 
