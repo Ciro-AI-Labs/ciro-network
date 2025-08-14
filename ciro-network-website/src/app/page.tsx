@@ -1768,12 +1768,7 @@ export default function HomePage() {
               className="text-center mb-12"
             >
               {/* Removed tokenomics headline and claims from landing */}
-              <div className="mt-4 flex justify-center flex-wrap gap-3">
-                <span className="bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-xs border border-green-500/30">
-                  ✅ PRODUCTION READY
-                </span>
-                {/* Removed badges */}
-              </div>
+              {/* Removed badges entirely */}
             </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

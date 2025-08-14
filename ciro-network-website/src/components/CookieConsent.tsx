@@ -190,7 +190,7 @@ export default function CookieConsent() {
                     onClick={handleAcceptAll}
                     className="px-6 py-2 text-sm bg-gradient-to-r from-cosmic-cyan to-nebula-pink text-black font-semibold rounded-lg hover:from-cosmic-cyan/90 hover:to-nebula-pink/90 transition-all duration-200 shadow-lg hover:shadow-cosmic-cyan/20"
                   >
-                    Confirm All
+                    Accept All
                   </button>
                   <button
                     onClick={handleManagePreferences}
@@ -268,7 +268,7 @@ export default function CookieConsent() {
                   onClick={handleAcceptAll}
                   className="px-4 py-2 text-sm bg-gradient-to-r from-cosmic-cyan to-nebula-pink text-black font-semibold rounded-lg hover:from-cosmic-cyan/90 hover:to-nebula-pink/90 transition-all duration-200 shadow-lg hover:shadow-cosmic-cyan/20"
                 >
-                  Confirm All
+                  Accept All
                 </button>
                 <button
                   onClick={handleSavePreferences}
