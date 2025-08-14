@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { WaitlistEntry } from '@/lib/supabase'
+import type { WaitlistEntry } from '@/lib/supabase'
 import { CheckCircle, XCircle, Clock, Mail, Building, User, Server, Code, Palette } from 'lucide-react'
 
 export default function WaitlistAdmin() {

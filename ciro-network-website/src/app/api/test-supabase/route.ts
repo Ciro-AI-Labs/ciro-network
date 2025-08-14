@@ -5,16 +5,16 @@ export async function GET() {
     // Check environment variables
     const envCheck = {
       hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasSupabaseKey: !!process.env.SUPABASE_KEY,
+      hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      keyLength: process.env.SUPABASE_KEY?.length || 0
+      serviceRoleKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
     }
     
     console.log('Environment check:', envCheck)
     
-    if (!process.env.SUPABASE_KEY) {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({
-        error: 'Missing SUPABASE_KEY environment variable',
+        error: 'Missing SUPABASE_SERVICE_ROLE_KEY environment variable',
         envCheck
       }, { status: 500 })
     }
