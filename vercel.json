@@ -1,0 +1,36 @@
+{
+  "buildCommand": "cd ciro-network-website && npm run build",
+  "installCommand": "cd ciro-network-website && npm install",
+  "outputDirectory": "ciro-network-website/.next",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_SITE_URL": "https://ciro.network"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/docs",
+      "destination": "https://docs.ciro.network",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        { "type": "host", "value": "www.ciro.network" }
+      ],
+      "destination": "https://ciro.network/:path*",
+      "permanent": true
+    }
+  ]
+}
+
+
