@@ -10,21 +10,13 @@ export default function TokenomicsPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              CIRO Tokenomics v4.1
+              Tokenomics Overview
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto">
-              Research-Based Hybrid Architecture for Sustainable 50x-200x Returns
+              High-level overview of token design, distribution, and governance mechanics.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm">
-              <span className="bg-green-900/30 text-green-400 px-4 py-2 rounded-full border border-green-500/30">
-                ✅ PRODUCTION READY
-              </span>
-              <span className="bg-blue-900/30 text-blue-400 px-4 py-2 rounded-full border border-blue-500/30">
-                🔒 PEER REVIEWED
-              </span>
-              <span className="bg-purple-900/30 text-purple-400 px-4 py-2 rounded-full border border-purple-500/30">
-                📊 MARKET-TESTED
-              </span>
+              {/* badges removed on public page */}
             </div>
           </div>
         </div>

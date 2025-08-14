@@ -1740,7 +1740,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tokenomics Section removed from landing page (private) */}
+      {/* Tokenomics content intentionally removed from landing page */}
       {/* <section id="tokenomics" className="py-20 relative"> */}
         <div className="math-grid absolute inset-0 opacity-10"></div>
         
@@ -1752,12 +1752,11 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-fractal">
-              The Power of $CIRO
-            </h2>
-            <p className="text-xl text-white/70 max-w-3xl mx-auto">
-              More than just a token. $CIRO is the governance, reward, and incentive mechanism that powers the world's most advanced distributed AI network.
-            </p>
+            {/* Removed public token messaging on landing */}
+            {/*
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-fractal">The Power of $CIRO</h2>
+            <p className="text-xl text-white/70 max-w-3xl mx-auto">More than just a token. $CIRO is the governance, reward, and incentive mechanism that powers the world's most advanced distributed AI network.</p>
+            */}
           </motion.div>
 
           {/* Token Overview */}
@@ -1768,17 +1767,12 @@ export default function HomePage() {
               transition={{ duration: 0.8 }}
               className="text-center mb-12"
             >
-              <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">CIRO Tokenomics v4.1</h3>
-              <p className="text-lg text-white/70">
-                Research-based architecture designed for sustainable 50x-200x returns with production-ready smart contracts
-              </p>
+              {/* Removed tokenomics headline and claims from landing */}
               <div className="mt-4 flex justify-center flex-wrap gap-3">
                 <span className="bg-green-900/30 text-green-400 px-3 py-1 rounded-full text-xs border border-green-500/30">
                   ✅ PRODUCTION READY
                 </span>
-                <span className="bg-blue-900/30 text-blue-400 px-3 py-1 rounded-full text-xs border border-blue-500/30">
-                  📊 MARKET-TESTED
-                </span>
+                {/* Removed badges */}
               </div>
             </motion.div>
 
@@ -1892,7 +1886,7 @@ export default function HomePage() {
                   href="/protected?next=%2Ftokenomics" 
                   className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300"
                 >
-                  View Complete Tokenomics
+                  Learn More
                   <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
