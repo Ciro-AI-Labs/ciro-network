@@ -1759,8 +1759,8 @@ export default function HomePage() {
             */}
           </motion.div>
 
-          {/* Token Overview */}
-          <div className="mb-20">
+          {/* Token Overview removed */}
+          {/* <div className="mb-20"> */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1829,8 +1829,8 @@ export default function HomePage() {
               </motion.div>
             </div>
 
-            {/* Live Smart Contracts */}
-            <motion.div
+            {/* Live Smart Contracts removed */}
+            {/* <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -1885,11 +1885,11 @@ export default function HomePage() {
                   <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
-            </motion.div>
-          </div>
+            </motion.div> */}
+          {/* </div> */}
 
-          {/* Governance Power */}
-          <div className="mb-20">
+          {/* Governance Power removed */}
+          {/* <div className="mb-20"> */}
                           <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -2041,10 +2041,10 @@ export default function HomePage() {
                 </div>
               </motion.div>
             </div>
-          </div>
+          {/* </div> */}
 
-          {/* Reward Program & Incentives */}
-          <div className="mb-20">
+          {/* Reward Program & Incentives removed */}
+          {/* <div className="mb-20"> */}
                           <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -2164,7 +2164,7 @@ export default function HomePage() {
                 </div>
               </motion.div>
             </div>
-          </div>
+          {/* </div> */}
 
           {/* Algorithmic Advantages */}
           <div className="mb-20">
