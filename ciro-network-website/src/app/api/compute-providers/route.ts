@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServer } from '@/lib/supabase-server'
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables')
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey)
+// Initialize Supabase client at runtime via server-side getter
 
 // SendGrid configuration
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY
@@ -257,6 +249,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert into Supabase
+    const supabase = await getSupabaseServer()
     const { data, error } = await supabase
       .from('compute_provider_applications')
       .insert([applicationData])
@@ -296,6 +289,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const computeType = searchParams.get('computeType')
     
+    const supabase = await getSupabaseServer()
     let query = supabase
       .from('compute_provider_applications')
       .select('*')

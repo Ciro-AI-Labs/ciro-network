@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServer } from '@/lib/supabase-server'
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables')
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey)
+// Supabase is now initialized lazily via getSupabaseServer() inside the handler
 
 // SendGrid configuration
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY
@@ -233,6 +225,7 @@ async function sendAdminNotification(submission: WaitlistSubmission) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await getSupabaseServer()
     const body: WaitlistSubmission = await request.json()
     
     // Validate required fields

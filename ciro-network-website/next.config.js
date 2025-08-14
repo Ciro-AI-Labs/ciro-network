@@ -11,7 +11,6 @@ const nextConfig = {
   // Skip static optimization for API routes
   experimental: {
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react', 'date-fns'],
-    missingSuspenseWithCSRBailout: false,
   },
   // Skip prerendering of API routes
   output: 'standalone',

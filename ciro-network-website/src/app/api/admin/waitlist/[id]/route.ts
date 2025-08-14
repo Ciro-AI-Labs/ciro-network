@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseServer } from '@/lib/supabase-server'
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables')
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey)
+// Use server-side getter to avoid build-time failures
 
 export async function PATCH(
   request: NextRequest,
@@ -29,6 +21,7 @@ export async function PATCH(
     }
 
     // Update the entry
+    const supabase = await getSupabaseServer()
     const { data, error } = await supabase
       .from('waitlist')
       .update({ status })
